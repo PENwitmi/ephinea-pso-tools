@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ephinea Tools — PSOBB ステータスシミュレーター & アイテム一覧</title>
-<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)と、bank/インベントリのアイテム一覧(検索・フィルタ・PD評価付き)。データはブラウザ内にのみ保存。">
+<title>Ephinea Tools — PSOBB Stat Simulator & Item List</title>
+<meta name="description" content="Unofficial tools for the PSOBB Ephinea server: a stat simulator (equipment & set effect visualization) and a bank/inventory item list (search, filters, PD value estimates). All data stays in your browser.">
 <style>
 :root {
   --bg: #f5f6f8; --card: #ffffff; --text: #1a1d24; --sub: #667085;
@@ -56,7 +56,7 @@ textarea { width: 100%; font-size: 0.75rem; background: var(--bg); color: var(--
 .sumchip { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 0.8rem; }
 details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); margin-top: 8px; }
 </style>
-<link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/">
+<link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/">
 <link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/">
 <link rel="alternate" hreflang="en" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/">
 <link rel="alternate" hreflang="x-default" href="https://ephinea-pso-tools.nishimoto-learning.jp/">
@@ -65,59 +65,59 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 <div class="wrap">
 <div class="nav">
   <a class="brand" href="./">Ephinea Tools</a>
-  <a class="tab on" href="./">ホーム / データ取込み</a><a class="tab " href="./simulator/">シミュレーター</a><a class="tab " href="./inventory/">アイテム一覧</a>
-  <a class="tab" href="/en/" hreflang="en">English</a><span class="spacer"></span>
+  <a class="tab on" href="./">Home / Import</a><a class="tab " href="./simulator/">Simulator</a><a class="tab " href="./inventory/">Item List</a>
+  <a class="tab" href="/" hreflang="ja">日本語</a><span class="spacer"></span>
   <span class="inv-chip" id="invChip"></span>
-  <button class="theme-btn" id="themeToggle">🌙 ダーク</button>
+  <button class="theme-btn" id="themeToggle">🌙 Dark</button>
 </div>
 <div class="hero">
   <h1>Ephinea Tools</h1>
-  <p style="margin:2px 0 6px; font-size:0.95rem">PSO Blue Burst (Ephineaサーバー) の<b>「どのキャラのどの倉庫に何があるか分からない問題」</b>と<b>「この装備、結局どんな効果?問題」</b>を解決する非公式ツールです。</p>
+  <p style="margin:2px 0 6px; font-size:0.95rem">Unofficial tools for PSO Blue Burst (Ephinea server), built to solve <b>the "which character's bank was that item in?" problem</b> and <b>the "what does this gear actually do?" problem</b>.</p>
   <div class="note" style="line-height:1.9">
-    <b>1️⃣ キャラクターデータを取り込む</b>(1分・任意) → <b>2️⃣ アイテム一覧</b>で全キャラ・全倉庫を横断検索 → <b>3️⃣ シミュレーター</b>で「家にある装備」からビルドを組む<br>
-    取込みなしでも、シミュレーターは全装備データ入りでそのまま使えます。
+    <b>1️⃣ Import your character data</b> (1 min, optional) → <b>2️⃣ Item List</b> to search every character and bank at once →  <b>3️⃣ Simulator</b> to build with the gear you actually own<br>
+    No import needed to use the simulator — it ships with the full equipment database.
   </div>
 </div>
 
 <div class="panel">
-  <h2>1️⃣ キャラクターデータ取込み</h2>
-  <p class="note" style="margin-bottom:10px">Ephinea公式からメールで届くキャラクターデータの中の <b>AllItems_with_slot.txt</b> を選ぶだけ。全キャラの所持品・個人倉庫・共有倉庫がまとめて読み込まれます。データは<b>あなたのブラウザ内にのみ保存</b>され、外部には一切送信されません。</p>
-  <details style="margin-bottom:10px"><summary>まだデータを持っていない場合 — 入手方法 (Ephinea公式)</summary>
+  <h2>1️⃣ Import character data</h2>
+  <p class="note" style="margin-bottom:10px">Just pick the <b>AllItems_with_slot.txt</b> file from the character data e-mailed to you by Ephinea. All characters' inventories, banks and the shared bank are loaded at once. Your data is stored<b>only inside your browser</b> and never sent anywhere.</p>
+  <details style="margin-bottom:10px"><summary>Don't have the data yet? — How to get it (official Ephinea)</summary>
     <ol class="note" style="margin:6px 0 0 1.4em">
-      <li>Ephinea公式の <a href="https://ephinea.pioneer2.net/download-data/" target="_blank">Download Character Data</a> ページでアカウント名とパスワードを入力</li>
-      <li>登録メールアドレスにキャラクターデータ(アーカイブ)が届く</li>
-      <li>解凍すると中に <b>AllItems_with_slot.txt</b> が入っています。それを下の取込み欄へ</li>
+      <li>Enter your account name and password on Ephinea's official <a href="https://ephinea.pioneer2.net/download-data/" target="_blank">Download Character Data</a> page</li>
+      <li>The character data archive is sent to your registered e-mail address</li>
+      <li>Extract it — <b>AllItems_with_slot.txt</b> is inside. Drop that file below</li>
     </ol>
   </details>
-  <div class="droparea" id="dropArea">Ephineaから届いた <b>AllItems_with_slot.txt</b> をここへ<br><span style="font-size:0.75rem">クリックしてファイル選択 / ドラッグ&ドロップ どちらでも</span></div>
+  <div class="droparea" id="dropArea">Drop the <b>AllItems_with_slot.txt</b> from your Ephinea e-mail here<br><span style="font-size:0.75rem">Click to choose a file, or drag & drop</span></div>
   <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
-  <details><summary>テキスト貼り付けで取込み</summary>
+  <details><summary>Or paste as text</summary>
     <textarea id="pasteArea" rows="5" placeholder="Saber [0/0/0/0|0], Slot: 4&#10;RED RING [20/85|18/25], Slot: 1&#10;..."></textarea>
-    <button class="btn" id="pasteBtn" style="margin-top:6px">取り込む</button>
+    <button class="btn" id="pasteBtn" style="margin-top:6px">Import</button>
   </details>
   <div id="importResult" style="margin-top:10px"></div>
   <div class="summary" id="importSummary"></div>
   <div style="margin-top:10px">
-    <button class="btn" id="clearBtn" style="display:none; background:transparent; color:var(--red); border-color:var(--border)">取込みデータを削除</button>
+    <button class="btn" id="clearBtn" style="display:none; background:transparent; color:var(--red); border-color:var(--border)">Delete imported data</button>
   </div>
 </div>
 
 <div class="cards2">
   <a class="toolcard" href="./inventory/">
-    <h3>2️⃣ 📦 アイテム一覧</h3>
-    <p>「あのレア武器どのキャラの倉庫だっけ?」を解決。全キャラの所持品・個人倉庫・共有倉庫をまとめて検索・絞り込み。ついでに相場(Price guide準拠のPD評価)の目安も分かります。</p>
+    <h3>2️⃣ 📦 Item List</h3>
+    <p>Solves "which character's bank was that rare in?" — search and filter every character's inventory, bank and the shared bank at once, with Price guide-based PD value estimates on the side.</p>
   </a>
   <a class="toolcard" href="./simulator/">
-    <h3>3️⃣ ⚔️ ステータスシミュレーター</h3>
-    <p>職業・レベル・マグ・マテリアル・装備を選ぶと、ステータスと装備効果が一目で分かります。「この効果はどの装備から出ているのか」「攻撃速度はどれが優先されるのか」「Thirteenのセット効果は何と組めば発動するのか」まで表示。データを取り込むと所持品に🔖が付き、持っている装備だけでビルドを検討できます。</p>
+    <h3>3️⃣ ⚔️ Stat Simulator</h3>
+    <p>Pick a class, level, mag, materials and gear to see your stats and every equipment effect at a glance — including which item each effect comes from, which attack-speed source wins, and what completes the Thirteen set effect. Import your data and owned items get a 🔖 badge so you can plan builds with gear you actually have.</p>
   </a>
 </div>
 
 <div class="footer">
-<p>データ出典: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
- (装備・相場・テクニック仕様) / キャラクター成長データはバニラPSOBB準拠 /
- Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">旧ステータスシミュレーター</a></p>
-<p>入力されたインベントリデータはブラウザ内(localStorage)にのみ保存され、サーバーには一切送信されません。</p>
+<p>Data sources: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
+ (equipment, prices, technique mechanics) / character growth data follows vanilla PSOBB /
+ Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">the classic status simulator</a></p>
+<p>Imported inventory data is stored only in your browser (localStorage) and never sent to any server.</p>
 </div>
 </div>
 <script>
@@ -126,7 +126,7 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 function applyTheme(t) {
   document.documentElement.dataset.theme = t;
   const b = document.getElementById('themeToggle');
-  if (b) b.textContent = t === 'dark' ? '☀️ ライト' : '🌙 ダーク';
+  if (b) b.textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
 }
 let __theme = localStorage.getItem('pso_theme')
   || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
@@ -147,8 +147,8 @@ function updateInvChip() {
   const el = document.getElementById('invChip');
   if (!el) return;
   el.textContent = inv && inv.items && inv.items.length
-    ? `📦 ${inv.items.length}件 取込済 (${(inv.imported || '').slice(0, 10)})`
-    : '📦 データ未取込';
+    ? `📦 ${inv.items.length} items imported (${(inv.imported || '').slice(0, 10)})`
+    : '📦 No data imported';
 }
 updateInvChip();
 
@@ -184,7 +184,7 @@ function parseInventoryText(text) {
 }
 
 
-// ---- 取込みUI ----
+// ---- importedみUI ----
 const drop = document.getElementById('dropArea');
 const fileInput = document.getElementById('fileInput');
 drop.addEventListener('click', () => fileInput.click());
@@ -202,7 +202,7 @@ document.getElementById('pasteBtn').addEventListener('click', () => {
 document.getElementById('clearBtn').addEventListener('click', () => {
   localStorage.removeItem(INV_KEY);
   showStatus();
-  document.getElementById('importResult').innerHTML = '<span class="note">取込みデータを削除しました</span>';
+  document.getElementById('importResult').innerHTML = '<span class="note">Imported data deleted</span>';
 });
 
 function importFile(f) {
@@ -215,13 +215,13 @@ function doImport(text, source) {
   const items = parseInventoryText(text);
   const res = document.getElementById('importResult');
   if (!items.length) {
-    res.innerHTML = '<span class="warn">取込み失敗: 「アイテム名, Slot: 場所」形式の行が見つかりません</span>';
+    res.innerHTML = '<span class="warn">Import failed: no lines in "Item name, Slot: location" format were found</span>';
     return;
   }
   localStorage.setItem(INV_KEY, JSON.stringify({
     imported: new Date().toISOString(), source, items,
   }));
-  res.innerHTML = `<span class="ok">✓ ${items.length}件を取り込みました</span> <span class="note">(${source})</span>`;
+  res.innerHTML = `<span class="ok">✓ ${items.length} items imported</span> <span class="note">(${source})</span>`;
   showStatus();
 }
 
@@ -237,14 +237,14 @@ function showStatus() {
   }
   const bySlot = {};
   inv.items.forEach(i => {
-    const who = i.slot === 'ShareBank' ? '共有倉庫' : 'キャラ' + i.slot.split(' ')[0];
+    const who = i.slot === 'ShareBank' ? 'Shared bank' : 'Char ' + i.slot.split(' ')[0];
     bySlot[who] = (bySlot[who] || 0) + 1;
   });
-  const order = k => k === '共有倉庫' ? 999 : parseInt(k.replace('キャラ', ''), 10);
-  sum.innerHTML = `<span class="sumchip"><b>${inv.items.length}</b>件</span>` +
+  const order = k => k === 'Shared bank' ? 999 : parseInt(k.replace('Char ', ''), 10);
+  sum.innerHTML = `<span class="sumchip"><b>${inv.items.length}</b></span>` +
     Object.entries(bySlot).sort((a, b) => order(a[0]) - order(b[0]))
       .map(([k, v]) => `<span class="sumchip">${k} ${v}</span>`).join('') +
-    `<span class="sumchip note">${(inv.imported || '').slice(0, 16).replace('T', ' ')} 取込</span>`;
+    `<span class="sumchip note">${(inv.imported || '').slice(0, 16).replace('T', ' ')} imported</span>`;
   clearBtn.style.display = '';
 }
 showStatus();

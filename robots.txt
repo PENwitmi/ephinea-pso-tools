@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ephinea-pso-tools.nishimoto-learning.jp/sitemap.xml
