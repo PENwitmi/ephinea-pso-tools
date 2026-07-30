@@ -938,7 +938,10 @@ function renderEffectsPanel(r, state) {
         const items = zl.map(c =>
           `<span class="chip ${c.slot}">${SLOT_JP[c.slot] || c.slot}</span>${jpName(c.label)} <b>${c.value > 0 ? '+' : ''}${fv(c.value)}</b>`
         ).join('<span class="bd-sep">·</span>');
-        return `<div class="bd-line"><span class="bd-zone">${zlabel} <b>${ztotal > 0 ? '+' : ''}${fv(ztotal)}</b> =</span> ${items}</div>`;
+        // 効果ゾーン(MST/LCK例外)には「なぜ装備由来なのにここに居るのか」の説明を添える
+        const capNote = (zone === 'cap' && (stat === 'mst' || stat === 'lck'))
+          ? ' <span class="overridden-note">※MST・LCKは装備由来でも限界値の内側(Ephinea仕様)</span>' : '';
+        return `<div class="bd-line"><span class="bd-zone">${zlabel} <b>${ztotal > 0 ? '+' : ''}${fv(ztotal)}</b> =</span> ${items}${capNote}</div>`;
       }).filter(Boolean).join('');
       html += `<div class="bd-row"><span class="bd-stat">${STAT_JP[stat]}</span><div class="bd-lines">${lines}</div></div>`;
     });
@@ -1061,7 +1064,13 @@ function renderEquipCards(state) {
         const modsStr = ef.mods.map(m => {
           const ch = FX.channels[m.channel] || {};
           if (m.channel === 'info') return m.text;
-          return `${ch.label}${m.value > 0 ? '+' : ''}${m.value}${ch.unit || ''}`;
+          let s = `${ch.label}${m.value > 0 ? '+' : ''}${m.value}${ch.unit || ''}`;
+          // 装備由来の全ステ系強化はMST・LCK分だけベース側でキャップされる(Ephinea仕様)。
+          // レッドリングの+20がATP等は装備列・MST/LCKは効果列に分かれる理由をその場で説明する
+          if (slot !== 'unit' && ['ability', 'stats5', 'all_stats'].includes(m.channel)) {
+            s += ' <span class="overridden-note">※うちMST・LCK分だけは装備由来でも限界値の内側(効果列)に入る仕様</span>';
+          }
+          return s;
         }).join(', ');
         return `<li>${isSet ? `<b>セット</b>(${partners}): ` : ''}${modsStr}</li>`;
       }).join('') + '</ul>';
