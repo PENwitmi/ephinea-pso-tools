@@ -10,10 +10,12 @@
 - [Home / data import (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/): import your AllItems_with_slot.txt character data
 - [Stat simulator (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/simulator/): class/level/mag/material/gear stat calculation with equipment & set effect breakdown, stat caps, presets
 - [Item list (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/inventory/): search all characters' inventories and banks, with PD value estimates
-- English versions: [https://ephinea-pso-tools.nishimoto-learning.jp/en/](https://ephinea-pso-tools.nishimoto-learning.jp/en/), [https://ephinea-pso-tools.nishimoto-learning.jp/en/simulator/](https://ephinea-pso-tools.nishimoto-learning.jp/en/simulator/), [https://ephinea-pso-tools.nishimoto-learning.jp/en/inventory/](https://ephinea-pso-tools.nishimoto-learning.jp/en/inventory/)
+- [Wishlist (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/wishlist/): reverse drop-chart lookup (difficulty / Section ID / enemy / rate) and PD values for items you want
+- English versions: [https://ephinea-pso-tools.nishimoto-learning.jp/en/](https://ephinea-pso-tools.nishimoto-learning.jp/en/), [https://ephinea-pso-tools.nishimoto-learning.jp/en/simulator/](https://ephinea-pso-tools.nishimoto-learning.jp/en/simulator/), [https://ephinea-pso-tools.nishimoto-learning.jp/en/inventory/](https://ephinea-pso-tools.nishimoto-learning.jp/en/inventory/), [https://ephinea-pso-tools.nishimoto-learning.jp/en/wishlist/](https://ephinea-pso-tools.nishimoto-learning.jp/en/wishlist/)
 
 ## Data sources
 
 - Equipment, prices and technique mechanics: Ephinea PSO Wiki (https://wiki.pioneer2.net)
+- Drop rates: Ephinea official drop charts (https://ephinea.pioneer2.net/drop-charts/)
 - Character growth data: vanilla PSOBB
 - Item values: Ephinea Price guide (https://wiki.pioneer2.net/w/Price_guide)
