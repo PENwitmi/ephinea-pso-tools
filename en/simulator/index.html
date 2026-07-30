@@ -197,8 +197,8 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
         <th title="Class base value for your level">Base</th>
         <th title="From materials used (+2 each)">Mats</th>
         <th title="From mag stats (DEF ×1 / POW ×2 / DEX→ATA ×0.5 / MIND ×2)">Mag</th>
-        <th title="From equipped units' stats">Units</th>
-        <th title="From unit special effects (V101, Adept…); counts toward the cap">Effects</th>
+        <th title="Total from equipped units (listed stats + unit-only effects like V101/Adept); counts toward the cap">Units</th>
+        <th title="Exceptions that count toward the cap despite not coming from units (e.g. gear-derived MST/LCK boosts)">Effects</th>
         <th title="Base + mats + mag + units + effects; anything over the class cap is wasted">Base total</th>
         <th title="This class's stat cap">Cap</th>
         <th title="Base total − cap. 0✓ = exactly maxed / red +N = overshot (wasted) / -N = N short">Diff</th>
@@ -317,10 +317,10 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </div>
 
 <ul class="footnote">
-  <li>"Base total" = base + mats + mag + units + unit-derived effects, before the cap. <b>Red means over the cap = the excess is wasted</b> (over-invested mats/mag/units). Green ✓ = exactly maxed.</li>
+  <li>"Base total" = base + mats + mag + units + effects (MST/LCK exceptions etc.), before the cap. <b>Red means over the cap = the excess is wasted</b> (over-invested mats/mag/units). Green ✓ = exactly maxed.</li>
   <li>"Diff" = base total − cap; your material-plan gauge.</li>
   <li>"Final" = capped base total + gear (weapon ATP, armor DFP/EVP, set effects). <b>Gear has no cap</b> (wiki Stats: total stats have no limit).</li>
-  <li>What counts toward the cap (per Ephinea admin Matt): <b>mags, units and materials count toward the cap; weapons, armor and shields do not</b>. However, <b>MST and LCK are exceptions — everything, gear included, is capped and can never exceed the limit</b>. No item on Ephinea raises the caps themselves.</li>
+  <li>What counts toward the cap (per Ephinea admin Matt): <b>mags, units and materials count toward the cap; weapons, armor and shields do not</b>. However, <b>MST and LCK are exceptions — everything, gear included, is capped and can never exceed the limit</b> (these exceptions appear in the Effects column). No item on Ephinea raises the caps themselves.</li>
   <li>ATA shows one decimal (internally ×10 integers). Each mag DEX gives +0.5 ATA.</li>
   <li>Variable frame/barrier/weapon stats are set with sliders (default = max roll).</li>
   <li>Non-stacking effects like attack speed apply the highest source only; losing sources are struck through.</li>
@@ -654,7 +654,13 @@ const Engine = {
       equip.ata += w.ata * 10;
     }
 
-    // Unit
+    // 内訳(効果パネル用): stat → [{zone:'unit'|'cap'|'equip', slot, label, value(ATAは内部×10)}]
+    const contribs = { atp: [], dfp: [], mst: [], ata: [], evp: [], lck: [] };
+    const addC = (stat, zone, slot, label, value) => {
+      if (value) contribs[stat].push({ zone, slot, label, value });
+    };
+
+    // Unit (表記ステータス。内訳もUnitゾーンに積む)
     const unit = { atp: 0, dfp: 0, mst: 0, ata: 0, evp: 0, lck: 0, hp: 0, tp: 0 };
     const resists = { efr: 0, eic: 0, eth: 0, edk: 0, elt: 0 };
     state.units.filter(Boolean).forEach(n => {
@@ -664,9 +670,13 @@ const Engine = {
       unit.atp += (s.atp || 0); unit.dfp += (s.dfp || 0); unit.mst += (s.mst || 0);
       unit.ata += (s.ata || 0) * 10; unit.evp += (s.evp || 0); unit.lck += (s.lck || 0);
       unit.hp += (s.hp || 0); unit.tp += (s.tp || 0);
+      addC('atp', 'unit', 'unit', n, s.atp || 0); addC('dfp', 'unit', 'unit', n, s.dfp || 0);
+      addC('mst', 'unit', 'unit', n, s.mst || 0); addC('ata', 'unit', 'unit', n, (s.ata || 0) * 10);
+      addC('evp', 'unit', 'unit', n, s.evp || 0); addC('lck', 'unit', 'unit', n, s.lck || 0);
       if (s.ability) {
         unit.atp += s.ability; unit.dfp += s.ability; unit.mst += s.ability;
         unit.evp += s.ability; unit.lck += s.ability; unit.ata += s.ability; // ATAは内部値+N (=表示N/10)
+        ['atp', 'dfp', 'mst', 'evp', 'lck', 'ata'].forEach(k2 => addC(k2, 'unit', 'unit', n, s.ability));
       }
       ['efr', 'eic', 'eth', 'edk', 'elt'].forEach(k => { resists[k] += (s[k] || 0); });
       if (s.resist_all) ['efr', 'eic', 'eth', 'edk', 'elt'].forEach(k => { resists[k] += s.resist_all; });
@@ -680,15 +690,12 @@ const Engine = {
     Object.keys(resists).forEach(k => { if (resists[k] < 0) resists[k] = 0; });
 
     // 効果 (固有効果・セット効果のステータス反映)
-    // Unit由来(origin=unit) → キャップ内(素ステ側) / 装備・セット由来 → キャップ外(装備側)
+    // Unit単体由来(origin=unit) → Unit列(キャップ内) / 装備・セット由来 → 装備列(キャップ外)
+    // fxCap(効果列) は「Unit以外由来なのにベース側に入る例外」専用 (MST/LCK例外の受け皿)
     const fx = resolveEffects(state);
+    const fxUnit = { atp: 0, dfp: 0, mst: 0, ata: 0, evp: 0, lck: 0 };
     const fxCap = { atp: 0, dfp: 0, mst: 0, ata: 0, evp: 0, lck: 0 };
     const fxEquip = { atp: 0, dfp: 0, mst: 0, ata: 0, evp: 0, lck: 0 };
-    // 内訳(効果パネル用): stat → [{zone:'cap'|'equip', slot, label, value(ATAは内部×10)}]
-    const contribs = { atp: [], dfp: [], mst: [], ata: [], evp: [], lck: [] };
-    const addC = (stat, zone, slot, label, value) => {
-      if (value) contribs[stat].push({ zone, slot, label, value });
-    };
     // 装備素体の内訳
     if (state.weapon && EQ.weapons[state.weapon]) {
       const w = EQ.weapons[state.weapon];
@@ -705,8 +712,8 @@ const Engine = {
       addC('evp', 'equip', 'barrier', state.barrier, state.bEvp);
     }
     fx.statMods.forEach(sm => {
-      const side = sm.origin === 'unit' ? fxCap : fxEquip;
-      const zone = sm.origin === 'unit' ? 'cap' : 'equip';
+      const side = sm.origin === 'unit' ? fxUnit : fxEquip;
+      const zone = sm.origin === 'unit' ? 'unit' : 'equip';
       const slot = sm.srcSlot || (sm.origin === 'unit' ? 'unit' : 'set');
       const v = sm.value;
       switch (sm.kind) {
@@ -745,20 +752,22 @@ const Engine = {
     //  and it cannot go above base under any circumstances." Definitive Material Plan Guide)
     fxCap.mst += fxEquip.mst; fxEquip.mst = 0;
     fxCap.lck += fxEquip.lck; fxEquip.lck = 0;
-    ['mst', 'lck'].forEach(s => contribs[s].forEach(c => { c.zone = 'cap'; }));
+    // 内訳も装備ゾーン分だけ効果(例外)ゾーンへ移す (Unitゾーンは触らない)
+    ['mst', 'lck'].forEach(s => contribs[s].forEach(c => { if (c.zone === 'equip') c.zone = 'cap'; }));
     Object.keys(resists).forEach(k => { if (resists[k] < 0) resists[k] = 0; });
 
     // 素ステ = ベース+マテ+Mag+Unit+効果(Unit由来)。限界値でキャップ、超過は無駄
     // 実効値 = キャップ後素ステ + 装備(武器・防具・セット効果)。上限なし(実機仕様)
     const stats = {};
     ['atp', 'dfp', 'mst', 'ata', 'evp', 'lck'].forEach(k => {
-      let raw = base[k] + (mat[k] || 0) + (mag[k] || 0) + (unit[k] || 0) + (fxCap[k] || 0);
+      const unitSide = (unit[k] || 0) + (fxUnit[k] || 0);  // 表記ステ+Unit単体効果
+      let raw = base[k] + (mat[k] || 0) + (mag[k] || 0) + unitSide + (fxCap[k] || 0);
       if (raw < min[k]) raw = min[k];
       const capped = Math.min(raw, max[k]);
       const waste = raw > max[k] ? raw - max[k] : 0;
       const equipSide = (equip[k] || 0) + (fxEquip[k] || 0);
       stats[k] = { base: base[k], mat: mat[k] || 0, mag: mag[k] || 0,
-                   unit: unit[k] || 0, fx: fxCap[k] || 0,
+                   unit: unitSide, fx: fxCap[k] || 0,
                    raw, capped, waste, max: max[k], diff: raw - max[k],
                    equip: equipSide, total: capped + equipSide };
     });
@@ -914,13 +923,15 @@ function renderEffectsPanel(r, state) {
   // ---- 1. Value breakdown (効果列・装備列の分解) ----
   if (hasContribs) {
     const STAT_JP = { atp: 'ATP', dfp: 'DFP', mst: 'MST', ata: 'ATA', evp: 'EVP', lck: 'LCK' };
-    html += '<div class="effect-group"><div><span class="gname">Value breakdown</span> <span class="overridden-note">(what makes up the Effects and Gear columns)</span></div>';
+    html += '<div class="effect-group"><div><span class="gname">Value breakdown</span> <span class="overridden-note">(what makes up the Units, Effects and Gear columns)</span></div>';
     Object.entries(r.contribs).forEach(([stat, list]) => {
       if (!list.length) return;
       const isAta = stat === 'ata';
       const fv = v => isAta ? ataStr(v) : v.toLocaleString();
-      // 「効果」「装備」は1行ずつ縦積み(該当なしのゾーンは省略)
-      const zones = [['cap', 'Effects', r.stats[stat].fx], ['equip', 'Gear', r.stats[stat].equip]];
+      // 「Unit」「効果」「装備」は1行ずつ縦積み(該当なしのゾーンは省略)
+      const zones = [['unit', 'Units', r.stats[stat].unit],
+                     ['cap', 'Effects', r.stats[stat].fx],
+                     ['equip', 'Gear', r.stats[stat].equip]];
       const lines = zones.map(([zone, zlabel, ztotal]) => {
         const zl = list.filter(c => c.zone === zone);
         if (!zl.length) return '';

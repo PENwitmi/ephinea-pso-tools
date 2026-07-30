@@ -197,8 +197,8 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
         <th title="レベルに応じた職業の基本値">ベース</th>
         <th title="使用したマテリアル分 (1個=+2)">マテ</th>
         <th title="マグの育成値分 (DEF×1 / POW×2 / DEX→ATA×0.5 / MIND×2)">マグ</th>
-        <th title="装備中ユニットのステータス分">ユニット</th>
-        <th title="ユニット由来の特殊効果分 (V101・Adept等)。限界値の対象">効果</th>
+        <th title="装備中ユニットの合計 (表記ステータス+V101・Adept等のユニット単体効果)。限界値の対象">ユニット</th>
+        <th title="ユニット以外からベース側(キャップ内)に入る例外分 (MST・LCKの装備由来強化など)。限界値の対象">効果</th>
         <th title="ベース+マテ+マグ+ユニット+効果の合計。職業の限界値を超えた分は無駄になる">素ステ</th>
         <th title="この職業がその素ステで到達できる上限">限界値</th>
         <th title="素ステ − 限界値。0✓=ぴったり理論値 / 赤+N=盛りすぎで無駄 / -N=あとN足りない">差</th>
@@ -317,10 +317,10 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </div>
 
 <ul class="footnote">
-  <li>「素ステ」= ベース+マテ+マグ+ユニット+効果(ユニット由来)のキャップ前合計。<b>限界値を超えると赤字=超過分は無駄</b>(マテ・マグ・ユニットの過剰投資)。緑✓はジャスト理論値。</li>
+  <li>「素ステ」= ベース+マテ+マグ+ユニット+効果(MST/LCK例外等)のキャップ前合計。<b>限界値を超えると赤字=超過分は無駄</b>(マテ・マグ・ユニットの過剰投資)。緑✓はジャスト理論値。</li>
   <li>「差」= 素ステ − 限界値。マテリアル計画の指標。</li>
   <li>「実効値」= 限界値でキャップした素ステ + 装備(武器ATP・防具DFP/EVP・セット効果)。<b>装備分に上限はない</b>(wiki Stats: Total stats have no limit)。</li>
-  <li>キャップの帰属(Ephinea運営Mattの回答に準拠): <b>マグ・ユニット・マテリアルはベース側(キャップ内)、武器・防具・シールド由来はTotal側(キャップ外)</b>。ただし<b>MSTとLCKは例外で、装備由来を含む全てがキャップ内・限界値を絶対に超えられない</b>。Ephineaに限界値自体を引き上げるアイテムは存在しない。</li>
+  <li>キャップの帰属(Ephinea運営Mattの回答に準拠): <b>マグ・ユニット・マテリアルはベース側(キャップ内)、武器・防具・シールド由来はTotal側(キャップ外)</b>。ただし<b>MSTとLCKは例外で、装備由来を含む全てがキャップ内・限界値を絶対に超えられない</b>(この例外分が「効果」列に表示される)。Ephineaに限界値自体を引き上げるアイテムは存在しない。</li>
   <li>ATAは小数1桁まで表示(ゲーム内部は×10整数)。マグDEXは1につきATA+0.5。</li>
   <li>フレーム/バリア/武器の可変ステータスはスライダーで個体値を指定(初期値=最大)。</li>
   <li>攻撃速度など重複しない効果は最大値のみ適用。負けた効果は打ち消し表示。</li>
@@ -654,7 +654,13 @@ const Engine = {
       equip.ata += w.ata * 10;
     }
 
-    // ユニット
+    // 内訳(効果パネル用): stat → [{zone:'unit'|'cap'|'equip', slot, label, value(ATAは内部×10)}]
+    const contribs = { atp: [], dfp: [], mst: [], ata: [], evp: [], lck: [] };
+    const addC = (stat, zone, slot, label, value) => {
+      if (value) contribs[stat].push({ zone, slot, label, value });
+    };
+
+    // ユニット (表記ステータス。内訳もユニットゾーンに積む)
     const unit = { atp: 0, dfp: 0, mst: 0, ata: 0, evp: 0, lck: 0, hp: 0, tp: 0 };
     const resists = { efr: 0, eic: 0, eth: 0, edk: 0, elt: 0 };
     state.units.filter(Boolean).forEach(n => {
@@ -664,9 +670,13 @@ const Engine = {
       unit.atp += (s.atp || 0); unit.dfp += (s.dfp || 0); unit.mst += (s.mst || 0);
       unit.ata += (s.ata || 0) * 10; unit.evp += (s.evp || 0); unit.lck += (s.lck || 0);
       unit.hp += (s.hp || 0); unit.tp += (s.tp || 0);
+      addC('atp', 'unit', 'unit', n, s.atp || 0); addC('dfp', 'unit', 'unit', n, s.dfp || 0);
+      addC('mst', 'unit', 'unit', n, s.mst || 0); addC('ata', 'unit', 'unit', n, (s.ata || 0) * 10);
+      addC('evp', 'unit', 'unit', n, s.evp || 0); addC('lck', 'unit', 'unit', n, s.lck || 0);
       if (s.ability) {
         unit.atp += s.ability; unit.dfp += s.ability; unit.mst += s.ability;
         unit.evp += s.ability; unit.lck += s.ability; unit.ata += s.ability; // ATAは内部値+N (=表示N/10)
+        ['atp', 'dfp', 'mst', 'evp', 'lck', 'ata'].forEach(k2 => addC(k2, 'unit', 'unit', n, s.ability));
       }
       ['efr', 'eic', 'eth', 'edk', 'elt'].forEach(k => { resists[k] += (s[k] || 0); });
       if (s.resist_all) ['efr', 'eic', 'eth', 'edk', 'elt'].forEach(k => { resists[k] += s.resist_all; });
@@ -680,15 +690,12 @@ const Engine = {
     Object.keys(resists).forEach(k => { if (resists[k] < 0) resists[k] = 0; });
 
     // 効果 (固有効果・セット効果のステータス反映)
-    // ユニット由来(origin=unit) → キャップ内(素ステ側) / 装備・セット由来 → キャップ外(装備側)
+    // ユニット単体由来(origin=unit) → ユニット列(キャップ内) / 装備・セット由来 → 装備列(キャップ外)
+    // fxCap(効果列) は「ユニット以外由来なのにベース側に入る例外」専用 (MST/LCK例外の受け皿)
     const fx = resolveEffects(state);
+    const fxUnit = { atp: 0, dfp: 0, mst: 0, ata: 0, evp: 0, lck: 0 };
     const fxCap = { atp: 0, dfp: 0, mst: 0, ata: 0, evp: 0, lck: 0 };
     const fxEquip = { atp: 0, dfp: 0, mst: 0, ata: 0, evp: 0, lck: 0 };
-    // 内訳(効果パネル用): stat → [{zone:'cap'|'equip', slot, label, value(ATAは内部×10)}]
-    const contribs = { atp: [], dfp: [], mst: [], ata: [], evp: [], lck: [] };
-    const addC = (stat, zone, slot, label, value) => {
-      if (value) contribs[stat].push({ zone, slot, label, value });
-    };
     // 装備素体の内訳
     if (state.weapon && EQ.weapons[state.weapon]) {
       const w = EQ.weapons[state.weapon];
@@ -705,8 +712,8 @@ const Engine = {
       addC('evp', 'equip', 'barrier', state.barrier, state.bEvp);
     }
     fx.statMods.forEach(sm => {
-      const side = sm.origin === 'unit' ? fxCap : fxEquip;
-      const zone = sm.origin === 'unit' ? 'cap' : 'equip';
+      const side = sm.origin === 'unit' ? fxUnit : fxEquip;
+      const zone = sm.origin === 'unit' ? 'unit' : 'equip';
       const slot = sm.srcSlot || (sm.origin === 'unit' ? 'unit' : 'set');
       const v = sm.value;
       switch (sm.kind) {
@@ -745,20 +752,22 @@ const Engine = {
     //  and it cannot go above base under any circumstances." Definitive Material Plan Guide)
     fxCap.mst += fxEquip.mst; fxEquip.mst = 0;
     fxCap.lck += fxEquip.lck; fxEquip.lck = 0;
-    ['mst', 'lck'].forEach(s => contribs[s].forEach(c => { c.zone = 'cap'; }));
+    // 内訳も装備ゾーン分だけ効果(例外)ゾーンへ移す (ユニットゾーンは触らない)
+    ['mst', 'lck'].forEach(s => contribs[s].forEach(c => { if (c.zone === 'equip') c.zone = 'cap'; }));
     Object.keys(resists).forEach(k => { if (resists[k] < 0) resists[k] = 0; });
 
     // 素ステ = ベース+マテ+マグ+ユニット+効果(ユニット由来)。限界値でキャップ、超過は無駄
     // 実効値 = キャップ後素ステ + 装備(武器・防具・セット効果)。上限なし(実機仕様)
     const stats = {};
     ['atp', 'dfp', 'mst', 'ata', 'evp', 'lck'].forEach(k => {
-      let raw = base[k] + (mat[k] || 0) + (mag[k] || 0) + (unit[k] || 0) + (fxCap[k] || 0);
+      const unitSide = (unit[k] || 0) + (fxUnit[k] || 0);  // 表記ステ+ユニット単体効果
+      let raw = base[k] + (mat[k] || 0) + (mag[k] || 0) + unitSide + (fxCap[k] || 0);
       if (raw < min[k]) raw = min[k];
       const capped = Math.min(raw, max[k]);
       const waste = raw > max[k] ? raw - max[k] : 0;
       const equipSide = (equip[k] || 0) + (fxEquip[k] || 0);
       stats[k] = { base: base[k], mat: mat[k] || 0, mag: mag[k] || 0,
-                   unit: unit[k] || 0, fx: fxCap[k] || 0,
+                   unit: unitSide, fx: fxCap[k] || 0,
                    raw, capped, waste, max: max[k], diff: raw - max[k],
                    equip: equipSide, total: capped + equipSide };
     });
@@ -914,13 +923,15 @@ function renderEffectsPanel(r, state) {
   // ---- 1. 数値の内訳 (効果列・装備列の分解) ----
   if (hasContribs) {
     const STAT_JP = { atp: 'ATP', dfp: 'DFP', mst: 'MST', ata: 'ATA', evp: 'EVP', lck: 'LCK' };
-    html += '<div class="effect-group"><div><span class="gname">数値の内訳</span> <span class="overridden-note">(効果列・装備列の構成)</span></div>';
+    html += '<div class="effect-group"><div><span class="gname">数値の内訳</span> <span class="overridden-note">(ユニット列・効果列・装備列の構成)</span></div>';
     Object.entries(r.contribs).forEach(([stat, list]) => {
       if (!list.length) return;
       const isAta = stat === 'ata';
       const fv = v => isAta ? ataStr(v) : v.toLocaleString();
-      // 「効果」「装備」は1行ずつ縦積み(該当なしのゾーンは省略)
-      const zones = [['cap', '効果', r.stats[stat].fx], ['equip', '装備', r.stats[stat].equip]];
+      // 「ユニット」「効果」「装備」は1行ずつ縦積み(該当なしのゾーンは省略)
+      const zones = [['unit', 'ユニット', r.stats[stat].unit],
+                     ['cap', '効果', r.stats[stat].fx],
+                     ['equip', '装備', r.stats[stat].equip]];
       const lines = zones.map(([zone, zlabel, ztotal]) => {
         const zl = list.filter(c => c.zone === zone);
         if (!zl.length) return '';
