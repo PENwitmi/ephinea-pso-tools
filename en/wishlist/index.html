@@ -43,10 +43,19 @@ a { color: var(--accent); }
 
 .addrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0 18px; }
 .addrow input { flex: 1; min-width: 240px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.95rem; }
-.wcard { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; margin-bottom: 14px; }
-.wcard h3 { font-size: 1.05rem; margin-bottom: 2px; }
+.wcard { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 0; margin-bottom: 14px; }
+.wcard > summary { cursor: pointer; list-style: none; display: flex; align-items: center; gap: 10px; padding: 13px 18px; border-radius: 14px; }
+.wcard > summary:hover { background: var(--accent-soft); }
+.wcard > summary::-webkit-details-marker { display: none; }
+.wcard .foldbtn { margin-left: auto; flex-shrink: 0; font-size: 0.78rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); border: 1px solid var(--border); border-radius: 8px; padding: 3px 12px; }
+.wcard .when-open { display: none; }
+.wcard[open] .when-open { display: inline; }
+.wcard[open] .when-closed { display: none; }
+.wcard .wtitle { font-size: 1.05rem; font-weight: 700; }
+.wcard .wbody { padding: 0 18px 16px; }
 .wcard .sub { font-size: 0.75rem; color: var(--sub); }
-.wcard .rm { float: right; cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--sub); padding: 2px 10px; font-size: 0.75rem; }
+.wcard .ownchip { font-size: 0.72rem; }
+.wcard .rm { cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--sub); padding: 3px 10px; font-size: 0.75rem; flex-shrink: 0; }
 .wcard .rm:hover { color: var(--red); border-color: var(--red); }
 .ownrow { margin: 8px 0 2px; font-size: 0.8rem; }
 .own-yes { color: var(--green); font-weight: 600; }
@@ -302,7 +311,11 @@ function dropsHTML(name) {
   return html;
 }
 
-// ---- カード描画 ----
+// ---- カード描画 (折りたたみ状態は保存して次回も維持) ----
+const FOLD_KEY = 'pso_wishlist_folded';
+function loadFolded() { try { return JSON.parse(localStorage.getItem(FOLD_KEY)) || []; } catch (e) { return []; } }
+function saveFolded(a) { localStorage.setItem(FOLD_KEY, JSON.stringify(a)); }
+
 function render() {
   const wl = loadWL();
   const box = document.getElementById('wList');
@@ -310,24 +323,35 @@ function render() {
     box.innerHTML = '<div class="empty">Nothing here yet. Add an item name above.</div>';
     return;
   }
+  const folded = loadFolded();
   box.innerHTML = wl.map(name => {
     const jp = jpName(name);
     const sub = jp !== name ? `<span class="sub">${esc(name)}</span>` : '';
     const own = ownedInfo(name);
-    let ownHtml = '';
+    let ownHtml = '', ownChip = '';
     if (own) {
       ownHtml = own.count
         ? `<div class="ownrow own-yes">✓ Owned: ${own.count} (${Object.entries(own.locs).map(([l, c]) => c > 1 ? `${l}×${c}` : l).join(' / ')})</div>`
         : '<div class="ownrow sub">Not in your imported data</div>';
+      if (own.count) ownChip = `<span class="ownchip own-yes">✓${own.count}</span>`;
     }
     const wiki = `https://wiki.pioneer2.net/w/${encodeURIComponent(name.replace(/ /g, '_'))}`;
-    return `<div class="wcard"><button class="rm" data-n="${esc(name)}">✕ Remove</button>
-      <h3>${esc(jp)}</h3>${sub} <a class="wikilink" href="${wiki}" target="_blank" rel="noopener">📖 wiki</a>
-      ${ownHtml}${priceHTML(name)}${dropsHTML(name)}</div>`;
+    return `<details class="wcard" data-n="${esc(name)}"${folded.includes(name) ? '' : ' open'}>
+      <summary><span class="wtitle">${esc(jp)}</span>${sub}${ownChip}<span class="foldbtn"><span class="when-closed">▼ Show details</span><span class="when-open">▲ Collapse</span></span><button class="rm" data-n="${esc(name)}">✕ Remove</button></summary>
+      <div class="wbody"><a class="wikilink" href="${wiki}" target="_blank" rel="noopener">📖 wiki</a>
+      ${ownHtml}${priceHTML(name)}${dropsHTML(name)}</div></details>`;
   }).join('');
-  box.querySelectorAll('.rm').forEach(b => b.addEventListener('click', () => {
+  box.querySelectorAll('.rm').forEach(b => b.addEventListener('click', e => {
+    e.preventDefault(); e.stopPropagation();  // summaryの開閉を発火させない
     saveWL(loadWL().filter(n => n !== b.dataset.n));
+    saveFolded(loadFolded().filter(n => n !== b.dataset.n));
     render();
+  }));
+  box.querySelectorAll('details.wcard').forEach(d => d.addEventListener('toggle', () => {
+    const n = d.dataset.n;
+    const f = loadFolded().filter(x => x !== n);
+    if (!d.open) f.push(n);
+    saveFolded(f);
   }));
 }
 
