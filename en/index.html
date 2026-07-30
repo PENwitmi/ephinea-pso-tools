@@ -52,8 +52,9 @@ a { color: var(--accent); }
 .droparea { border: 2px dashed var(--border); border-radius: 12px; padding: 22px; text-align: center; color: var(--sub); font-size: 0.9rem; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
 .droparea.drag { border-color: var(--accent); background: var(--accent-soft); }
 textarea { width: 100%; font-size: 0.75rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-top: 8px; }
-.summary { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.summary { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; align-items: center; }
 .sumchip { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 0.8rem; }
+.nextbtn { text-decoration: none; display: inline-block; }
 details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); margin-top: 8px; }
 </style>
 <link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/">
@@ -235,16 +236,9 @@ function showStatus() {
     clearBtn.style.display = 'none';
     return;
   }
-  const bySlot = {};
-  inv.items.forEach(i => {
-    const who = i.slot === 'ShareBank' ? 'Shared bank' : 'Char ' + i.slot.split(' ')[0];
-    bySlot[who] = (bySlot[who] || 0) + 1;
-  });
-  const order = k => k === 'Shared bank' ? 999 : parseInt(k.replace('Char ', ''), 10);
-  sum.innerHTML = `<span class="sumchip"><b>${inv.items.length}</b></span>` +
-    Object.entries(bySlot).sort((a, b) => order(a[0]) - order(b[0]))
-      .map(([k, v]) => `<span class="sumchip">${k} ${v}</span>`).join('') +
-    `<span class="sumchip note">${(inv.imported || '').slice(0, 16).replace('T', ' ')} imported</span>`;
+  sum.innerHTML =
+    `<span class="sumchip">✓ <b>${inv.items.length}</b> items imported  <span class="note">(${(inv.imported || '').slice(0, 16).replace('T', ' ')})</span></span>` +
+    `<a class="btn nextbtn" href="./inventory/">Next: 2️⃣ Check them in the Item List →</a>`;
   clearBtn.style.display = '';
 }
 showStatus();

@@ -230,6 +230,10 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <div class="row"><label>Level</label>
       <input type="number" id="lv" min="1" max="200" value="200">
       <input type="range" id="lvR" min="1" max="200" value="200"></div>
+    <div class="row"><label>Wiki plan</label>
+      <select id="wikiPlan" class="slot-select"><option value="">Select a plan to apply…</option></select></div>
+    <div class="row varstat" style="line-height:1.5">Load the official wiki build plans (mag, materials, units, barrier) in one click. See the <a id="clsGuideLink" href="#" target="_blank" rel="noopener">class guide</a> for details</div>
+    <div class="row varstat" id="wikiPlanNote" style="line-height:1.6"></div>
   </div>
 
   <div class="panel">
@@ -325,6 +329,7 @@ const INV = (() => {
       hit: i.hit, raw: i.raw, slot: i.slot }));
   } catch (e) { return []; }
 })();
+const PLANS = {"source_note": "wiki.pioneer2.net の各クラス Guide ページ 「Material and Mag plans」節より。Mag は DEF/POW/DEX/MIND。", "classes": {"HUmar": {"guide_url": "https://wiki.pioneer2.net/w/HUmar/Guide", "groups": [{"name": "With V101", "plans": [{"name": "Important Stats Only", "mag": [5, 147, 48, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 222, "Luck": 28}, "unused": 0}, {"name": "Min-Max (-3 EVP)", "mag": [5, 147, 48, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 73, "Mind": 52, "Def": 69, "Evade": 28, "Luck": 28}, "unused": 0}, {"name": "Max Stats", "mag": [5, 147, 48, 0], "units": ["V101", "V801"], "shield": "Red Ring", "materials": {"Power": 73, "Mind": 49, "Def": 69, "Evade": 30, "Luck": 28}, "unused": 1}]}, {"name": "Without V101", "plans": [{"name": "Important Stats Only", "mag": [5, 144, 51, 0], "units": [], "shield": "Red Ring", "materials": {"Power": 215, "Luck": 35}, "unused": 0}, {"name": "Min-Max", "mag": [5, 144, 51, 0], "units": [], "shield": "Red Ring", "materials": {"Power": 83, "Mind": 56, "Def": 76, "Luck": 35}, "unused": 0}, {"name": "Max Stats", "mag": [5, 150, 45, 0], "units": ["Centurion/Ability"], "shield": "Red Ring", "materials": {"Power": 62, "Mind": 44, "Def": 61, "Evade": 22, "Luck": 20}, "unused": 41}]}]}, "HUnewearl": {"guide_url": "https://wiki.pioneer2.net/w/HUnewearl/Guide", "groups": [{"name": "With V101", "plans": [{"name": "Important Stats Only", "mag": [5, 95, 100, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 122, "Luck": 28}, "unused": 0}, {"name": "Min-Max", "mag": [5, 95, 100, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 99, "Mind": 23, "Luck": 28}, "unused": 0}, {"name": "Min-Max (Allows Barrier Swap)", "mag": [5, 95, 100, 0], "units": ["V101"], "shield": "", "materials": {"Power": 99, "Def": 13, "Luck": 38}, "unused": 0}, {"name": "Max Stats", "mag": [5, 176, 19, 0], "units": ["V101", "Adept", "Adept", "Centurion/Ability"], "shield": "Red Ring", "materials": {"Mind": 104, "Evade": 40, "Luck": 3}, "unused": 3}]}, {"name": "Without V101", "plans": [{"name": "Important Stats Only", "mag": [5, 92, 103, 0], "units": [], "shield": "Red Ring", "materials": {"Power": 115, "Luck": 35}, "unused": 0}, {"name": "Min-Max", "mag": [5, 92, 103, 0], "units": [], "shield": "Red Ring", "materials": {"Power": 109, "Mind": 6, "Luck": 35}, "unused": 0}]}]}, "HUcast": {"guide_url": "https://wiki.pioneer2.net/w/HUcast/Guide", "groups": [{"name": "With V101", "plans": [{"name": "Budget Important Stats Only", "mag": [5, 133, 62, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 150}, "unused": 0}, {"name": "Important Stats Only", "mag": [5, 133, 62, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 122, "Luck": 28}, "unused": 0}, {"name": "Min-Max", "mag": [5, 133, 62, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 106, "Def": 16, "Luck": 28}, "unused": 0}, {"name": "Important Stats Only*", "mag": [5, 133, 62, 0], "units": ["V101"], "shield": "", "materials": {"Power": 112, "Luck": 38}, "unused": 0}, {"name": "Min-Max*", "mag": [5, 133, 62, 0], "units": ["V101"], "shield": "", "materials": {"Power": 106, "Def": 6, "Luck": 38}, "unused": 0}, {"name": "Max Stats", "mag": [5, 139, 56, 0], "units": ["V101", "Centurion/Ability"], "shield": "Red Ring", "materials": {"Power": 85, "Def": 25, "Evade": 15, "Luck": 13}, "unused": 12}]}, {"name": "Without V101", "plans": [{"name": "Important Stats Only (-3 ATP)", "mag": [5, 130, 65, 0], "units": [], "shield": "Red Ring", "materials": {"Power": 115, "Luck": 35}, "unused": 0}]}]}, "HUcaseal": {"guide_url": "https://wiki.pioneer2.net/w/HUcaseal/Guide", "groups": [{"name": "With V101", "plans": [{"name": "Important Stats Only", "mag": [5, 131, 64, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 122, "Luck": 28}, "unused": 0}, {"name": "Min-Max", "mag": [5, 131, 64, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 62, "Def": 53, "Evade": 7, "Luck": 28}, "unused": 0}, {"name": "Max Stats", "mag": [5, 137, 58, 0], "units": ["V101", "Centurion/Ability"], "shield": "Red Ring", "materials": {"Power": 41, "Def": 38, "Evade": 28, "Luck": 13}, "unused": 30}, {"name": "Important Stats Only*", "mag": [5, 131, 64, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 112, "Luck": 38}, "unused": 0}, {"name": "Min-Max*", "mag": [5, 131, 64, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 62, "Def": 50, "Luck": 38}, "unused": 0}, {"name": "Min-Max**", "mag": [5, 131, 64, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 62, "Def": 10, "Evade": 50, "Luck": 28}, "unused": 0}]}, {"name": "Without V101", "plans": [{"name": "Important Stats Only", "mag": [5, 128, 67, 0], "units": [], "shield": "Red Ring", "materials": {"Power": 115, "Luck": 35}, "unused": 0}, {"name": "Min-Max", "mag": [5, 128, 67, 0], "units": [], "shield": "Red Ring", "materials": {"Power": 72, "Def": 43, "Luck": 35}, "unused": 0}]}]}, "RAmar": {"guide_url": "https://wiki.pioneer2.net/w/RAmar/Guide", "groups": [{"name": "", "plans": [{"name": "Important Stats Only", "mag": [5, 160, 35, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 222, "Luck": 28}, "unused": 0}, {"name": "Min-Max", "mag": [5, 160, 35, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 60, "Mind": 63, "Def": 68, "Evade": 31, "Luck": 28}, "unused": 0}, {"name": "Min-Max (2)", "mag": [5, 145, 35, 15], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 75, "Mind": 48, "Def": 68, "Evade": 31, "Luck": 28}, "unused": 0}]}]}, "RAmarl": {"guide_url": "https://wiki.pioneer2.net/w/RAmarl/Guide", "groups": [{"name": "", "plans": [{"name": "Budget Important Stats Only", "mag": [5, 149, 46, 0], "units": ["Heavenly/Battle", "Heavenly/Ability"], "shield": "Ranger Wall", "materials": {"Power": 222, "Luck": 28}, "unused": 0}, {"name": "Important Stats Only", "mag": [5, 149, 46, 0], "units": ["V101"], "shield": "Ranger Wall", "materials": {"Power": 212, "Luck": 38}, "unused": 0}, {"name": "Clio at 180", "mag": [5, 149, 46, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 129, "Mind": 93, "Luck": 28}, "unused": 0}, {"name": "Min-Max", "mag": [5, 149, 46, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 45, "Mind": 132, "Def": 45, "Luck": 28}, "unused": 0}, {"name": "Max Stats", "mag": [5, 155, 40, 0], "units": ["V101", "Centurion/Ability"], "shield": "Red Ring", "materials": {"Power": 24, "Mind": 117, "Def": 51, "Evade": 29, "Luck": 13}, "unused": 16}]}]}, "RAcast": {"guide_url": "https://wiki.pioneer2.net/w/RAcast/Guide", "groups": [{"name": "", "plans": [{"name": "Important Stats Only", "mag": [5, 148, 47, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 122, "Luck": 28}, "unused": 0}, {"name": "Min-Max", "mag": [5, 148, 47, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 90, "Def": 32, "Luck": 28}, "unused": 0}, {"name": "Max Stats", "mag": [5, 154, 41, 0], "units": ["V101", "Centurion/Ability"], "shield": "Red Ring", "materials": {"Power": 69, "Def": 26, "Evade": 14, "Luck": 13}, "unused": 28}]}]}, "RAcaseal": {"guide_url": "https://wiki.pioneer2.net/w/RAcaseal/Guide", "groups": [{"name": "", "plans": [{"name": "Important Stats Only", "mag": [5, 152, 43, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 122, "Luck": 28}, "unused": 0}, {"name": "Min-Max", "mag": [5, 152, 43, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 41, "Def": 53, "Evade": 28, "Luck": 28}, "unused": 0}, {"name": "Min-Max (2)", "mag": [7, 150, 43, 0], "units": ["V101"], "shield": "Red Ring", "materials": {"Power": 43, "Def": 52, "Evade": 27, "Luck": 28}, "unused": 0}, {"name": "Max Stats", "mag": [5, 158, 37, 0], "units": ["V101", "Centurion/Ability"], "shield": "Red Ring", "materials": {"Power": 20, "Def": 38, "Evade": 15, "Luck": 13}, "unused": 64}]}]}, "FOmar": {"guide_url": "https://wiki.pioneer2.net/w/FOmar/Guide", "groups": [{"name": "", "plans": [{"name": "Budget Important Stats Only", "mag": [5, 117, 46, 0], "units": ["V101", "V801"], "shield": "", "materials": {"Mind": 250}, "unused": 0}, {"name": "Important Stats Only", "mag": [5, 117, 46, 0], "units": ["V101", "V801"], "shield": "", "materials": {"Mind": 212, "Luck": 38}, "unused": 0}, {"name": "Min-Max", "mag": [5, 117, 46, 32], "units": ["V101", "V801"], "shield": "", "materials": {"Mind": 133, "Def": 65, "Evade": 14, "Luck": 38}, "unused": 0}, {"name": "Max Stats", "mag": [5, 112, 20, 63], "units": ["V101", "V801", "Adept"], "shield": "", "materials": {"Mind": 97, "Def": 60, "Evade": 38, "Luck": 33}, "unused": 22}]}]}, "FOmarl": {"guide_url": "https://wiki.pioneer2.net/w/FOmarl/Guide", "groups": [{"name": "", "plans": [{"name": "Budget Important Stats Only", "mag": [5, 68, 48, 0], "units": ["V101", "V801"], "shield": "", "materials": {"Mind": 250}, "unused": 0, "mag_note": "wiki shows 5/68+/48+/0 (mid-leveling values; keep raising the mag)"}, {"name": "Important Stats Only", "mag": [5, 68, 48, 0], "units": ["V101", "V801"], "shield": "", "materials": {"Mind": 212, "Luck": 38}, "unused": 0, "mag_note": "wiki shows 5/68+/48+/0 (mid-leveling values; keep raising the mag)"}, {"name": "Min-Max", "mag": [5, 68, 48, 79], "units": ["V101", "V801"], "shield": "", "materials": {"Mind": 94, "Def": 71, "Evade": 38, "Luck": 38}, "unused": 9}, {"name": "Max Stats (at Level 194)", "mag": [5, 78, 51, 66], "units": ["V101", "V801"], "shield": "", "materials": {"Mind": 112, "Def": 70, "Evade": 30, "Luck": 38}, "unused": 0}]}]}, "FOnewm": {"guide_url": "https://wiki.pioneer2.net/w/FOnewm/Guide", "groups": [{"name": "Level 200", "plans": [{"name": "General use", "mag": [5, 88, 61, 46], "units": ["V101", "V801 (or V502)", "Adept", "Smartlink"], "shield": "Any", "materials": {"Mind": 140}, "unused": 10}, {"name": "Optional: Episode 2", "mag": [5, 93, 101, 1], "units": ["V101", "V801", "V502", "Smartlink"], "shield": "Any", "materials": {"Mind": 140}, "unused": 10}, {"name": "Optional: Nuking only (max ATA)", "mag": [40, 0, 104, 56], "units": ["V101", "V801", "Smartlink"], "shield": "Any", "materials": {"Mind": 150}, "unused": 0}]}, {"name": "Other", "plans": [{"name": "Level 146-170", "mag": [5, 0, 45, 150], "units": ["V101", "V801", "Adept", "Heavenly/Mind"], "shield": "Technique Merges (especially Gi and Ra)", "materials": {"Mind": 150}, "unused": 0}, {"name": "Level 171-181", "mag": [5, 11, 73, 111], "units": ["V101", "V801", "Adept", "Smartlink"], "shield": "Technique Merges (especially Gi and Ra)", "materials": {"Mind": 150}, "unused": 0}, {"name": "Level 182+", "mag": [5, 0, 109, 86], "units": ["V101", "V801", "Smartlink"], "shield": "Technique Merges (especially Gi and Ra)", "materials": {"Mind": 150}, "unused": 0}, {"name": "Max Stats", "mag": [5, 6, 20, 169], "units": ["V101", "Adept", "Adept", "Centurion/Ability"], "shield": "Red Ring", "materials": {"Power": 62, "Evade": 42, "Luck": 13}, "unused": 33}]}]}, "FOnewearl": {"guide_url": "https://wiki.pioneer2.net/w/FOnewearl/Guide", "groups": [{"name": "Level 200", "plans": [{"name": "General use", "mag": [5, 36, 62, 97], "units": ["V101", "V801 (or V502)", "Adept", "Smartlink"], "shield": "Technique Merges (especially Gi and Ra), Red Ring", "materials": {"Mind": 150}, "unused": 0}, {"name": "Optional: General use Episode 2", "mag": [5, 43, 102, 50], "units": ["V101", "V801", "V502", "Smartlink"], "shield": "Technique Merges (especially Gi and Ra), Red Ring", "materials": {"Mind": 150}, "unused": 0}, {"name": "Min-Max", "mag": [5, 36, 62, 97], "units": ["V101", "V801 (or V502)", "Adept", "Smartlink"], "shield": "Technique Merges (especially Gi and Ra), Red Ring", "materials": {"Mind": 148, "Def": 2}, "unused": 0}, {"name": "Optional: Min-Max Episode 2", "mag": [5, 43, 102, 50], "units": ["V101", "V801", "V502", "Smartlink"], "shield": "Technique Merges (especially Gi and Ra), Red Ring", "materials": {"Mind": 148, "Def": 2}, "unused": 0}, {"name": "Optional: Nuking only", "mag": [64, 0, 0, 136], "units": ["V801"], "shield": "Technique Merges (especially Gi and Ra)", "materials": {"Mind": 148}, "unused": 2}]}, {"name": "Max Stats", "plans": [{"name": "Max Stats", "mag": [5, 18, 16, 161], "units": ["V101", "Adept", "Adept", "Centurion/Ability"], "shield": "Red Ring", "materials": {"Mind": 82, "Evade": 42, "Luck": 13}, "unused": 13}]}]}}};
 const CLASS_ORDER = EQ._meta.class_order;
 
 // ---------- ユーティリティ ----------
@@ -1022,7 +1027,88 @@ function renderEquipCards(state) {
 }
 
 // ---------- イベント ----------
-['cls'].forEach(id => $(id).addEventListener('change', () => { refreshSelects(); render(); }));
+['cls'].forEach(id => $(id).addEventListener('change', () => { refreshSelects(); rebuildWikiPlans(); render(); }));
+
+// ---------- wiki推奨プラン ----------
+function wikiPlanData() {
+  const c = CHAR[$('cls').value];
+  return (c && PLANS.classes[c.name]) || null;
+}
+
+function rebuildWikiPlans() {
+  const sel = $('wikiPlan');
+  sel.innerHTML = '<option value="">Select a plan to apply…</option>';
+  const wp = wikiPlanData();
+  $('wikiPlanNote').innerHTML = '';
+  if (!wp) { sel.disabled = true; return; }
+  sel.disabled = false;
+  $('clsGuideLink').href = wp.guide_url;
+  wp.groups.forEach((g, gi) => {
+    let parent = sel;
+    if (g.name) {
+      parent = document.createElement('optgroup');
+      parent.label = g.name;
+      sel.appendChild(parent);
+    }
+    g.plans.forEach((p, pi) => {
+      const o = document.createElement('option');
+      o.value = gi + ':' + pi; o.textContent = p.name;
+      parent.appendChild(o);
+    });
+  });
+}
+
+function planLevel(name) {
+  const nums = (name.match(/\d{3}/g) || []).map(Number).filter(n => n >= 100 && n <= 200);
+  return nums.length ? nums[nums.length - 1] : 200;
+}
+
+$('wikiPlan').addEventListener('change', () => {
+  const v = $('wikiPlan').value;
+  const wp = wikiPlanData();
+  if (!v || !wp) return;
+  const [gi, pi] = v.split(':').map(Number);
+  const g = wp.groups[gi], plan = g.plans[pi];
+  const st = readState();
+  st.lv = planLevel(plan.name);
+  st.mag = { def: plan.mag[0], pow: plan.mag[1], dex: plan.mag[2], mind: plan.mag[3] };
+  st.mats = { hp: 0, tp: 0,
+              pow: plan.materials.Power || 0, def: plan.materials.Def || 0,
+              mind: plan.materials.Mind || 0, eva: plan.materials.Evade || 0,
+              lck: plan.materials.Luck || 0 };
+  const us = [];
+  plan.units.forEach(u => {
+    const name = u.split(' (or')[0].trim();
+    if (EQ.units[name]) us.push(name);
+  });
+  st.units = [0, 1, 2, 3].map(i => us[i] || null);
+  let shieldApplied = null;
+  (plan.shield ? plan.shield.split(',') : []).some(cand => {
+    cand = cand.trim();
+    if (EQ.barriers[cand]) { shieldApplied = cand; return true; }
+    return false;
+  });
+  if (shieldApplied) {
+    st.barrier = shieldApplied;
+    delete st.bDfp; delete st.bEvp;  // スライダーは新Barrierの最大値に任せる
+  }
+  applyState(st);
+  $('wikiPlan').value = '';  // アクションメニューとして振る舞う(選択状態を残さない)
+  const matStr = Object.entries(plan.materials).map(([k, n]) => `${k}×${n}`).join(' ') || 'None';
+  const parts = [
+    `✓ Wiki plan "<b>${g.name ? g.name + ' / ' : ''}${plan.name}</b>" applied (target Lv${st.lv})`,
+    `Mag ${plan.mag.join('/')}` + (plan.mag_note ? ` <span class="warn">※${plan.mag_note}</span>` : ''),
+    `Materials ${matStr}` + (plan.unused ? ` (unused slots: ${plan.unused})` : ''),
+    `Units ${plan.units.join(', ') || 'None'}`,
+  ];
+  if (plan.shield) {
+    parts.push(shieldApplied
+      ? `Barrier ${shieldApplied}` + (plan.shield !== shieldApplied ? ` (wiki suggests: ${plan.shield})` : '')
+      : `Wiki barrier suggestion "${plan.shield}" cannot be auto-applied — current barrier kept`);
+  }
+  parts.push('Weapon and frame are left unchanged');
+  $('wikiPlanNote').innerHTML = parts.join('<br>');
+});
 ['lv', 'matHP', 'matTP', 'matPow', 'matDef', 'matMind', 'matEva', 'matLck',
  'magDef', 'magPow', 'magDex', 'magMind', 'wGrind'].forEach(id =>
   $(id).addEventListener('input', render));
@@ -1078,6 +1164,7 @@ function applyState(st) {
   forceSelect($('barrier'), st.barrier);
   (st.units || []).forEach((u, i) => forceSelect($('unit' + (i + 1)), u));
   refreshSelects();       // 選択を保持したままリストを正規化
+  rebuildWikiPlans();     // 職業が変わった場合に備えwiki推奨プラン一覧も追随
   syncVarUI();            // スライダーレンジを装備に合わせる
   // 個体値スライダーをPresets値でover
   const setR = (id, v) => { if (v !== undefined && v !== null) { $(id).value = v; const vid = { wAtpR: 'wAtpV', fDfpR: 'fDfpV', fEvpR: 'fEvpV', bDfpR: 'bDfpV', bEvpR: 'bEvpV' }[id]; if (vid) $(vid).textContent = $(id).value; } };
@@ -1187,6 +1274,7 @@ try {
   const last = JSON.parse(localStorage.getItem(LAST_KEY));
   if (last && last.cls) { applyState(last); restored = true; }
 } catch (e) {}
+rebuildWikiPlans();
 if (!restored) render();
 </script>
 </body>
