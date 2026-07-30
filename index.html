@@ -74,6 +74,13 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 <div class="panel">
   <h2>📦 インベントリデータ取込み</h2>
   <p class="note" style="margin-bottom:10px">キャラクターデータ出力の <b>AllItems_with_slot.txt</b>(「アイテム名, Slot: 場所」形式)を取り込みます。データは<b>このブラウザ内にのみ保存</b>され、サーバーには送信されません。</p>
+  <details style="margin-bottom:10px"><summary>データの入手方法 (Ephinea公式)</summary>
+    <ol class="note" style="margin:6px 0 0 1.4em">
+      <li>Ephinea公式の <a href="https://ephinea.pioneer2.net/download-data/" target="_blank">Download Character Data</a> ページでアカウント名とパスワードを入力</li>
+      <li>登録メールアドレスにキャラクターデータ(アーカイブ)が届く</li>
+      <li>解凍して中の <b>AllItems_with_slot.txt</b> を下の取込み欄へ(全キャラのインベントリ+倉庫+共有倉庫が1ファイルにまとまっているもの)</li>
+    </ol>
+  </details>
   <div class="droparea" id="dropArea">クリックしてファイルを選択 / ここにドラッグ&ドロップ<br><span style="font-size:0.75rem">(AllItems_with_slot.txt)</span></div>
   <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
   <details><summary>テキスト貼り付けで取込み</summary>
