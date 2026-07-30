@@ -159,6 +159,13 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 .eqcard ul { margin-left: 1.1em; }
 .footnote { margin-top: 18px; font-size: 0.72rem; color: var(--sub); }
 .footnote li { margin-left: 1.2em; margin-top: 3px; }
+
+.nav { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; font-size: 0.88rem; }
+.nav .brand { font-weight: 800; font-size: 1.05rem; color: var(--text); text-decoration: none; }
+.nav a.tab { text-decoration: none; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+.nav a.tab.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.nav .spacer { flex: 1; }
+.nav .inv-chip { font-size: 0.75rem; color: var(--sub); }
 </style>
 <link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/simulator/">
 <link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/simulator/">
@@ -168,12 +175,17 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </head>
 <body>
 <div class="wrap">
-<div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;font-size:0.85rem"><a href="../" style="color:var(--accent);text-decoration:none;font-weight:700">Ephinea Tools</a><a href="../" style="color:var(--accent);text-decoration:none">📦 Import data</a><a href="../inventory/" style="color:var(--accent);text-decoration:none">📦 Item List</a><a href="../wishlist/" style="color:var(--accent);text-decoration:none">🎯 Wishlist</a><a href="/simulator/" style="color:var(--accent);text-decoration:none">日本語</a><span id="invChipS" style="margin-left:auto;color:var(--sub);font-size:0.75rem"></span></div><p style="margin-bottom:10px;font-size:0.78rem;color:var(--sub)">How to use: ① pick a class and level → ② set gear, mag and materials → your stats appear in the table above and the Effects panel shows every effect's source and priority. Hover the column headers for what each means.</p>
+<div class="nav">
+  <a class="brand" href="../">Ephinea Tools</a>
+  <a class="tab " href="../">Home / Import</a><a class="tab on" href="../simulator/">Simulator</a><a class="tab " href="../inventory/">Item List</a><a class="tab " href="../wishlist/">Wishlist</a>
+  <a class="tab" href="/simulator/" hreflang="ja">日本語</a><span class="spacer"></span>
+  <span class="inv-chip" id="invChipS"></span>
+  <button class="theme-btn" id="themeToggle">🌙 Dark</button>
+</div><p style="margin-bottom:10px;font-size:0.78rem;color:var(--sub)">How to use: ① pick a class and level → ② set gear, mag and materials → your stats appear in the table above and the Effects panel shows every effect's source and priority. Hover the column headers for what each means.</p>
 <div class="titlebar">
   <h1>PSOBB Ephinea Stat Simulator</h1>
-  <button class="theme-btn" id="themeToggle">🌙 Dark</button>
 </div>
-<p class="meta">Equipment data: <a href="https://wiki.pioneer2.net" target="_blank">wiki.pioneer2.net</a> (Ephinea) / character data: vanilla BB / built: 2026-07-30</p>
+<p class="meta">Equipment data: <a href="https://wiki.pioneer2.net" target="_blank">wiki.pioneer2.net</a> (Ephinea) / character data: vanilla BB / built: 2026-07-31</p>
 
 <div id="stickySentinel"></div>
 <div class="sticky-results" id="stickyResults">
