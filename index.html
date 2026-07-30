@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ephinea Tools — PSOBB ステータスシミュレーター & インベントリ査定</title>
-<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)とインベントリ査定(Price guide準拠)。データはブラウザ内にのみ保存。">
+<title>Ephinea Tools — PSOBB ステータスシミュレーター & アイテム一覧</title>
+<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)と、bank/インベントリのアイテム一覧(検索・フィルタ・PD評価付き)。データはブラウザ内にのみ保存。">
 <style>
 :root {
   --bg: #f5f6f8; --card: #ffffff; --text: #1a1d24; --sub: #667085;
@@ -61,14 +61,14 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 <div class="wrap">
 <div class="nav">
   <a class="brand" href="./">Ephinea Tools</a>
-  <a class="tab on" href="./">ホーム / データ取込み</a><a class="tab " href="./simulator/">シミュレーター</a><a class="tab " href="./inventory/">査定</a>
+  <a class="tab on" href="./">ホーム / データ取込み</a><a class="tab " href="./simulator/">シミュレーター</a><a class="tab " href="./inventory/">アイテム一覧</a>
   <span class="spacer"></span>
   <span class="inv-chip" id="invChip"></span>
   <button class="theme-btn" id="themeToggle">🌙 ダーク</button>
 </div>
 <div class="hero">
   <h1>Ephinea Tools</h1>
-  <p class="note">PSOBB Ephineaサーバー用の非公式ツール集。インベントリデータを取り込むと、シミュレーターに所持品が反映され、査定ツールで資産評価ができます(取込みなしでもシミュレーターは使えます)。</p>
+  <p class="note">PSOBB Ephineaサーバー用の非公式ツール集。インベントリデータを取り込むと、全キャラ・倉庫のアイテムを一覧で把握でき、シミュレーターにも所持品が反映されます(取込みなしでもシミュレーターは使えます)。</p>
 </div>
 
 <div class="panel">
@@ -93,8 +93,8 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
     <p>職業・Lv・マテリアル・マグ・装備からステータスを計算。装備効果・セット効果の内訳と優先関係を一望。素ステのキャップと実効値を分離表示。ビルドのプリセット保存対応。</p>
   </a>
   <a class="toolcard" href="./inventory/">
-    <h3>💰 インベントリ査定</h3>
-    <p>取り込んだ全アイテムを<a href="https://wiki.pioneer2.net/w/Price_guide" target="_blank">Price guide</a>準拠で査定。カテゴリ別・キャラ別の内訳、検索・フィルタ付き一覧。</p>
+    <h3>📦 アイテム一覧</h3>
+    <p>全キャラ・倉庫のアイテムを横断して一覧・検索・フィルタ。カテゴリ別・キャラ別の内訳表示。<a href="https://wiki.pioneer2.net/w/Price_guide" target="_blank">Price guide</a>準拠のPD評価付き。</p>
   </a>
 </div>
 
