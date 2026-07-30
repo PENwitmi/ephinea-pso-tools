@@ -139,6 +139,35 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 });
 
 // ---- インベントリストレージ ----
+// ---- 日本語表示辞書 (内部キーは常に英語名。英語ページでは空オブジェクト) ----
+const JPN = {};
+const JPN_CF = {};
+const jpKey = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+if (JPN.names) Object.entries(JPN.names).forEach(([en, jp]) => { JPN_CF[jpKey(en)] = jp; });
+function jpName(name) {
+  if (!JPN.names || !name) return name;
+  const hit = JPN_CF[jpKey(name)];
+  if (hit) return hit;
+  let m = name.match(/^([A-Za-z]+) LV(\d+) Disk$/i);
+  if (m) {
+    const t = JPN.tech_jp[m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()];
+    if (t) return `${t} Lv${m[2]} ディスク`;
+  }
+  m = name.match(/^(.+) LV(\d+)$/i);
+  if (m) {
+    const b = JPN_CF[jpKey(m[1])];
+    if (b) return `${b} Lv${m[2]}`;
+  }
+  m = name.match(/^(\d+) MESETA$/i);
+  if (m) return `${Number(m[1]).toLocaleString()} メセタ`;
+  return name;
+}
+function jpRaw(raw, name) {
+  const jp = jpName(name);
+  if (jp === name) return raw;
+  return raw.toLowerCase().startsWith(name.toLowerCase()) ? jp + raw.slice(name.length) : jp;
+}
+
 const INV_KEY = 'pso_inventory';
 function loadInventory() {
   try { return JSON.parse(localStorage.getItem(INV_KEY)); } catch (e) { return null; }

@@ -166,6 +166,35 @@ document.getElementById('themeToggle').addEventListener('click', () => {
 });
 
 // ---- インベントリストレージ ----
+// ---- 日本語表示辞書 (内部キーは常に英語名。英語ページでは空オブジェクト) ----
+const JPN = {};
+const JPN_CF = {};
+const jpKey = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+if (JPN.names) Object.entries(JPN.names).forEach(([en, jp]) => { JPN_CF[jpKey(en)] = jp; });
+function jpName(name) {
+  if (!JPN.names || !name) return name;
+  const hit = JPN_CF[jpKey(name)];
+  if (hit) return hit;
+  let m = name.match(/^([A-Za-z]+) LV(\d+) Disk$/i);
+  if (m) {
+    const t = JPN.tech_jp[m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()];
+    if (t) return `${t} Lv${m[2]} ディスク`;
+  }
+  m = name.match(/^(.+) LV(\d+)$/i);
+  if (m) {
+    const b = JPN_CF[jpKey(m[1])];
+    if (b) return `${b} Lv${m[2]}`;
+  }
+  m = name.match(/^(\d+) MESETA$/i);
+  if (m) return `${Number(m[1]).toLocaleString()} メセタ`;
+  return name;
+}
+function jpRaw(raw, name) {
+  const jp = jpName(name);
+  if (jp === name) return raw;
+  return raw.toLowerCase().startsWith(name.toLowerCase()) ? jp + raw.slice(name.length) : jp;
+}
+
 const INV_KEY = 'pso_inventory';
 function loadInventory() {
   try { return JSON.parse(localStorage.getItem(INV_KEY)); } catch (e) { return null; }
@@ -437,6 +466,7 @@ if (!inv || !inv.items || !inv.items.length) {
 } else {
   document.getElementById('app').style.display = '';
   const DATA = valuateAll(inv.items);
+  DATA.forEach(d => { d.disp = jpRaw(d.raw, d.name); });
 
   const fmt = v => v === 0 ? '0' : (v < 0.1 ? v.toFixed(2) : (v < 10 ? String(Math.round(v * 10) / 10) : Math.round(v).toLocaleString()));
   const rangeStr = (lo, hi) => lo === hi ? fmt(lo) : fmt(lo) + '–' + fmt(hi);
@@ -451,7 +481,7 @@ if (!inv || !inv.items || !inv.items.length) {
   document.getElementById('cItems').textContent = DATA.length;
   document.getElementById('cMesetaTotal').textContent = mesetaTotal.toLocaleString();
   document.getElementById('cTopVal').textContent = top.sub_lo === top.sub_hi ? `${fmt(top.sub_hi)} PD` : `${fmt(top.sub_lo)}–${fmt(top.sub_hi)} PD`;
-  document.getElementById('cTopName').textContent = top.raw.slice(0, 40);
+  document.getElementById('cTopName').textContent = top.disp.slice(0, 40);
 
   // ファセット
   const charOrder = k => k === 'Shared bank' ? 999 : parseInt(k.replace('Char ', ''), 10);
@@ -499,12 +529,14 @@ if (!inv || !inv.items || !inv.items.length) {
     const fv = document.getElementById('fval').checked;
     const fz = document.getElementById('fzero').checked;
     const baseF = d =>
-      (!q || d.raw.toLowerCase().includes(q) || (d.note && d.note.toLowerCase().includes(q))) &&
+      (!q || d.raw.toLowerCase().includes(q) || d.disp.toLowerCase().includes(q) ||
+       (d.note && d.note.toLowerCase().includes(q))) &&
       (!fv || d.sub_hi >= 1) && (!fz || d.sub_hi === 0);
     let rows = DATA.filter(d => baseF(d) && (!fc || d.cat === fc) && (!fl || d.who === fl));
     renderGrids(d => baseF(d) && (!fl || d.who === fl), d => baseF(d) && (!fc || d.cat === fc), fc, fl);
     rows.sort((a, b) => {
-      const x = a[sortKey], y = b[sortKey];
+      const k = sortKey === 'raw' ? 'disp' : sortKey;  // アイテム列は表示名でソート
+      const x = a[k], y = b[k];
       return (typeof x === 'string' ? x.localeCompare(y) : x - y) * sortDir;
     });
     const sumLo = rows.reduce((s, r) => s + r.sub_lo, 0), sumHi = rows.reduce((s, r) => s + r.sub_hi, 0);
@@ -513,7 +545,7 @@ if (!inv || !inv.items || !inv.items.length) {
       const big = d.sub_hi >= 20, zero = d.sub_hi < 0.5;
       return `<tr class="${big ? 'hi' : ''} ${zero ? 'zero' : ''}">
         <td>${d.id}</td>
-        <td>${d.raw}${d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
+        <td>${d.disp}${d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
         <td><span class="pill">${d.cat}</span></td>
         <td>${d.loc}</td>
         <td class="num">${d.qty}</td>
