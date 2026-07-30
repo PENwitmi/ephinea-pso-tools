@@ -66,7 +66,18 @@ a { color: var(--accent); }
 .droptbl th { text-align: left; color: var(--sub); font-weight: 600; font-size: 0.7rem; padding: 4px 8px; border-bottom: 1px solid var(--border); }
 .droptbl td { padding: 4px 8px; border-bottom: 1px solid var(--border); }
 .droptbl .rate { font-variant-numeric: tabular-nums; font-weight: 600; }
-.idtag { display: inline-block; padding: 0 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 600; background: var(--accent-soft); color: var(--accent); }
+.idtag { display: inline-block; padding: 0 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 600; background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(0,0,0,0.18); }
+/* Section ID色は公式ドロップチャート準拠 (背景色・文字色とも) */
+.idtag.sid-0 { background: #00A562; color: #FFFFFF; }  /* Viridia */
+.idtag.sid-1 { background: #76FE43; color: #000000; }  /* Greenill */
+.idtag.sid-2 { background: #59F9F9; color: #000000; }  /* Skyly */
+.idtag.sid-3 { background: #4488FF; color: #FFFFFF; }  /* Bluefull */
+.idtag.sid-4 { background: #CC00FF; color: #FFFFFF; }  /* Purplenum */
+.idtag.sid-5 { background: #FF87CB; color: #000000; }  /* Pinkal */
+.idtag.sid-6 { background: #F70F0F; color: #FFFFFF; }  /* Redria */
+.idtag.sid-7 { background: #F7830F; color: #000000; }  /* Oran */
+.idtag.sid-8 { background: #F7F715; color: #000000; }  /* Yellowboze */
+.idtag.sid-9 { background: #FFFFFF; color: #000000; }  /* Whitill */
 .empty { color: var(--sub); font-size: 0.85rem; padding: 30px 0; text-align: center; }
 .warn { color: var(--red); font-size: 0.8rem; }
 h2 { font-size: 1.05rem; margin: 20px 0 8px; }
@@ -298,7 +309,7 @@ function dropsHTML(name) {
     const [di, ep, box, sid, si, rate] = d;
     const src = SRCS[si];
     const srcName = JPN.names ? (src[1] || src[0]) : src[0];  // 日本語ページのみ和名
-    return `<tr><td>${DIFFS_JP[di]}</td><td>EP${ep}</td><td>${box ? '📦 ' : ''}${srcName}</td><td><span class="idtag">${SIDS[sid]}</span></td><td class="rate">1/${rate.toLocaleString()}</td></tr>`;
+    return `<tr><td>${DIFFS_JP[di]}</td><td>EP${ep}</td><td>${box ? '📦 ' : ''}${srcName}</td><td><span class="idtag sid-${sid}">${SIDS[sid]}</span></td><td class="rate">1/${rate.toLocaleString()}</td></tr>`;
   };
   const head = '<table class="droptbl"><tr><th>難易度</th><th>EP</th><th>敵 / 箱</th><th>Section ID</th><th>確率</th></tr>';
   const main = rows.slice(0, 8).map(row).join('');
