@@ -82,15 +82,16 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 
 <div class="panel">
   <h2>1️⃣ Import character data</h2>
-  <p class="note" style="margin-bottom:10px">Just pick the <b>AllItems_with_slot.txt</b> file from the character data e-mailed to you by Ephinea. All characters' inventories, banks and the shared bank are loaded at once. Your data is stored<b>only inside your browser</b> and never sent anywhere.</p>
-  <details style="margin-bottom:10px"><summary>Don't have the data yet? — How to get it (official Ephinea)</summary>
+  <p class="note" style="margin-bottom:10px">Just pick the <b>AllItems_with_slot.txt</b>  and you're set. All characters' inventories, banks and the shared bank are loaded at once. Your data is stored<b>only inside your browser</b> and never sent anywhere.</p>
+  <details style="margin-bottom:10px"><summary>How to get AllItems_with_slot.txt (official data → text export)</summary>
     <ol class="note" style="margin:6px 0 0 1.4em">
       <li>Enter your account name and password on Ephinea's official <a href="https://ephinea.pioneer2.net/download-data/" target="_blank">Download Character Data</a> page</li>
-      <li>The character data archive is sent to your registered e-mail address</li>
-      <li>Extract it — <b>AllItems_with_slot.txt</b> is inside. Drop that file below</li>
+      <li>Your registered e-mail address receives the character data (<b>.psochar / .psobank / .psoclassicbank</b> files). These are binary files and cannot be imported directly</li>
+      <li><a href="https://nanakamado7746.github.io/PSOBBCharacterItemViewer/" target="_blank" rel="noopener">EPHINEA CHARACTER VIEWER</a> (unofficial viewer): open it, load the files you received, and press <b>"Getting as Text File"</b> to download <b>psobb_character_data.zip</b><br>Keep the viewer language set to <b>"English"</b> when exporting (this site matches items by their English names)</li>
+      <li>Unzip it and put the <b>AllItems_with_slot.txt</b> inside into the import box below</li>
     </ol>
   </details>
-  <div class="droparea" id="dropArea">Drop the <b>AllItems_with_slot.txt</b> from your Ephinea e-mail here<br><span style="font-size:0.75rem">Click to choose a file, or drag & drop</span></div>
+  <div class="droparea" id="dropArea">Drop <b>AllItems_with_slot.txt</b> here<br><span style="font-size:0.75rem">Click to choose a file, or drag & drop</span></div>
   <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
   <details><summary>Or paste as text</summary>
     <textarea id="pasteArea" rows="5" placeholder="Saber [0/0/0/0|0], Slot: 4&#10;RED RING [20/85|18/25], Slot: 1&#10;..."></textarea>

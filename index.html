@@ -82,15 +82,16 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 
 <div class="panel">
   <h2>1️⃣ キャラクターデータ取込み</h2>
-  <p class="note" style="margin-bottom:10px">Ephinea公式からメールで届くキャラクターデータの中の <b>AllItems_with_slot.txt</b> を選ぶだけ。全キャラの所持品・個人倉庫・共有倉庫がまとめて読み込まれます。データは<b>あなたのブラウザ内にのみ保存</b>され、外部には一切送信されません。</p>
-  <details style="margin-bottom:10px"><summary>まだデータを持っていない場合 — 入手方法 (Ephinea公式)</summary>
+  <p class="note" style="margin-bottom:10px">キャラクターデータをテキスト化した <b>AllItems_with_slot.txt</b> を選ぶだけ。全キャラの所持品・個人倉庫・共有倉庫がまとめて読み込まれます。データは<b>あなたのブラウザ内にのみ保存</b>され、外部には一切送信されません。</p>
+  <details style="margin-bottom:10px"><summary>AllItems_with_slot.txt の入手方法 (Ephinea公式データ → テキスト化)</summary>
     <ol class="note" style="margin:6px 0 0 1.4em">
       <li>Ephinea公式の <a href="https://ephinea.pioneer2.net/download-data/" target="_blank">Download Character Data</a> ページでアカウント名とパスワードを入力</li>
-      <li>登録メールアドレスにキャラクターデータ(アーカイブ)が届く</li>
-      <li>解凍すると中に <b>AllItems_with_slot.txt</b> が入っています。それを下の取込み欄へ</li>
+      <li>登録メールアドレスにキャラクターデータ(<b>.psochar / .psobank / .psoclassicbank</b> ファイル)が届く。これはバイナリ形式で、そのままでは取込めません</li>
+      <li><a href="https://nanakamado7746.github.io/PSOBBCharacterItemViewer/" target="_blank" rel="noopener">EPHINEA CHARACTER VIEWER</a> (非公式ビューアー) を開き、届いたファイルを読み込む → <b>「Getting as Text File」</b>ボタンで <b>psobb_character_data.zip</b> をダウンロード<br>※言語は<b>「English」のまま</b>書き出してください (本サイトのアイテム照合は英語名基準です。表示は日本語に対応しています)</li>
+      <li>zipを解凍し、中の <b>AllItems_with_slot.txt</b> を下の取込み欄へ</li>
     </ol>
   </details>
-  <div class="droparea" id="dropArea">Ephineaから届いた <b>AllItems_with_slot.txt</b> をここへ<br><span style="font-size:0.75rem">クリックしてファイル選択 / ドラッグ&ドロップ どちらでも</span></div>
+  <div class="droparea" id="dropArea"><b>AllItems_with_slot.txt</b> をここへ<br><span style="font-size:0.75rem">クリックしてファイル選択 / ドラッグ&ドロップ どちらでも</span></div>
   <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
   <details><summary>テキスト貼り付けで取込み</summary>
     <textarea id="pasteArea" rows="5" placeholder="Saber [0/0/0/0|0], Slot: 4&#10;RED RING [20/85|18/25], Slot: 1&#10;..."></textarea>
