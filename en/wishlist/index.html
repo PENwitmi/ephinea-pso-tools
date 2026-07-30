@@ -254,9 +254,14 @@ function ownedInfo(name) {
     return jpKey(n) === key;
   });
   if (!hits.length) return { count: 0 };
+  const chars = (inv || {}).chars || {};
+  const cn = n => chars[n] && chars[n].name ? `(${chars[n].name})` : '';
   const locs = {};
   hits.forEach(i => {
-    const l = i.slot === 'ShareBank' ? 'Shared bank' : (i.slot.endsWith(' Bank') ? `Char ${i.slot.split(' ')[0]} bank` : `Char ${i.slot} inv.`);
+    const l = i.slot.startsWith('ShareBank')
+      ? (i.slot === 'ShareBank' ? 'Shared bank' : 'Shared bank (Classic)')
+      : (i.slot.endsWith(' Bank') ? `Char ${i.slot.split(' ')[0]}${cn(i.slot.split(' ')[0])} bank`
+                                  : `Char ${i.slot}${cn(i.slot)} inv.`);
     locs[l] = (locs[l] || 0) + 1;
   });
   return { count: hits.length, locs };

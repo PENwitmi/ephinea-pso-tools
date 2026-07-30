@@ -425,8 +425,16 @@ function category(it) {
   return 'Weapons (rare)';
 }
 
-const slotLabel = s => s === 'ShareBank' ? 'Shared bank' : (s.endsWith(' Bank') ? `Char ${s.split(' ')[0]} bank` : `Char ${s} inv.`);
-const slotWho = s => s === 'ShareBank' ? 'Shared bank' : `Char ${s.split(' ')[0]}`;
+// バイナリimportedみ時はChar 名が入る (inv.chars = {slot: {name, cls, level, ...}})
+const CHARS = (loadInventory() || {}).chars || {};
+const chName = n => CHARS[n] && CHARS[n].name ? ` ${CHARS[n].name}` : '';
+const slotLabel = s => s === 'ShareBank' ? 'Shared bank'
+  : (s === 'ShareBank(Classic)' ? 'Shared bank (Classic)'
+  : (s.endsWith(' Bank') ? `Char ${s.split(' ')[0]}${chName(s.split(' ')[0])} bank`
+                         : `Char ${s}${chName(s)} inv.`));
+const slotWho = s => s.startsWith('ShareBank')
+  ? (s === 'ShareBank' ? 'Shared bank' : 'Shared bank (Classic)')
+  : `Char ${s.split(' ')[0]}${chName(s.split(' ')[0])}`;
 
 function valuateAll(rawItems) {
   const items = rawItems.map(o => ({ ...o }));
@@ -484,7 +492,7 @@ if (!inv || !inv.items || !inv.items.length) {
   document.getElementById('cTopName').textContent = top.disp.slice(0, 40);
 
   // ファセット
-  const charOrder = k => k === 'Shared bank' ? 999 : parseInt(k.replace('Char ', ''), 10);
+  const charOrder = k => k.startsWith('Shared bank') ? 999 : parseInt(k.replace('Char ', ''), 10);
   const sumBy = (rows, key) => {
     const acc = {};
     rows.forEach(d => { const k = d[key]; (acc[k] = acc[k] || { lo: 0, hi: 0, n: 0 });
