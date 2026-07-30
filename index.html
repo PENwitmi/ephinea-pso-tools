@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ephinea Tools — PSOBB ステータスシミュレーター & インベントリ査定</title>
+<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)とインベントリ査定(Price guide準拠)。データはブラウザ内にのみ保存。">
+<style>
+:root {
+  --bg: #f5f6f8; --card: #ffffff; --text: #1a1d24; --sub: #667085;
+  --border: #e4e7ec; --accent: #4f6af0; --accent-soft: #eef1fe;
+  --gold: #b7791f; --gold-soft: #fdf3e0; --red: #d92d20; --green: #12805c;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #12141a; --card: #1c1f28; --text: #e8eaf0; --sub: #98a2b3;
+    --border: #2c313d; --accent: #7c93f5; --accent-soft: #232a44;
+    --gold: #e0a94f; --gold-soft: #322817; --red: #f97066; --green: #3ccb95; }
+}
+:root[data-theme="dark"] { --bg: #12141a; --card: #1c1f28; --text: #e8eaf0; --sub: #98a2b3;
+  --border: #2c313d; --accent: #7c93f5; --accent-soft: #232a44;
+  --gold: #e0a94f; --gold-soft: #322817; --red: #f97066; --green: #3ccb95; }
+:root[data-theme="light"] { --bg: #f5f6f8; --card: #ffffff; --text: #1a1d24; --sub: #667085;
+  --border: #e4e7ec; --accent: #4f6af0; --accent-soft: #eef1fe;
+  --gold: #b7791f; --gold-soft: #fdf3e0; --red: #d92d20; --green: #12805c; }
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px 14px 80px; }
+.wrap { max-width: 1200px; margin: 0 auto; }
+a { color: var(--accent); }
+.nav { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; font-size: 0.88rem; }
+.nav .brand { font-weight: 800; font-size: 1.05rem; color: var(--text); text-decoration: none; }
+.nav a.tab { text-decoration: none; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+.nav a.tab.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.nav .spacer { flex: 1; }
+.nav .inv-chip { font-size: 0.75rem; color: var(--sub); }
+.theme-btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 99px; padding: 4px 12px; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+.panel h2 { font-size: 1rem; margin-bottom: 10px; }
+.footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
+.footer a { color: var(--sub); }
+.btn { border: 1px solid var(--border); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+.note { font-size: 0.78rem; color: var(--sub); }
+.warn { color: var(--red); }
+.ok { color: var(--green); font-weight: 700; }
+
+.hero { margin-bottom: 18px; }
+.hero h1 { font-size: 1.5rem; margin-bottom: 4px; }
+.cards2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 14px; }
+.toolcard { display: block; text-decoration: none; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; transition: border-color 0.15s; }
+.toolcard:hover { border-color: var(--accent); }
+.toolcard h3 { margin-bottom: 6px; }
+.toolcard p { font-size: 0.82rem; color: var(--sub); }
+.droparea { border: 2px dashed var(--border); border-radius: 12px; padding: 22px; text-align: center; color: var(--sub); font-size: 0.9rem; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.droparea.drag { border-color: var(--accent); background: var(--accent-soft); }
+textarea { width: 100%; font-size: 0.75rem; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-top: 8px; }
+.summary { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+.sumchip { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 4px 12px; font-size: 0.8rem; }
+details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="nav">
+  <a class="brand" href="./">Ephinea Tools</a>
+  <a class="tab on" href="./">ホーム / データ取込み</a><a class="tab " href="./simulator/">シミュレーター</a><a class="tab " href="./inventory/">査定</a>
+  <span class="spacer"></span>
+  <span class="inv-chip" id="invChip"></span>
+  <button class="theme-btn" id="themeToggle">🌙 ダーク</button>
+</div>
+<div class="hero">
+  <h1>Ephinea Tools</h1>
+  <p class="note">PSOBB Ephineaサーバー用の非公式ツール集。インベントリデータを取り込むと、シミュレーターに所持品が反映され、査定ツールで資産評価ができます(取込みなしでもシミュレーターは使えます)。</p>
+</div>
+
+<div class="panel">
+  <h2>📦 インベントリデータ取込み</h2>
+  <p class="note" style="margin-bottom:10px">キャラクターデータ出力の <b>AllItems_with_slot.txt</b>(「アイテム名, Slot: 場所」形式)を取り込みます。データは<b>このブラウザ内にのみ保存</b>され、サーバーには送信されません。</p>
+  <div class="droparea" id="dropArea">クリックしてファイルを選択 / ここにドラッグ&ドロップ<br><span style="font-size:0.75rem">(AllItems_with_slot.txt)</span></div>
+  <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
+  <details><summary>テキスト貼り付けで取込み</summary>
+    <textarea id="pasteArea" rows="5" placeholder="Saber [0/0/0/0|0], Slot: 4&#10;RED RING [20/85|18/25], Slot: 1&#10;..."></textarea>
+    <button class="btn" id="pasteBtn" style="margin-top:6px">取り込む</button>
+  </details>
+  <div id="importResult" style="margin-top:10px"></div>
+  <div class="summary" id="importSummary"></div>
+  <div style="margin-top:10px">
+    <button class="btn" id="clearBtn" style="display:none; background:transparent; color:var(--red); border-color:var(--border)">取込みデータを削除</button>
+  </div>
+</div>
+
+<div class="cards2">
+  <a class="toolcard" href="./simulator/">
+    <h3>⚔️ ステータスシミュレーター</h3>
+    <p>職業・Lv・マテリアル・マグ・装備からステータスを計算。装備効果・セット効果の内訳と優先関係を一望。素ステのキャップと実効値を分離表示。ビルドのプリセット保存対応。</p>
+  </a>
+  <a class="toolcard" href="./inventory/">
+    <h3>💰 インベントリ査定</h3>
+    <p>取り込んだ全アイテムを<a href="https://wiki.pioneer2.net/w/Price_guide" target="_blank">Price guide</a>準拠で査定。カテゴリ別・キャラ別の内訳、検索・フィルタ付き一覧。</p>
+  </a>
+</div>
+
+<div class="footer">
+<p>データ出典: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
+ (装備・相場・テクニック仕様) / キャラクター成長データはバニラPSOBB準拠 /
+ Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">旧ステータスシミュレーター</a></p>
+<p>入力されたインベントリデータはブラウザ内(localStorage)にのみ保存され、サーバーには一切送信されません。</p>
+</div>
+</div>
+<script>
+
+// ---- テーマ ----
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  const b = document.getElementById('themeToggle');
+  if (b) b.textContent = t === 'dark' ? '☀️ ライト' : '🌙 ダーク';
+}
+let __theme = localStorage.getItem('pso_theme')
+  || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+applyTheme(__theme);
+document.getElementById('themeToggle').addEventListener('click', () => {
+  __theme = __theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('pso_theme', __theme);
+  applyTheme(__theme);
+});
+
+// ---- インベントリストレージ ----
+const INV_KEY = 'pso_inventory';
+function loadInventory() {
+  try { return JSON.parse(localStorage.getItem(INV_KEY)); } catch (e) { return null; }
+}
+function updateInvChip() {
+  const inv = loadInventory();
+  const el = document.getElementById('invChip');
+  if (!el) return;
+  el.textContent = inv && inv.items && inv.items.length
+    ? `📦 ${inv.items.length}件 取込済 (${(inv.imported || '').slice(0, 10)})`
+    : '📦 データ未取込';
+}
+updateInvChip();
+
+// ---- インベントリテキストのパーサ (AllItems_with_slot.txt形式) ----
+const PSO_SPECIALS = new Set(['Hell','Chaos','Spirit','Shadow','Panic','Charge','Blizzard','Arrest','Hold',
+  'Berserk',"Demon's",'Havoc','Fill','Dark','Thunder','Dim','Bind',"Devil's",'Draw','Heart','Mind','Soul',
+  'Geist',"King's",'Lord','Master','Gush','Heat','Fire','Flame','Burning','Frost','Freeze','Ice','Seize',
+  'Riot','Storm','Tempest']);
+
+function parseInventoryText(text) {
+  const items = [];
+  text.split(/\r?\n/).forEach(ln => {
+    const m = ln.match(/^(.*?), Slot: (.+)$/);
+    if (!m) return;
+    const it = { raw: m[1].trim(), slot: m[2].trim(), name: null, grind: 0,
+                 special: null, stats: null, hit: null, qty: 1, extra: [] };
+    let s = it.raw;
+    let mm = s.match(/ x(\d+)$/);
+    if (mm) { it.qty = +mm[1]; s = s.slice(0, mm.index); }
+    mm = s.match(/\[(-?\d+)\/(-?\d+)\/(-?\d+)\/(-?\d+)\|(-?\d+)\]/);
+    if (mm) { it.stats = [+mm[1], +mm[2], +mm[3], +mm[4]]; it.hit = +mm[5]; s = s.replace(mm[0], ''); }
+    mm = s.match(/ \+(\d+)/);
+    if (mm) { it.grind = +mm[1]; s = s.replace(mm[0], ''); }
+    for (const br of [...s.matchAll(/\[([^\]]*)\]/g)].map(x => x[1])) {
+      if (PSO_SPECIALS.has(br) && it.special === null) it.special = br;
+      else it.extra.push(br);
+      s = s.replace('[' + br + ']', '');
+    }
+    it.name = s.replace(/\s+/g, ' ').trim();
+    if (it.name) { it.id = items.length + 1; items.push(it); }
+  });
+  return items;
+}
+
+
+// ---- 取込みUI ----
+const drop = document.getElementById('dropArea');
+const fileInput = document.getElementById('fileInput');
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) importFile(f);
+});
+fileInput.addEventListener('change', e => { if (e.target.files[0]) importFile(e.target.files[0]); e.target.value = ''; });
+document.getElementById('pasteBtn').addEventListener('click', () => {
+  doImport(document.getElementById('pasteArea').value, '貼り付け');
+});
+document.getElementById('clearBtn').addEventListener('click', () => {
+  localStorage.removeItem(INV_KEY);
+  showStatus();
+  document.getElementById('importResult').innerHTML = '<span class="note">取込みデータを削除しました</span>';
+});
+
+function importFile(f) {
+  const reader = new FileReader();
+  reader.onload = () => doImport(reader.result, f.name);
+  reader.readAsText(f);
+}
+
+function doImport(text, source) {
+  const items = parseInventoryText(text);
+  const res = document.getElementById('importResult');
+  if (!items.length) {
+    res.innerHTML = '<span class="warn">取込み失敗: 「アイテム名, Slot: 場所」形式の行が見つかりません</span>';
+    return;
+  }
+  localStorage.setItem(INV_KEY, JSON.stringify({
+    imported: new Date().toISOString(), source, items,
+  }));
+  res.innerHTML = `<span class="ok">✓ ${items.length}件を取り込みました</span> <span class="note">(${source})</span>`;
+  showStatus();
+}
+
+function showStatus() {
+  updateInvChip();
+  const inv = loadInventory();
+  const sum = document.getElementById('importSummary');
+  const clearBtn = document.getElementById('clearBtn');
+  if (!inv || !inv.items || !inv.items.length) {
+    sum.innerHTML = '';
+    clearBtn.style.display = 'none';
+    return;
+  }
+  const bySlot = {};
+  inv.items.forEach(i => {
+    const who = i.slot === 'ShareBank' ? '共有倉庫' : 'キャラ' + i.slot.split(' ')[0];
+    bySlot[who] = (bySlot[who] || 0) + 1;
+  });
+  const order = k => k === '共有倉庫' ? 999 : parseInt(k.replace('キャラ', ''), 10);
+  sum.innerHTML = `<span class="sumchip"><b>${inv.items.length}</b>件</span>` +
+    Object.entries(bySlot).sort((a, b) => order(a[0]) - order(b[0]))
+      .map(([k, v]) => `<span class="sumchip">${k} ${v}</span>`).join('') +
+    `<span class="sumchip note">${(inv.imported || '').slice(0, 16).replace('T', ' ')} 取込</span>`;
+  clearBtn.style.display = '';
+}
+showStatus();
+</script>
+</body>
+</html>
