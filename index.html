@@ -68,20 +68,24 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 </div>
 <div class="hero">
   <h1>Ephinea Tools</h1>
-  <p class="note">PSOBB Ephineaサーバー用の非公式ツール集。インベントリデータを取り込むと、全キャラ・倉庫のアイテムを一覧で把握でき、シミュレーターにも所持品が反映されます(取込みなしでもシミュレーターは使えます)。</p>
+  <p style="margin:2px 0 6px; font-size:0.95rem">PSO Blue Burst (Ephineaサーバー) の<b>「どのキャラのどの倉庫に何があるか分からない問題」</b>と<b>「この装備、結局どんな効果?問題」</b>を解決する非公式ツールです。</p>
+  <div class="note" style="line-height:1.9">
+    <b>1️⃣ キャラクターデータを取り込む</b>(1分・任意) → <b>2️⃣ アイテム一覧</b>で全キャラ・全倉庫を横断検索 → <b>3️⃣ シミュレーター</b>で「家にある装備」からビルドを組む<br>
+    取込みなしでも、シミュレーターは全装備データ入りでそのまま使えます。
+  </div>
 </div>
 
 <div class="panel">
-  <h2>📦 インベントリデータ取込み</h2>
-  <p class="note" style="margin-bottom:10px">キャラクターデータ出力の <b>AllItems_with_slot.txt</b>(「アイテム名, Slot: 場所」形式)を取り込みます。データは<b>このブラウザ内にのみ保存</b>され、サーバーには送信されません。</p>
-  <details style="margin-bottom:10px"><summary>データの入手方法 (Ephinea公式)</summary>
+  <h2>1️⃣ キャラクターデータ取込み</h2>
+  <p class="note" style="margin-bottom:10px">Ephinea公式からメールで届くキャラクターデータの中の <b>AllItems_with_slot.txt</b> を選ぶだけ。全キャラの所持品・個人倉庫・共有倉庫がまとめて読み込まれます。データは<b>あなたのブラウザ内にのみ保存</b>され、外部には一切送信されません。</p>
+  <details style="margin-bottom:10px"><summary>まだデータを持っていない場合 — 入手方法 (Ephinea公式)</summary>
     <ol class="note" style="margin:6px 0 0 1.4em">
       <li>Ephinea公式の <a href="https://ephinea.pioneer2.net/download-data/" target="_blank">Download Character Data</a> ページでアカウント名とパスワードを入力</li>
       <li>登録メールアドレスにキャラクターデータ(アーカイブ)が届く</li>
-      <li>解凍して中の <b>AllItems_with_slot.txt</b> を下の取込み欄へ(全キャラのインベントリ+倉庫+共有倉庫が1ファイルにまとまっているもの)</li>
+      <li>解凍すると中に <b>AllItems_with_slot.txt</b> が入っています。それを下の取込み欄へ</li>
     </ol>
   </details>
-  <div class="droparea" id="dropArea">クリックしてファイルを選択 / ここにドラッグ&ドロップ<br><span style="font-size:0.75rem">(AllItems_with_slot.txt)</span></div>
+  <div class="droparea" id="dropArea">Ephineaから届いた <b>AllItems_with_slot.txt</b> をここへ<br><span style="font-size:0.75rem">クリックしてファイル選択 / ドラッグ&ドロップ どちらでも</span></div>
   <input type="file" id="fileInput" accept=".txt,text/plain" hidden>
   <details><summary>テキスト貼り付けで取込み</summary>
     <textarea id="pasteArea" rows="5" placeholder="Saber [0/0/0/0|0], Slot: 4&#10;RED RING [20/85|18/25], Slot: 1&#10;..."></textarea>
@@ -95,13 +99,13 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 </div>
 
 <div class="cards2">
-  <a class="toolcard" href="./simulator/">
-    <h3>⚔️ ステータスシミュレーター</h3>
-    <p>職業・Lv・マテリアル・マグ・装備からステータスを計算。装備効果・セット効果の内訳と優先関係を一望。素ステのキャップと実効値を分離表示。ビルドのプリセット保存対応。</p>
-  </a>
   <a class="toolcard" href="./inventory/">
-    <h3>📦 アイテム一覧</h3>
-    <p>全キャラ・倉庫のアイテムを横断して一覧・検索・フィルタ。カテゴリ別・キャラ別の内訳表示。<a href="https://wiki.pioneer2.net/w/Price_guide" target="_blank">Price guide</a>準拠のPD評価付き。</p>
+    <h3>2️⃣ 📦 アイテム一覧</h3>
+    <p>「あのレア武器どのキャラの倉庫だっけ?」を解決。全キャラの所持品・個人倉庫・共有倉庫をまとめて検索・絞り込み。ついでに相場(Price guide準拠のPD評価)の目安も分かります。</p>
+  </a>
+  <a class="toolcard" href="./simulator/">
+    <h3>3️⃣ ⚔️ ステータスシミュレーター</h3>
+    <p>職業・レベル・マグ・マテリアル・装備を選ぶと、ステータスと装備効果が一目で分かります。「この効果はどの装備から出ているのか」「攻撃速度はどれが優先されるのか」「Thirteenのセット効果は何と組めば発動するのか」まで表示。データを取り込むと所持品に🔖が付き、持っている装備だけでビルドを検討できます。</p>
   </a>
 </div>
 

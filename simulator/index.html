@@ -163,7 +163,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </head>
 <body>
 <div class="wrap">
-<div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;font-size:0.85rem"><a href="../" style="color:var(--accent);text-decoration:none;font-weight:700">Ephinea Tools</a><a href="../" style="color:var(--accent);text-decoration:none">📦 データ取込み</a><a href="../inventory/" style="color:var(--accent);text-decoration:none">📦 アイテム一覧</a><span id="invChipS" style="margin-left:auto;color:var(--sub);font-size:0.75rem"></span></div>
+<div style="display:flex;gap:12px;align-items:center;margin-bottom:6px;font-size:0.85rem"><a href="../" style="color:var(--accent);text-decoration:none;font-weight:700">Ephinea Tools</a><a href="../" style="color:var(--accent);text-decoration:none">📦 データ取込み</a><a href="../inventory/" style="color:var(--accent);text-decoration:none">📦 アイテム一覧</a><span id="invChipS" style="margin-left:auto;color:var(--sub);font-size:0.75rem"></span></div><p style="margin-bottom:10px;font-size:0.78rem;color:var(--sub)">使い方: ① 職業とレベルを選ぶ → ② 装備・マグ・マテリアルを設定 → 上の表にステータス、右の「効果一望パネル」に装備効果の内訳と優先関係が表示されます。各列の意味は見出しにマウスを乗せると確認できます。</p>
 <div class="titlebar">
   <h1>PSOBB Ephinea ステータスシミュレーター</h1>
   <button class="theme-btn" id="themeToggle">🌙 ダーク</button>
@@ -176,9 +176,17 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <div class="tblwrap">
     <table class="stats" id="statTable">
       <thead><tr>
-        <th></th><th>ベース</th><th>マテ</th><th>マグ</th><th>ユニット</th><th>効果</th>
-        <th>素ステ</th><th>限界値</th><th>差</th>
-        <th class="sep">装備</th><th>実効値</th>
+        <th></th>
+        <th title="レベルに応じた職業の基本値">ベース</th>
+        <th title="使用したマテリアル分 (1個=+2)">マテ</th>
+        <th title="マグの育成値分 (DEF×1 / POW×2 / DEX→ATA×0.5 / MIND×2)">マグ</th>
+        <th title="装備中ユニットのステータス分">ユニット</th>
+        <th title="ユニット由来の特殊効果分 (V101・Adept等)。限界値の対象">効果</th>
+        <th title="ベース+マテ+マグ+ユニット+効果の合計。職業の限界値を超えた分は無駄になる">素ステ</th>
+        <th title="この職業がその素ステで到達できる上限">限界値</th>
+        <th title="素ステ − 限界値。0✓=ぴったり理論値 / 赤+N=盛りすぎで無駄 / -N=あとN足りない">差</th>
+        <th class="sep" title="武器ATP・防具DFP/EVP・セット効果分。限界値の対象外で上限なし">装備</th>
+        <th title="限界値で頭打ちした素ステ + 装備分 = 実際に発揮される値">実効値</th>
       </tr></thead>
       <tbody></tbody>
     </table>
