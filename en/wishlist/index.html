@@ -115,6 +115,22 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
 .footer a { color: var(--sub); }
 
+/* Section ID の色。公式ドロップチャート準拠(背景色・文字色とも)。
+   色は変数で持ち、タグ・カードの識別帯など複数の見せ方で使い回す */
+.sid-0 { --sid: #00A562; --sid-fg: #FFFFFF; }  /* Viridia */
+.sid-1 { --sid: #76FE43; --sid-fg: #000000; }  /* Greenill */
+.sid-2 { --sid: #59F9F9; --sid-fg: #000000; }  /* Skyly */
+.sid-3 { --sid: #4488FF; --sid-fg: #FFFFFF; }  /* Bluefull */
+.sid-4 { --sid: #CC00FF; --sid-fg: #FFFFFF; }  /* Purplenum */
+.sid-5 { --sid: #FF87CB; --sid-fg: #000000; }  /* Pinkal */
+.sid-6 { --sid: #F70F0F; --sid-fg: #FFFFFF; }  /* Redria */
+.sid-7 { --sid: #F7830F; --sid-fg: #000000; }  /* Oran */
+.sid-8 { --sid: #F7F715; --sid-fg: #000000; }  /* Yellowboze */
+.sid-9 { --sid: #FFFFFF; --sid-fg: #000000; }  /* Whitill */
+.idtag { display: inline-block; padding: 0 8px; border-radius: 99px; font-size: 0.7rem;
+         font-weight: 600; background: var(--sid, var(--accent-soft));
+         color: var(--sid-fg, var(--accent)); border: 1px solid rgba(0,0,0,0.18); }
+
 .addrow { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 12px 0 18px; }
 .addrow input { flex: 1; min-width: 240px; background: var(--card); color: var(--text); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font-size: 0.95rem; }
 .wcard { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 0; margin-bottom: 14px; }
@@ -142,18 +158,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .droptbl th { text-align: left; background: var(--accent-soft); color: var(--text); font-weight: 600; font-size: 0.7rem; padding: 4px 8px; border-bottom: 1px solid var(--border); }
 .droptbl td { padding: 4px 8px; border-bottom: 1px solid var(--border); }
 .droptbl .rate { font-variant-numeric: tabular-nums; font-weight: 600; }
-.idtag { display: inline-block; padding: 0 8px; border-radius: 99px; font-size: 0.7rem; font-weight: 600; background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(0,0,0,0.18); }
-/* Section ID色は公式ドロップチャート準拠 (背景色・文字色とも) */
-.idtag.sid-0 { background: #00A562; color: #FFFFFF; }  /* Viridia */
-.idtag.sid-1 { background: #76FE43; color: #000000; }  /* Greenill */
-.idtag.sid-2 { background: #59F9F9; color: #000000; }  /* Skyly */
-.idtag.sid-3 { background: #4488FF; color: #FFFFFF; }  /* Bluefull */
-.idtag.sid-4 { background: #CC00FF; color: #FFFFFF; }  /* Purplenum */
-.idtag.sid-5 { background: #FF87CB; color: #000000; }  /* Pinkal */
-.idtag.sid-6 { background: #F70F0F; color: #FFFFFF; }  /* Redria */
-.idtag.sid-7 { background: #F7830F; color: #000000; }  /* Oran */
-.idtag.sid-8 { background: #F7F715; color: #000000; }  /* Yellowboze */
-.idtag.sid-9 { background: #FFFFFF; color: #000000; }  /* Whitill */
+/* .idtag(Section IDタグ)の定義は tools/theme.css に集約 */
 .empty { color: var(--sub); font-size: 0.85rem; padding: 30px 0; text-align: center; }
 .warn { color: var(--red); font-size: 0.8rem; }
 details.moredrops summary { cursor: pointer; color: var(--accent); font-size: 0.78rem; margin-top: 4px; }
@@ -172,7 +177,7 @@ details.moredrops summary { cursor: pointer; color: var(--accent); font-size: 0.
 <div class="wrap">
 <nav class="nav" aria-label="Site menu">
   <a class="brand" href="../">Ephinea Tools</a>
-  <a class="tab " href="../">Home / Import</a><a class="tab " href="../simulator/">Simulator</a><a class="tab " href="../inventory/">Item List</a><a class="tab on" href="../wishlist/">Wishlist</a>
+  <a class="tab " href="../">Home / Import</a><a class="tab " href="../characters/">Character</a><a class="tab " href="../simulator/">Simulator</a><a class="tab " href="../inventory/">Item List</a><a class="tab on" href="../wishlist/">Wishlist</a>
   <a class="tab" href="/wishlist/" hreflang="ja">日本語</a><span class="spacer"></span>
   <span class="inv-chip" id="invChip"></span>
   <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">🌙 Dark</button>
@@ -211,11 +216,16 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   applyTheme(__theme);
 });
 
+// ---- HTMLエスケープ (複数ページで使う) ----
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
 // ---- インベントリストレージ ----
 // ---- 日本語表示辞書 (内部キーは常に英語名。英語ページでは空オブジェクト) ----
 const JPN = {};
 const JPN_CF = {};
-const jpKey = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+// 記号のゆれ(引用符・コロン・ハイフン)を吸収して辞書を引く。
+// ただし「+」はアイテム名の一部(マザーガーブ+)なので落とさない
+const jpKey = s => s.toLowerCase().replace(/[^a-z0-9+]+/g, '');
 if (JPN.names) Object.entries(JPN.names).forEach(([en, jp]) => { JPN_CF[jpKey(en)] = jp; });
 function jpName(name) {
   if (!JPN.names || !name) return name;
@@ -422,7 +432,6 @@ function ownedInfo(name) {
 }
 
 // ---- 相場表示 ----
-function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 // "40-60" のような数値レンジのときだけ PD 単位を付ける ("Inestimable"や"See ..."はそのまま)
 function pd(v) { return /^[\d.,\s–~-]+$/.test(v) ? `${esc(v)} PD` : esc(v); }
 function priceHTML(name) {

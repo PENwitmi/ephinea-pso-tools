@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ephinea Tools — PSOBB Stat Simulator & Item List</title>
-<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスSimulator(装備効果・セット効果の可視化)、Item List(全Char ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)。データはブラウザ内にのみ保存。">
+<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。StatsSimulator(装備効果・セット効果の可視化)、Item List(全Char ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)。データはブラウザ内にのみ保存。">
 <style>/* Ephinea Tools 共通テーマ (単一ソース)
    全4ページ+Simulatorのローカル版に埋め込まれる。
    パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
@@ -116,6 +116,22 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
 .footer a { color: var(--sub); }
 
+/* Section ID の色。公式ドロップチャート準拠(背景色・文字色とも)。
+   色は変数で持ち、タグ・カードの識別帯など複数の見せ方で使い回す */
+.sid-0 { --sid: #00A562; --sid-fg: #FFFFFF; }  /* Viridia */
+.sid-1 { --sid: #76FE43; --sid-fg: #000000; }  /* Greenill */
+.sid-2 { --sid: #59F9F9; --sid-fg: #000000; }  /* Skyly */
+.sid-3 { --sid: #4488FF; --sid-fg: #FFFFFF; }  /* Bluefull */
+.sid-4 { --sid: #CC00FF; --sid-fg: #FFFFFF; }  /* Purplenum */
+.sid-5 { --sid: #FF87CB; --sid-fg: #000000; }  /* Pinkal */
+.sid-6 { --sid: #F70F0F; --sid-fg: #FFFFFF; }  /* Redria */
+.sid-7 { --sid: #F7830F; --sid-fg: #000000; }  /* Oran */
+.sid-8 { --sid: #F7F715; --sid-fg: #000000; }  /* Yellowboze */
+.sid-9 { --sid: #FFFFFF; --sid-fg: #000000; }  /* Whitill */
+.idtag { display: inline-block; padding: 0 8px; border-radius: 99px; font-size: 0.7rem;
+         font-weight: 600; background: var(--sid, var(--accent-soft));
+         color: var(--sid-fg, var(--accent)); border: 1px solid rgba(0,0,0,0.18); }
+
 .hero { margin-bottom: 18px; padding: 18px 20px; border: 1px solid var(--border); border-radius: 14px; background: linear-gradient(135deg, var(--accent-soft), var(--card) 55%); }
 .hero h1 { font-size: 1.5rem; margin-bottom: 4px; }
 .cards2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 14px; }
@@ -143,7 +159,7 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 <div class="wrap">
 <nav class="nav" aria-label="Site menu">
   <a class="brand" href="./">Ephinea Tools</a>
-  <a class="tab on" href="./">Home / Import</a><a class="tab " href="./simulator/">Simulator</a><a class="tab " href="./inventory/">Item List</a><a class="tab " href="./wishlist/">Wishlist</a>
+  <a class="tab on" href="./">Home / Import</a><a class="tab " href="./characters/">Character</a><a class="tab " href="./simulator/">Simulator</a><a class="tab " href="./inventory/">Item List</a><a class="tab " href="./wishlist/">Wishlist</a>
   <a class="tab" href="/" hreflang="ja">日本語</a><span class="spacer"></span>
   <span class="inv-chip" id="invChip"></span>
   <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">🌙 Dark</button>
@@ -221,11 +237,16 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   applyTheme(__theme);
 });
 
+// ---- HTMLエスケープ (複数ページで使う) ----
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
 // ---- インベントリストレージ ----
 // ---- 日本語表示辞書 (内部キーは常に英語名。英語ページでは空オブジェクト) ----
 const JPN = {};
 const JPN_CF = {};
-const jpKey = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+// 記号のゆれ(引用符・コロン・ハイフン)を吸収して辞書を引く。
+// ただし「+」はアイテム名の一部(マザーガーブ+)なので落とさない
+const jpKey = s => s.toLowerCase().replace(/[^a-z0-9+]+/g, '');
 if (JPN.names) Object.entries(JPN.names).forEach(([en, jp]) => { JPN_CF[jpKey(en)] = jp; });
 function jpName(name) {
   if (!JPN.names || !name) return name;
@@ -375,6 +396,41 @@ function psoDecodeItem(d) {
   return `${name}${label}`;
 }
 
+function psoEquipped(data) {
+  // Equippedフラグは **ItemData の直前4B**。インベントリ1件は
+  // present(2) + unknown(2) + flags(4) + ItemData(20) の28Bで、flags の 0x8 がEquipped。
+  // 実データ8Char で「武器1, frames 1, barriers ≤1・Unit≤4・Mag≤1」になることを確認済み。
+  // アイテム名は既存の item_codes をそのまま使う(psoDecodeItem は表示用の装飾が付くので使わない)
+  const IC = PSO.item_codes;
+  const eq = { weapon: null, wGrind: 0, frame: null, fDfp: 0, fEvp: 0,
+               barrier: null, bDfp: 0, bEvp: 0, units: [], mag: null };
+  for (let i = 20; i < 860; i += 28) {
+    const d = data.slice(i, i + 28);
+    if (d.length < 20 || psoIsBlank(d)) continue;
+    const flags = data[i - 4] | data[i - 3] << 8 | data[i - 2] << 16 | data[i - 1] << 24;
+    if (!(flags & 0x8)) continue;
+    const code = d[0] << 16 | d[1] << 8 | d[2];
+    if (code <= 0x00ED00) {                                   // 武器
+      if (IC[code]) { eq.weapon = IC[code]; eq.wGrind = d[3]; }
+      else if (PSO.srank_weapon_codes[code & 0xFFF0] !== undefined) {
+        // S-RANK武器はSimulatorの装備DBに無いので、表示だけ行い連携には渡さない
+        eq.srank = 'S-RANK ' + PSO.srank_weapon_codes[code & 0xFFF0];
+      }
+    } else if (code >= 0x010100 && code <= 0x010158) {         // Frame
+      if (IC[code]) { eq.frame = IC[code]; eq.fDfp = d[6]; eq.fEvp = d[8]; }
+    } else if (code >= 0x010200 && code <= 0x0102B4) {         // Barrier
+      if (IC[code]) { eq.barrier = IC[code]; eq.bDfp = d[6]; eq.bEvp = d[8]; }
+    } else if (code >= 0x010300 && code <= 0x010364) {         // Unit(最大4)
+      if (IC[code] && eq.units.length < 4) eq.units.push(IC[code]);
+    } else if (code >= 0x020000 && code <= 0x025200) {         // Mag
+      const st = [4, 6, 8, 10].map(o => (d[o + 1] << 8 | d[o]) / 100);
+      eq.mag = { name: IC[code & 0xFFFF00] || null, level: d[2],
+                 def: st[0], pow: st[1], dex: st[2], mind: st[3] };
+    }
+  }
+  return eq;
+}
+
 function psoParseItems(data, start, end, stride, slot, lines) {
   for (let i = start; i < end; i += stride) {
     const d = data.slice(i, i + stride);
@@ -396,8 +452,15 @@ function psoCharMeta(data, slot) {
     name += String.fromCharCode(c);
   }
   if (name.startsWith('\t')) name = name.slice(2);  // "\tE"/"\tJ" 言語タグ
+  // 素のStats。ファイルには「クラス別の基礎値(min)を引いた成長分」が入っているので、
+  // 表示値にするには min を足し戻す(実測: Lv1Char 5人×6項目がwikiのベース値と完全一致)
+  const u16 = o => data[o] | data[o + 1] << 8;
   return { slot, name, cls: PSO.classes[data[937]] || '?',
-           sectionId: PSO.section_ids[data[936]] || '?', level: data[876] + 1 };
+           sectionId: PSO.section_ids[data[936]] || '?', level: data[876] + 1,
+           exp: data[880] | data[881] << 8 | data[882] << 16 | data[883] << 24,
+           raw: { atp: u16(852), mst: u16(854), evp: u16(856),
+                  dfp: u16(860), ata: u16(862), lck: u16(864) },
+           eq: psoEquipped(data) };
 }
 
 function psoParseBinaryFiles(fileList) {

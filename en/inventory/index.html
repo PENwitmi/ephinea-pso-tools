@@ -115,6 +115,22 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
 .footer a { color: var(--sub); }
 
+/* Section ID の色。公式ドロップチャート準拠(背景色・文字色とも)。
+   色は変数で持ち、タグ・カードの識別帯など複数の見せ方で使い回す */
+.sid-0 { --sid: #00A562; --sid-fg: #FFFFFF; }  /* Viridia */
+.sid-1 { --sid: #76FE43; --sid-fg: #000000; }  /* Greenill */
+.sid-2 { --sid: #59F9F9; --sid-fg: #000000; }  /* Skyly */
+.sid-3 { --sid: #4488FF; --sid-fg: #FFFFFF; }  /* Bluefull */
+.sid-4 { --sid: #CC00FF; --sid-fg: #FFFFFF; }  /* Purplenum */
+.sid-5 { --sid: #FF87CB; --sid-fg: #000000; }  /* Pinkal */
+.sid-6 { --sid: #F70F0F; --sid-fg: #FFFFFF; }  /* Redria */
+.sid-7 { --sid: #F7830F; --sid-fg: #000000; }  /* Oran */
+.sid-8 { --sid: #F7F715; --sid-fg: #000000; }  /* Yellowboze */
+.sid-9 { --sid: #FFFFFF; --sid-fg: #000000; }  /* Whitill */
+.idtag { display: inline-block; padding: 0 8px; border-radius: 99px; font-size: 0.7rem;
+         font-weight: 600; background: var(--sid, var(--accent-soft));
+         color: var(--sid-fg, var(--accent)); border: 1px solid rgba(0,0,0,0.18); }
+
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
 .card .label { font-size: 0.72rem; color: var(--sub); letter-spacing: 0.03em; }
@@ -171,7 +187,7 @@ tr.zero td { color: var(--sub); }
 <div class="wrap">
 <nav class="nav" aria-label="Site menu">
   <a class="brand" href="../">Ephinea Tools</a>
-  <a class="tab " href="../">Home / Import</a><a class="tab " href="../simulator/">Simulator</a><a class="tab on" href="../inventory/">Item List</a><a class="tab " href="../wishlist/">Wishlist</a>
+  <a class="tab " href="../">Home / Import</a><a class="tab " href="../characters/">Character</a><a class="tab " href="../simulator/">Simulator</a><a class="tab on" href="../inventory/">Item List</a><a class="tab " href="../wishlist/">Wishlist</a>
   <a class="tab" href="/inventory/" hreflang="ja">日本語</a><span class="spacer"></span>
   <span class="inv-chip" id="invChip"></span>
   <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">🌙 Dark</button>
@@ -259,11 +275,16 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   applyTheme(__theme);
 });
 
+// ---- HTMLエスケープ (複数ページで使う) ----
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
 // ---- インベントリストレージ ----
 // ---- 日本語表示辞書 (内部キーは常に英語名。英語ページでは空オブジェクト) ----
 const JPN = {};
 const JPN_CF = {};
-const jpKey = s => s.toLowerCase().replace(/[^a-z0-9]+/g, '');
+// 記号のゆれ(引用符・コロン・ハイフン)を吸収して辞書を引く。
+// ただし「+」はアイテム名の一部(マザーガーブ+)なので落とさない
+const jpKey = s => s.toLowerCase().replace(/[^a-z0-9+]+/g, '');
 if (JPN.names) Object.entries(JPN.names).forEach(([en, jp]) => { JPN_CF[jpKey(en)] = jp; });
 function jpName(name) {
   if (!JPN.names || !name) return name;
@@ -550,7 +571,7 @@ function category(it) {
   if (COMMON_ARMORS.includes(n) || norm(n) in FRAMES_T) return 'Frame';
   if (norm(n) in BARRIERS_T) return 'Barrier';
   if (CONSUMABLES.includes(n) || ['Scape Doll', 'Monogrinder', 'Digrinder', 'Trigrinder', 'AddSlot'].includes(n)) return 'Consumable';
-  if (n.includes('Material')) return 'Material';
+  if (n.includes('Material')) return 'Materials';
   if (OV.items[n] && (OV.items[n].note || '').includes('クエスト納品')) return 'Enemy part';
   if (["Rappy's Beak", 'Tablet'].includes(n)) return 'Enemy part';
   if (n.toLowerCase().startsWith('disk vol')) return 'Music disk';
@@ -744,6 +765,15 @@ if (!inv || !inv.items || !inv.items.length) {
     render();
   });
   ['q', 'fcat', 'floc', 'fval', 'fzero'].forEach(id => document.getElementById(id).addEventListener('input', render));
+
+  // Characterページから ?slot=N で来たら、そのChar で絞り込んだ状態で開く。
+  // floc の値は slotWho() が作る「Char {番号}({名前})」形式なので前方一致で拾う
+  const __slot = new URLSearchParams(location.search).get('slot');
+  if (__slot) {
+    const sel = document.getElementById('floc');
+    const hit = [...sel.options].find(o => o.value.startsWith(`Char ${__slot}`));
+    if (hit) { sel.value = hit.value; render(); }
+  }
   render();
 }
 </script>
