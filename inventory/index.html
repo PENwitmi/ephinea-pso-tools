@@ -90,6 +90,11 @@ h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; b
 .toolcard, .catrow, .wcard, .card { transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s; }
 .toolcard:hover, .catrow:hover, .wcard:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(11, 127, 194, 0.12); transform: translateY(-1px); }
 
+/* フォーカスリング (キーボード操作時の共通表現) */
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+
 /* 汎用テキスト */
 .note { font-size: 0.78rem; color: var(--sub); }
 .warn { color: var(--red); }
@@ -107,13 +112,16 @@ h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; b
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
 .controls input[type=search], .controls select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 0.85rem; }
 .controls input[type=search] { flex: 1 1 200px; min-width: 160px; }
-.controls label.chk { font-size: 0.8rem; color: var(--sub); display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.controls label.chk { font-size: 0.8rem; color: var(--sub); display: flex; align-items: center; gap: 4px; cursor: pointer; border: 1px solid var(--border); border-radius: 99px; padding: 4px 12px; background: var(--card); }
+.controls label.chk:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .count { font-size: 0.78rem; color: var(--sub); margin-left: auto; }
 .tblwrap { overflow-x: auto; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
 table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 760px; }
 th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
 th { position: sticky; top: 0; background: var(--accent-soft); font-size: 0.72rem; color: var(--text); cursor: pointer; user-select: none; z-index: 1; }
 th .arrow { opacity: 0.5; font-size: 0.65rem; }
+th.sorted { color: var(--accent); }
+tbody tr:hover td { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 td .notetxt { display: block; white-space: normal; font-size: 0.72rem; color: var(--sub); }
 tr.hi td:first-child { border-left: 3px solid var(--gold); }
@@ -121,12 +129,17 @@ tr.zero { opacity: 0.55; }
 .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 0.7rem; background: var(--accent-soft); color: var(--accent); }
 .pdval { font-weight: 600; }
 .pdval.big { color: var(--gold); }
-.catgrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 8px; }
-.catrow { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; display: flex; justify-content: space-between; font-size: 0.82rem; cursor: pointer; user-select: none; transition: border-color 0.15s, background 0.15s; }
+.breakdowns { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: start; }
+@media (max-width: 900px) { .breakdowns { grid-template-columns: 1fr; } }
+.catgrid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+.catrow { position: relative; overflow: hidden; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 7px 12px; display: flex; justify-content: space-between; gap: 8px; font-size: 0.82rem; cursor: pointer; user-select: none; }
+.catrow .bar { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-soft); pointer-events: none; }
+.catrow > span { position: relative; z-index: 1; }
 .catrow:hover { border-color: var(--accent); }
-.catrow.active { background: var(--accent-soft); border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.catrow.active { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); font-weight: 600; }
+.catrow.active .c-name::before { content: "✓ "; color: var(--accent); }
 .catrow.nohit { opacity: 0.45; }
-.catrow .c-val { font-variant-numeric: tabular-nums; color: var(--sub); }
+.catrow .c-val { font-variant-numeric: tabular-nums; color: var(--sub); white-space: nowrap; }
 .footnote { margin-top: 24px; font-size: 0.75rem; color: var(--sub); }
 .footnote li { margin-left: 1.2em; margin-top: 4px; }
 .empty { text-align: center; padding: 60px 20px; color: var(--sub); }
@@ -164,11 +177,17 @@ tr.zero { opacity: 0.55; }
   <div class="card"><div class="label">最高額アイテム</div><div class="val" id="cTopVal">-</div><div class="sub" id="cTopName"></div></div>
 </div>
 
+<div class="breakdowns">
+<div>
 <h2 class="sec">カテゴリ別内訳 <span style="font-size:0.72rem;font-weight:400;color:var(--sub)">クリックで絞り込み</span></h2>
 <div class="catgrid" id="catgrid"></div>
 
+</div>
+<div>
 <h2 class="sec">キャラ別内訳 <span style="font-size:0.72rem;font-weight:400;color:var(--sub)">クリックで絞り込み</span></h2>
 <div class="catgrid" id="chargrid"></div>
+</div>
+</div>
 
 <h2 class="sec">全アイテム一覧</h2>
 <div class="controls">
@@ -177,6 +196,7 @@ tr.zero { opacity: 0.55; }
   <select id="floc"><option value="">キャラ: 全て</option></select>
   <label class="chk"><input type="checkbox" id="fval"> 1PD以上のみ</label>
   <label class="chk"><input type="checkbox" id="fzero"> 0PDのみ</label>
+  <button class="reset" id="clearFilters" style="display:none">絞り込み解除 ✕</button>
   <span class="count" id="count"></span>
 </div>
 <div class="tblwrap">
@@ -564,11 +584,16 @@ if (!inv || !inv.items || !inv.items.length) {
   function renderGrids(passExceptCat, passExceptChar, fc, fl) {
     const catAcc = sumBy(DATA.filter(passExceptCat), 'cat');
     const charAcc = sumBy(DATA.filter(passExceptChar), 'who');
-    const gridHTML = (order, acc, active) => order.map(c => {
-      const v = acc[c] || { lo: 0, hi: 0, n: 0 };
-      const cls = ['catrow', c === active ? 'active' : '', v.n === 0 ? 'nohit' : ''].join(' ');
-      return `<div class="${cls}" data-val="${c}"><span>${c} <span style="color:var(--sub)">(${v.n})</span></span><span class="c-val">${rangeStr(v.lo, v.hi)} PD</span></div>`;
-    }).join('');
+    const gridHTML = (order, acc, active) => {
+      // 評価額の横バーで資産の偏りを可視化 (グリッド内の最大値を軸にする)
+      const maxHi = Math.max(1, ...order.map(c => (acc[c] || { hi: 0 }).hi));
+      return order.map(c => {
+        const v = acc[c] || { lo: 0, hi: 0, n: 0 };
+        const cls = ['catrow', c === active ? 'active' : '', v.n === 0 ? 'nohit' : ''].join(' ');
+        const w = Math.round(v.hi / maxHi * 100);
+        return `<div class="${cls}" data-val="${c}"><span class="bar" style="width:${w}%"></span><span class="c-name">${c} <span style="color:var(--sub)">(${v.n})</span></span><span class="c-val">${rangeStr(v.lo, v.hi)} PD</span></div>`;
+      }).join('');
+    };
     document.getElementById('catgrid').innerHTML = gridHTML(CAT_ORDER, catAcc, fc);
     document.getElementById('chargrid').innerHTML = gridHTML(CHAR_ORDER, charAcc, fl);
   }
@@ -606,6 +631,8 @@ if (!inv || !inv.items || !inv.items.length) {
       const x = a[k], y = b[k];
       return (typeof x === 'string' ? x.localeCompare(y) : x - y) * sortDir;
     });
+    const filtered = !!(fc || fl || fv || fz);
+    document.getElementById('clearFilters').style.display = filtered ? '' : 'none';
     const sumLo = rows.reduce((s, r) => s + r.sub_lo, 0), sumHi = rows.reduce((s, r) => s + r.sub_hi, 0);
     document.getElementById('count').textContent = `${rows.length}件 / 小計 ${rangeStr(sumLo, sumHi)} PD`;
     document.querySelector('#tbl tbody').innerHTML = rows.map(d => {
@@ -623,12 +650,20 @@ if (!inv || !inv.items || !inv.items.length) {
   document.querySelectorAll('#tbl th').forEach(th => th.addEventListener('click', () => {
     const k = th.dataset.k;
     if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = ['raw', 'cat', 'loc'].includes(k) ? 1 : -1; }
-    document.querySelectorAll('#tbl th .arrow').forEach(a => a.textContent = '');
+    document.querySelectorAll('#tbl th').forEach(t => { t.classList.remove('sorted'); t.querySelector('.arrow').textContent = ''; });
+    th.classList.add('sorted');
     th.querySelector('.arrow').textContent = sortDir === -1 ? '▼' : '▲';
     render();
   }));
   document.getElementById('fval').addEventListener('input', e => { if (e.target.checked) document.getElementById('fzero').checked = false; });
   document.getElementById('fzero').addEventListener('input', e => { if (e.target.checked) document.getElementById('fval').checked = false; });
+  document.getElementById('clearFilters').addEventListener('click', () => {
+    document.getElementById('fcat').value = '';
+    document.getElementById('floc').value = '';
+    document.getElementById('fval').checked = false;
+    document.getElementById('fzero').checked = false;
+    render();
+  });
   ['q', 'fcat', 'floc', 'fval', 'fzero'].forEach(id => document.getElementById(id).addEventListener('input', render));
   render();
 }

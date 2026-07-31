@@ -91,6 +91,11 @@ h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; b
 .toolcard, .catrow, .wcard, .card { transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s; }
 .toolcard:hover, .catrow:hover, .wcard:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(11, 127, 194, 0.12); transform: translateY(-1px); }
 
+/* フォーカスリング (キーボード操作時の共通表現) */
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+
 /* 汎用テキスト */
 .note { font-size: 0.78rem; color: var(--sub); }
 .warn { color: var(--red); }
