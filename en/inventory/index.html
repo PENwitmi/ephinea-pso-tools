@@ -142,15 +142,18 @@ tr.zero td { color: var(--sub); }
 .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 0.7rem; background: var(--accent-soft); color: var(--accent); }
 .pdval { font-weight: 600; }
 .pdval.big { color: var(--gold); }
-.breakdowns { display: grid; grid-template-columns: 1fr 1fr; gap: 0 18px; align-items: start; }
+.breakdowns { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 18px; align-items: start; margin-top: 18px; }
+.breakdowns .panel { margin-bottom: 0; padding: 12px 14px 8px; }
 @media (max-width: 900px) { .breakdowns { grid-template-columns: 1fr; } }
-.catgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(185px, 1fr)); gap: 6px; }
-.catrow { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 7px 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 8px; font-size: 0.8rem; cursor: pointer; user-select: none; }
-.catrow:hover { border-color: var(--accent); }
-.catrow.active { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); font-weight: 600; }
+.catgrid { display: block; }
+.catrow { display: grid; grid-template-columns: 1fr 3.2em 8.5em; gap: 8px; align-items: baseline; padding: 5px 8px; font-size: 0.82rem; border-bottom: 1px solid var(--border); border-radius: 6px; cursor: pointer; user-select: none; transition: background 0.12s; transform: none !important; }
+.catrow:last-child { border-bottom: none; }
+.catrow:hover { background: color-mix(in srgb, var(--accent-soft) 50%, transparent); box-shadow: none; }
+.catrow.active { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); font-weight: 600; }
 .catrow.active .c-name::before { content: "✓ "; color: var(--accent); }
-.catrow.nohit { color: var(--sub); border-style: dashed; }
-.catrow .c-val { font-variant-numeric: tabular-nums; color: var(--sub); white-space: nowrap; }
+.catrow.nohit { color: var(--sub); }
+.catrow .c-n { text-align: right; font-variant-numeric: tabular-nums; color: var(--sub); font-size: 0.75rem; }
+.catrow .c-val { text-align: right; font-variant-numeric: tabular-nums; color: var(--sub); white-space: nowrap; }
 .footnote { margin-top: 24px; font-size: 0.75rem; color: var(--sub); }
 .footnote li { margin-left: 1.2em; margin-top: 4px; }
 .empty { text-align: center; padding: 60px 20px; color: var(--sub); }
@@ -190,13 +193,12 @@ tr.zero td { color: var(--sub); }
 </div>
 
 <div class="breakdowns">
-<div>
-<h2 class="sec">By category <span style="font-size:0.72rem;font-weight:400;color:var(--sub)">click to filter</span></h2>
+<div class="panel">
+<h2>By category <span class="note" style="font-weight:400">click to filter</span><span class="grow"></span><span class="note" id="catHeadTotal"></span></h2>
 <div class="catgrid" id="catgrid"></div>
-
 </div>
-<div>
-<h2 class="sec">By character <span style="font-size:0.72rem;font-weight:400;color:var(--sub)">click to filter</span></h2>
+<div class="panel">
+<h2>By character <span class="note" style="font-weight:400">click to filter</span><span class="grow"></span><span class="note" id="charHeadTotal"></span></h2>
 <div class="catgrid" id="chargrid"></div>
 </div>
 </div>
@@ -580,6 +582,8 @@ if (!inv || !inv.items || !inv.items.length) {
   document.getElementById('cMeseta').textContent = `≈ ${(totalLo * rate[0] / 1e8).toFixed(1)}–${(totalHi * rate[1] / 1e8).toFixed(1)}00M meseta`;
   document.getElementById('cItems').textContent = DATA.length;
   document.getElementById('cMesetaTotal').textContent = mesetaTotal.toLocaleString();
+  document.getElementById('catHeadTotal').textContent = `Total ${rangeStr(totalLo, totalHi)} PD`;
+  document.getElementById('charHeadTotal').textContent = `${inv.items.length} items total`;
   document.getElementById('cTopVal').textContent = top.sub_lo === top.sub_hi ? `${fmt(top.sub_hi)} PD` : `${fmt(top.sub_lo)}–${fmt(top.sub_hi)} PD`;
   document.getElementById('cTopName').textContent = top.disp.slice(0, 40);
 
@@ -600,7 +604,7 @@ if (!inv || !inv.items || !inv.items.length) {
     const gridHTML = (order, acc, active) => order.map(c => {
       const v = acc[c] || { lo: 0, hi: 0, n: 0 };
       const cls = ['catrow', c === active ? 'active' : '', v.n === 0 ? 'nohit' : ''].join(' ');
-      return `<div class="${cls}" data-val="${c}" role="button" tabindex="0" aria-pressed="${c === active}"><span class="c-name">${c} <span style="color:var(--sub)">(${v.n})</span></span><span class="c-val">${rangeStr(v.lo, v.hi)} PD</span></div>`;
+      return `<div class="${cls}" data-val="${c}" role="button" tabindex="0" aria-pressed="${c === active}"><span class="c-name">${c}</span><span class="c-n">${v.n}</span><span class="c-val">${rangeStr(v.lo, v.hi)} PD</span></div>`;
     }).join('');
     document.getElementById('catgrid').innerHTML = gridHTML(CAT_ORDER, catAcc, fc);
     document.getElementById('chargrid').innerHTML = gridHTML(CHAR_ORDER, charAcc, fl);
