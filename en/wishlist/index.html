@@ -299,6 +299,50 @@ function perKillJP(s) {
   const m = String(s).match(/^(\S+) per (\S+)$/);
   return m ? `${Number(m[2]).toLocaleString()} kills per ${m[1]} PD` : esc(s);
 }
+// 相場表の "See ...(X)" を参照先価格に解決 (Item List側 resolveSee と同じ規則)
+function resolveSeeWL(cell, hit) {
+  if (typeof cell !== 'string' || !cell.startsWith('See')) return null;
+  const tokens = [...cell.matchAll(/\(([^()]+)\)/g)].map(m => m[1]);
+  if (!tokens.length) return null;
+  const nk = s2 => jpKey(s2);
+  let lo = 0, hi = 0;
+  const parts = [];
+  const parse = v => {
+    const t2 = String(v).replace(/,/g, '');
+    let m = t2.match(/^(\d*\.?\d+)\s*-\s*(\d*\.?\d+)\+?$/);
+    if (m) return [parseFloat(m[1]), parseFloat(m[2])];
+    m = t2.match(/^(\d*\.?\d+)\+?$/);
+    if (m) return [parseFloat(m[1]), parseFloat(m[1])];
+    return null;
+  };
+  for (const t of tokens) {
+    const rk = Object.keys(PRICES.rare).find(x => nk(x) === nk(t));
+    const fk = Object.keys(PRICES.flat).find(x => nk(x) === nk(t));
+    if (rk) {
+      const tbl = PRICES.rare[rk].hit || {};
+      let best = null, used = null;
+      Object.keys(tbl).map(Number).sort((a, b) => a - b).forEach(c => {
+        if (c > (hit || 0)) return;
+        const pr = parse(tbl[String(c)]);
+        if (pr) { best = pr; used = c; }
+      });
+      if (!best) return null;
+      lo += best[0]; hi += best[1];
+      parts.push(`${jpName(rk)} hit${used}%`);
+    } else if (fk) {
+      const pr = parse(PRICES.flat[fk]);
+      if (!pr) return null;
+      lo += pr[0]; hi += pr[1];
+      parts.push(jpName(fk));
+    } else if (cell.toLowerCase().includes('commons')) {
+      parts.push(`${t}系コモン素体`);
+    } else {
+      return null;
+    }
+  }
+  return [Math.round(lo * 100) / 100, Math.round(hi * 100) / 100, parts.join(' + ')];
+}
+
 function svcHTML(sname) {
   const u = (SVC.unsealing || {})[sname];
   const inst = (SVC.instant_unsealing || {})[sname];
@@ -386,10 +430,22 @@ function priceHTML(name) {
   const findK = obj => Object.keys(obj).find(k => jpKey(k) === key);
   let k = findK(PRICES.rare);
   if (k) {
-    const chips = Object.entries(PRICES.rare[k].hit || {})
-      .filter(([h, v]) => v && v !== 'N/A' && v !== '-')
+    const table = PRICES.rare[k].hit || {};
+    // "See ..."(他アイテムを見よ)のセルは価格が書かれていないので、そのままは出さない
+    const chips = Object.entries(table)
+      .filter(([h, v]) => v && v !== 'N/A' && v !== '-' && !String(v).startsWith('See'))
       .map(([h, v]) => `<span class="pchip">hit${h}%: <b>${pd(v)}</b></span>`).join('');
     if (chips) return `<div class="pricechips">${chips}</div>`;
+    // 価格セルが See 参照しかない場合(合成品など)は参照先を解決した目安を出す
+    const seeCell = Object.values(table).find(v => String(v).startsWith('See'));
+    if (seeCell) {
+      const solved = [0, 30, 50].map(h => [h, resolveSeeWL(seeCell, h)]).filter(([h, r]) => r);
+      if (solved.length) {
+        const cs = solved.map(([h, r]) =>
+          `<span class="pchip">hit${h}%: <b>${r[0] === r[1] ? r[0] : r[0] + '-' + r[1]} PD</b></span>`).join('');
+        return `<div class="pricechips">${cs} <span class="sub">(相場表の指定により ${esc(solved[0][1][2])} から算出)</span></div>`;
+      }
+    }
   }
   for (const sec of ['frames', 'barriers']) {
     k = findK(PRICES[sec]);
