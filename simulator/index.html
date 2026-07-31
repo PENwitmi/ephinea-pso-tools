@@ -11,16 +11,16 @@
    ダークはフォトン寄りの濃紺トーン。chip系はゲーム準拠の意味色。 */
 
 :root {
-  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
-  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
   --photon: #31c7e8;
-  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
-  --strike: #9aa8b8;
-  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
-  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
-  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
-  --chip-set: #feecec; --chip-set-t: #d92d20;
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
@@ -44,16 +44,16 @@
   --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
   --chip-unit: #241a3d; --chip-unit-t: #b18aff;
   --chip-set: #391b1b; --chip-set-t: #f97066; }
-:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
-  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
   --photon: #31c7e8;
-  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
-  --strike: #9aa8b8;
-  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
-  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
-  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
-  --chip-set: #feecec; --chip-set-t: #d92d20; }
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a; }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px 14px 80px; }
@@ -94,6 +94,19 @@ h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; b
 /* フォーカスリング (キーボード操作時の共通表現) */
 input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 1px;
+}
+
+
+/* 導入文の器 (h1直下の説明ブロック) */
+.lead { border-left: 3px solid var(--accent); border-image: linear-gradient(180deg, var(--accent), var(--photon)) 1; padding: 2px 0 2px 12px; margin: 4px 0 16px; color: var(--sub); font-size: 0.85rem; }
+.lead p + p { margin-top: 4px; }
+
+/* スクリーンリーダー専用テキスト */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* モーション低減設定の尊重 */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 
 /* 汎用テキスト */
@@ -224,17 +237,18 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </head>
 <body>
 <div class="wrap">
-<div class="nav">
+<nav class="nav" aria-label="サイト内メニュー">
   <a class="brand" href="../">Ephinea Tools</a>
   <a class="tab " href="../">ホーム / データ取込み</a><a class="tab on" href="../simulator/">シミュレーター</a><a class="tab " href="../inventory/">アイテム一覧</a><a class="tab " href="../wishlist/">欲しいもの</a>
   <a class="tab" href="/en/simulator/" hreflang="en">English</a><span class="spacer"></span>
   <span class="inv-chip" id="invChipS"></span>
-  <button class="theme-btn" id="themeToggle">🌙 ダーク</button>
-</div>
+  <button class="theme-btn" id="themeToggle" aria-label="配色テーマ切替">🌙 ダーク</button>
+</nav>
+<main>
 <div class="titlebar">
   <h1 class="page">⚔️ ステータスシミュレーター</h1>
 </div>
-<p class="note" style="margin-bottom:12px">使い方: ① 職業とレベルを選ぶ → ② 装備・マグ・マテリアルを設定 → 上の表にステータス、「効果一望パネル」に装備効果の内訳と優先関係が表示されます。各列の意味は見出しにマウスを乗せると確認できます。</p>
+<p class="lead">使い方: ① 職業とレベルを選ぶ → ② 装備・マグ・マテリアルを設定 → 上の表にステータス、「効果一望パネル」に装備効果の内訳と優先関係が表示されます。各列の意味は見出しにマウスを乗せると確認できます。</p>
 
 <div id="stickySentinel"></div>
 <div class="sticky-results" id="stickyResults">
@@ -242,22 +256,22 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <div class="tblwrap">
     <table class="stats" id="statTable">
       <thead><tr class="grp">
-        <th></th>
-        <th colspan="5">素ステの内訳</th>
-        <th colspan="3">上限との比較</th>
-        <th colspan="2">装備・実効</th>
+        <th><span class="sr-only">ステータス</span></th>
+        <th colspan="5" scope="colgroup">素ステの内訳</th>
+        <th colspan="3" scope="colgroup">上限との比較</th>
+        <th colspan="2" scope="colgroup">装備・実効</th>
       </tr><tr>
-        <th></th>
-        <th title="レベルに応じた職業の基本値">ベース</th>
-        <th title="使用したマテリアル分 (1個=+2)">マテ</th>
-        <th title="マグの育成値分 (DEF×1 / POW×2 / DEX→ATA×0.5 / MIND×2)">マグ</th>
-        <th title="装備中ユニットの合計 (表記ステータス+V101・Adept等のユニット単体効果)。限界値の対象">ユニット</th>
-        <th title="例外扱いの強化分。MST・LCKは装備で上げても限界値を超えられないため、装備の分もこの列に集めて限界値と比べます">効果</th>
-        <th title="ベース+マテ+マグ+ユニット+効果の合計。限界値を超えた分はステータスに反映されません">素ステ</th>
-        <th title="この職業がその素ステで到達できる上限">限界値</th>
-        <th title="素ステ − 限界値。0✓=限界値ちょうど / +N=限界値を超過(超過分は反映されない) / -N=限界値まであとN">差</th>
-        <th class="sep" title="武器ATP・防具DFP/EVP・セット効果分。限界値の対象外で上限なし">装備</th>
-        <th title="限界値で頭打ちした素ステ + 装備分 = 実際に発揮される値">実効値</th>
+        <th scope="col"><span class="sr-only">ステータス</span></th>
+        <th scope="col" title="レベルに応じた職業の基本値">ベース</th>
+        <th scope="col" title="使用したマテリアル分 (1個=+2)">マテ</th>
+        <th scope="col" title="マグの育成値分 (DEF×1 / POW×2 / DEX→ATA×0.5 / MIND×2)">マグ</th>
+        <th scope="col" title="装備中ユニットの合計 (表記ステータス+V101・Adept等のユニット単体効果)。限界値の対象">ユニット</th>
+        <th scope="col" title="例外扱いの強化分。MST・LCKは装備で上げても限界値を超えられないため、装備の分もこの列に集めて限界値と比べます">効果</th>
+        <th scope="col" title="ベース+マテ+マグ+ユニット+効果の合計。限界値を超えた分はステータスに反映されません">素ステ</th>
+        <th scope="col" title="この職業がその素ステで到達できる上限">限界値</th>
+        <th scope="col" title="素ステ − 限界値。0✓=限界値ちょうど / +N=限界値を超過(超過分は反映されない) / -N=限界値まであとN">差</th>
+        <th scope="col" class="sep" title="武器ATP・防具DFP/EVP・セット効果分。限界値の対象外で上限なし">装備</th>
+        <th scope="col" title="限界値で頭打ちした素ステ + 装備分 = 実際に発揮される値">実効値</th>
       </tr></thead>
       <tbody></tbody>
     </table>
@@ -273,7 +287,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
   <div class="panel">
     <h2>プリセット</h2>
     <div class="row">
-      <input type="text" id="presetName" placeholder="ビルド名" style="flex:1;min-width:0">
+      <input type="text" id="presetName" aria-label="ビルド名" placeholder="ビルド名" style="flex:1;min-width:0">
       <button class="btn" id="presetSave" style="padding:4px 12px; font-size:0.78rem">保存</button>
     </div>
     <div id="presetList" class="preset-list"></div>
@@ -283,23 +297,23 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
       <input type="file" id="presetImportFile" accept=".json,application/json" hidden>
     </div>
     <details class="copies"><summary>テキスト貼り付けで読み込み</summary>
-      <textarea id="presetPaste" rows="3" style="width:100%; margin-top:4px; font-size:0.72rem; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:6px" placeholder="書き出したJSONを貼り付け"></textarea>
+      <textarea id="presetPaste" rows="3" aria-label="書き出したJSONを貼り付け" style="width:100%; margin-top:4px; font-size:0.72rem; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:6px" placeholder="書き出したJSONを貼り付け"></textarea>
       <button class="btn" id="presetPasteBtn" style="margin-top:4px; padding:4px 12px; font-size:0.78rem">取り込む</button>
     </details>
-    <div class="varstat" id="presetNote"></div>
+    <div class="varstat" id="presetNote" aria-live="polite"></div>
   </div>
 
   <div class="panel">
     <h2>キャラクター</h2>
-    <div class="row"><label>職業</label>
+    <div class="row"><label for="cls">職業</label>
       <select id="cls" class="slot-select"><option value="">-</option></select></div>
-    <div class="row"><label>レベル</label>
+    <div class="row"><label for="lv">レベル</label>
       <input type="number" id="lv" min="1" max="200" value="200">
-      <input type="range" id="lvR" min="1" max="200" value="200"></div>
-    <div class="row"><label>wiki推奨</label>
+      <input type="range" id="lvR" min="1" max="200" value="200" aria-label="レベル (スライダー)"></div>
+    <div class="row"><label for="wikiPlan">wiki推奨</label>
       <select id="wikiPlan" class="slot-select"><option value="">プランを選んで反映…</option></select></div>
     <div class="row varstat" style="line-height:1.5">公式wikiの育成プラン(マグ・マテリアル・ユニット・バリア)をそのまま反映できます。詳細は <a id="clsGuideLink" href="#" target="_blank" rel="noopener">職業別ガイド</a> 参照</div>
-    <div class="row varstat" id="wikiPlanNote" style="line-height:1.6"></div>
+    <div class="row varstat" id="wikiPlanNote" style="line-height:1.6" aria-live="polite"></div>
   </div>
 
   <div class="panel">
@@ -309,27 +323,27 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
       <label class="own-toggle"><input type="checkbox" id="allEquip"> 効果なし装備も表示</label>
     </div>
     <div class="row varstat" id="equipFilterNote" style="margin-top:-2px"></div>
-    <div class="row"><label>武器</label><select id="weapon" class="slot-select"><option value="">-</option></select></div>
+    <div class="row"><label for="weapon">武器</label><select id="weapon" class="slot-select"><option value="">-</option></select></div>
     <div id="weaponOpts" style="display:none">
-      <div class="vrow"><span class="vlabel">ATP</span><input type="range" id="wAtpR" min="0" max="0" value="0"><b id="wAtpV">0</b></div>
-      <div class="vrow"><span class="vlabel">研磨</span><input type="number" id="wGrind" min="0" max="0" value="0"><b></b></div>
+      <div class="vrow"><span class="vlabel">ATP</span><input type="range" id="wAtpR" min="0" max="0" value="0" aria-label="武器ATP個体値"><b id="wAtpV">0</b></div>
+      <div class="vrow"><span class="vlabel">研磨</span><input type="number" id="wGrind" min="0" max="0" value="0" aria-label="研磨値"><b></b></div>
     </div>
-    <div class="row"><label>フレーム</label><select id="frame" class="slot-select"><option value="">-</option></select></div>
+    <div class="row"><label for="frame">フレーム</label><select id="frame" class="slot-select"><option value="">-</option></select></div>
     <div id="frameOpts" style="display:none">
-      <div class="vrow"><span class="vlabel">DFP</span><input type="range" id="fDfpR" min="0" max="0" value="0"><b id="fDfpV">0</b></div>
-      <div class="vrow"><span class="vlabel">EVP</span><input type="range" id="fEvpR" min="0" max="0" value="0"><b id="fEvpV">0</b></div>
+      <div class="vrow"><span class="vlabel">DFP</span><input type="range" id="fDfpR" min="0" max="0" value="0" aria-label="フレームDFP個体値"><b id="fDfpV">0</b></div>
+      <div class="vrow"><span class="vlabel">EVP</span><input type="range" id="fEvpR" min="0" max="0" value="0" aria-label="フレームEVP個体値"><b id="fEvpV">0</b></div>
     </div>
-    <div class="row"><label>バリア</label><select id="barrier" class="slot-select"><option value="">-</option></select></div>
+    <div class="row"><label for="barrier">バリア</label><select id="barrier" class="slot-select"><option value="">-</option></select></div>
     <div id="barrierOpts" style="display:none">
-      <div class="vrow"><span class="vlabel">DFP</span><input type="range" id="bDfpR" min="0" max="0" value="0"><b id="bDfpV">0</b></div>
-      <div class="vrow"><span class="vlabel">EVP</span><input type="range" id="bEvpR" min="0" max="0" value="0"><b id="bEvpV">0</b></div>
+      <div class="vrow"><span class="vlabel">DFP</span><input type="range" id="bDfpR" min="0" max="0" value="0" aria-label="バリアDFP個体値"><b id="bDfpV">0</b></div>
+      <div class="vrow"><span class="vlabel">EVP</span><input type="range" id="bEvpR" min="0" max="0" value="0" aria-label="バリアEVP個体値"><b id="bEvpV">0</b></div>
     </div>
-    <div class="row"><label>ユニット1</label><select id="unit1" class="slot-select unitsel"><option value="">-</option></select></div>
-    <div class="row"><label>ユニット2</label><select id="unit2" class="slot-select unitsel"><option value="">-</option></select></div>
-    <div class="row"><label>ユニット3</label><select id="unit3" class="slot-select unitsel"><option value="">-</option></select></div>
-    <div class="row"><label>ユニット4</label><select id="unit4" class="slot-select unitsel"><option value="">-</option></select></div>
+    <div class="row"><label for="unit1">ユニット1</label><select id="unit1" class="slot-select unitsel"><option value="">-</option></select></div>
+    <div class="row"><label for="unit2">ユニット2</label><select id="unit2" class="slot-select unitsel"><option value="">-</option></select></div>
+    <div class="row"><label for="unit3">ユニット3</label><select id="unit3" class="slot-select unitsel"><option value="">-</option></select></div>
+    <div class="row"><label for="unit4">ユニット4</label><select id="unit4" class="slot-select unitsel"><option value="">-</option></select></div>
     <!--SITEONLY--><div class="row" style="margin-top:6px"><button class="btn" id="addWishBtn" style="padding:5px 12px; font-size:0.78rem">🎯 未所持の装備を欲しいものリストへ</button></div>
-    <div class="row varstat" id="addWishNote" style="line-height:1.5"></div><!--/SITEONLY-->
+    <div class="row varstat" id="addWishNote" style="line-height:1.5" aria-live="polite"></div><!--/SITEONLY-->
     <div class="row varstat" id="equipWarn"></div>
   </div>
 
@@ -337,20 +351,20 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <h2>育成 (マグ・マテリアル)</h2>
     <div class="subh">マグ <span>LV <b id="magLV">5</b>/200 <span class="warn" id="magWarn"></span> <button class="reset" data-reset="mag">Reset</button></span></div>
     <div class="matgrid">
-      <div class="mrow"><label>DEF <span class="mcap">×1</span></label><input type="number" id="magDef" min="0" max="200" value="5"></div>
-      <div class="mrow"><label>POW <span class="mcap">×2</span></label><input type="number" id="magPow" min="0" max="200" value="0"></div>
-      <div class="mrow"><label>DEX <span class="mcap">×0.5</span></label><input type="number" id="magDex" min="0" max="200" value="0"></div>
-      <div class="mrow"><label>MIND <span class="mcap">×2</span></label><input type="number" id="magMind" min="0" max="200" value="0"></div>
+      <div class="mrow"><label for="magDef">DEF <span class="mcap">×1</span></label><input type="number" id="magDef" min="0" max="200" value="5"></div>
+      <div class="mrow"><label for="magPow">POW <span class="mcap">×2</span></label><input type="number" id="magPow" min="0" max="200" value="0"></div>
+      <div class="mrow"><label for="magDex">DEX <span class="mcap">×0.5</span></label><input type="number" id="magDex" min="0" max="200" value="0"></div>
+      <div class="mrow"><label for="magMind">MIND <span class="mcap">×2</span></label><input type="number" id="magMind" min="0" max="200" value="0"></div>
     </div>
     <div class="subh">マテリアル <span>合計 <b id="matTotal">0</b>/<span id="matCap">-</span> <span class="warn" id="matWarn"></span> <button class="reset" data-reset="mat">Reset</button></span></div>
     <div class="matgrid">
-      <div class="mrow"><label>HP <span class="mcap" id="matHPmax"></span></label><input type="number" id="matHP" min="0" max="125" value="0"></div>
-      <div class="mrow"><label>TP <span class="mcap" id="matTPmax"></span></label><input type="number" id="matTP" min="0" max="125" value="0"></div>
-      <div class="mrow"><label>パワー</label><input type="number" id="matPow" min="0" max="250" value="0"></div>
-      <div class="mrow"><label>ディフェ</label><input type="number" id="matDef" min="0" max="250" value="0"></div>
-      <div class="mrow"><label>マインド</label><input type="number" id="matMind" min="0" max="250" value="0"></div>
-      <div class="mrow"><label>イベード</label><input type="number" id="matEva" min="0" max="250" value="0"></div>
-      <div class="mrow"><label>ラック</label><input type="number" id="matLck" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matHP">HP <span class="mcap" id="matHPmax"></span></label><input type="number" id="matHP" min="0" max="125" value="0"></div>
+      <div class="mrow"><label for="matTP">TP <span class="mcap" id="matTPmax"></span></label><input type="number" id="matTP" min="0" max="125" value="0"></div>
+      <div class="mrow"><label for="matPow">パワー</label><input type="number" id="matPow" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matDef">ディフェ</label><input type="number" id="matDef" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matMind">マインド</label><input type="number" id="matMind" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matEva">イベード</label><input type="number" id="matEva" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matLck">ラック</label><input type="number" id="matLck" min="0" max="250" value="0"></div>
     </div>
   </div>
 
@@ -388,12 +402,13 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </ul>
 <p class="note" style="margin-top:10px">装備データ: <a href="https://wiki.pioneer2.net" target="_blank">wiki.pioneer2.net</a> (Ephinea) / キャラクター成長データ: バニラPSOBB準拠 / データ生成: 2026-07-31</p>
 </div>
-<div class="footer">
+</main>
+<footer class="footer">
 <p>データ出典: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
  (装備・相場・テクニック仕様) / キャラクター成長データはバニラPSOBB準拠 /
  Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">旧ステータスシミュレーター</a></p>
 <p>入力されたインベントリデータはブラウザ内(localStorage)にのみ保存され、サーバーには一切送信されません。</p>
-</div>
+</footer>
 </div>
 
 <script>

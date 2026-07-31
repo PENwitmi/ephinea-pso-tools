@@ -11,16 +11,16 @@
    ダークはフォトン寄りの濃紺トーン。chip系はゲーム準拠の意味色。 */
 
 :root {
-  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
-  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
   --photon: #31c7e8;
-  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
-  --strike: #9aa8b8;
-  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
-  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
-  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
-  --chip-set: #feecec; --chip-set-t: #d92d20;
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
@@ -44,16 +44,16 @@
   --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
   --chip-unit: #241a3d; --chip-unit-t: #b18aff;
   --chip-set: #391b1b; --chip-set-t: #f97066; }
-:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
-  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
   --photon: #31c7e8;
-  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
-  --strike: #9aa8b8;
-  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
-  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
-  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
-  --chip-set: #feecec; --chip-set-t: #d92d20; }
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a; }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px 14px 80px; }
@@ -94,6 +94,19 @@ h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; b
 /* フォーカスリング (キーボード操作時の共通表現) */
 input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
   outline: 2px solid var(--accent); outline-offset: 1px;
+}
+
+
+/* 導入文の器 (h1直下の説明ブロック) */
+.lead { border-left: 3px solid var(--accent); border-image: linear-gradient(180deg, var(--accent), var(--photon)) 1; padding: 2px 0 2px 12px; margin: 4px 0 16px; color: var(--sub); font-size: 0.85rem; }
+.lead p + p { margin-top: 4px; }
+
+/* スクリーンリーダー専用テキスト */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* モーション低減設定の尊重 */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 
 /* 汎用テキスト */
@@ -224,17 +237,18 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </head>
 <body>
 <div class="wrap">
-<div class="nav">
+<nav class="nav" aria-label="Site menu">
   <a class="brand" href="../">Ephinea Tools</a>
   <a class="tab " href="../">Home / Import</a><a class="tab on" href="../simulator/">Simulator</a><a class="tab " href="../inventory/">Item List</a><a class="tab " href="../wishlist/">Wishlist</a>
   <a class="tab" href="/simulator/" hreflang="ja">日本語</a><span class="spacer"></span>
   <span class="inv-chip" id="invChipS"></span>
-  <button class="theme-btn" id="themeToggle">🌙 Dark</button>
-</div>
+  <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">🌙 Dark</button>
+</nav>
+<main>
 <div class="titlebar">
   <h1 class="page">⚔️ Stat Simulator</h1>
 </div>
-<p class="note" style="margin-bottom:12px">How to use: ① pick a class and level → ② set gear, mag and materials → your stats appear in the table and the Effects panel shows every effect's source and priority. Hover the column headers for what each means.</p>
+<p class="lead">How to use: ① pick a class and level → ② set gear, mag and materials → your stats appear in the table and the Effects panel shows every effect's source and priority. Hover the column headers for what each means.</p>
 
 <div id="stickySentinel"></div>
 <div class="sticky-results" id="stickyResults">
@@ -242,22 +256,22 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <div class="tblwrap">
     <table class="stats" id="statTable">
       <thead><tr class="grp">
-        <th></th>
-        <th colspan="5">Base total breakdown</th>
-        <th colspan="3">vs. cap</th>
-        <th colspan="2">Gear & effective</th>
+        <th><span class="sr-only">Stat</span></th>
+        <th colspan="5" scope="colgroup">Base total breakdown</th>
+        <th colspan="3" scope="colgroup">vs. cap</th>
+        <th colspan="2" scope="colgroup">Gear & effective</th>
       </tr><tr>
-        <th></th>
-        <th title="Class base value for your level">Base</th>
-        <th title="From materials used (+2 each)">Mats</th>
-        <th title="From mag stats (DEF ×1 / POW ×2 / DEX→ATA ×0.5 / MIND ×2)">Mag</th>
-        <th title="Total from equipped units (listed stats + unit-only effects like V101/Adept); counts toward the cap">Units</th>
-        <th title="Exception column: MST and LCK can never exceed the stat cap even when boosted by gear, so those boosts are collected here and compared against the cap">Effects</th>
-        <th title="Base + materials + mag + units + effects. Anything above the stat cap is not applied">Base total</th>
-        <th title="This class's stat cap">Cap</th>
-        <th title="Base total − cap. 0✓ = exactly at cap / +N = over the cap (excess is not applied) / -N = N below the cap">Diff</th>
-        <th class="sep" title="Weapon ATP, armor DFP/EVP and set effects; outside the cap, no limit">Gear</th>
-        <th title="Capped base total + gear = the value you actually get">Final</th>
+        <th scope="col"><span class="sr-only">Stat</span></th>
+        <th scope="col" title="Class base value for your level">Base</th>
+        <th scope="col" title="From materials used (+2 each)">Mats</th>
+        <th scope="col" title="From mag stats (DEF ×1 / POW ×2 / DEX→ATA ×0.5 / MIND ×2)">Mag</th>
+        <th scope="col" title="Total from equipped units (listed stats + unit-only effects like V101/Adept); counts toward the cap">Units</th>
+        <th scope="col" title="Exception column: MST and LCK can never exceed the stat cap even when boosted by gear, so those boosts are collected here and compared against the cap">Effects</th>
+        <th scope="col" title="Base + materials + mag + units + effects. Anything above the stat cap is not applied">Base total</th>
+        <th scope="col" title="This class's stat cap">Cap</th>
+        <th scope="col" title="Base total − cap. 0✓ = exactly at cap / +N = over the cap (excess is not applied) / -N = N below the cap">Diff</th>
+        <th scope="col" class="sep" title="Weapon ATP, armor DFP/EVP and set effects; outside the cap, no limit">Gear</th>
+        <th scope="col" title="Capped base total + gear = the value you actually get">Final</th>
       </tr></thead>
       <tbody></tbody>
     </table>
@@ -273,7 +287,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
   <div class="panel">
     <h2>Presets</h2>
     <div class="row">
-      <input type="text" id="presetName" placeholder="Build name" style="flex:1;min-width:0">
+      <input type="text" id="presetName" aria-label="Build name" placeholder="Build name" style="flex:1;min-width:0">
       <button class="btn" id="presetSave" style="padding:4px 12px; font-size:0.78rem">Save</button>
     </div>
     <div id="presetList" class="preset-list"></div>
@@ -283,23 +297,23 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
       <input type="file" id="presetImportFile" accept=".json,application/json" hidden>
     </div>
     <details class="copies"><summary>Or paste JSON as text</summary>
-      <textarea id="presetPaste" rows="3" style="width:100%; margin-top:4px; font-size:0.72rem; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:6px" placeholder="Paste exported JSON"></textarea>
+      <textarea id="presetPaste" rows="3" aria-label="Paste exported JSON" style="width:100%; margin-top:4px; font-size:0.72rem; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:6px" placeholder="Paste exported JSON"></textarea>
       <button class="btn" id="presetPasteBtn" style="margin-top:4px; padding:4px 12px; font-size:0.78rem">Import</button>
     </details>
-    <div class="varstat" id="presetNote"></div>
+    <div class="varstat" id="presetNote" aria-live="polite"></div>
   </div>
 
   <div class="panel">
     <h2>Character</h2>
-    <div class="row"><label>Class</label>
+    <div class="row"><label for="cls">Class</label>
       <select id="cls" class="slot-select"><option value="">-</option></select></div>
-    <div class="row"><label>Level</label>
+    <div class="row"><label for="lv">Level</label>
       <input type="number" id="lv" min="1" max="200" value="200">
-      <input type="range" id="lvR" min="1" max="200" value="200"></div>
-    <div class="row"><label>Wiki plan</label>
+      <input type="range" id="lvR" min="1" max="200" value="200" aria-label="Level (slider)"></div>
+    <div class="row"><label for="wikiPlan">Wiki plan</label>
       <select id="wikiPlan" class="slot-select"><option value="">Select a plan to apply…</option></select></div>
     <div class="row varstat" style="line-height:1.5">Load the official wiki build plans (mag, materials, units, barrier) in one click. See the <a id="clsGuideLink" href="#" target="_blank" rel="noopener">class guide</a> for details</div>
-    <div class="row varstat" id="wikiPlanNote" style="line-height:1.6"></div>
+    <div class="row varstat" id="wikiPlanNote" style="line-height:1.6" aria-live="polite"></div>
   </div>
 
   <div class="panel">
@@ -309,27 +323,27 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
       <label class="own-toggle"><input type="checkbox" id="allEquip"> Show gear without effects too</label>
     </div>
     <div class="row varstat" id="equipFilterNote" style="margin-top:-2px"></div>
-    <div class="row"><label>Weapon</label><select id="weapon" class="slot-select"><option value="">-</option></select></div>
+    <div class="row"><label for="weapon">Weapon</label><select id="weapon" class="slot-select"><option value="">-</option></select></div>
     <div id="weaponOpts" style="display:none">
-      <div class="vrow"><span class="vlabel">ATP</span><input type="range" id="wAtpR" min="0" max="0" value="0"><b id="wAtpV">0</b></div>
-      <div class="vrow"><span class="vlabel">Grind</span><input type="number" id="wGrind" min="0" max="0" value="0"><b></b></div>
+      <div class="vrow"><span class="vlabel">ATP</span><input type="range" id="wAtpR" min="0" max="0" value="0" aria-label="Weapon ATP roll"><b id="wAtpV">0</b></div>
+      <div class="vrow"><span class="vlabel">Grind</span><input type="number" id="wGrind" min="0" max="0" value="0" aria-label="Grind value"><b></b></div>
     </div>
-    <div class="row"><label>Frame</label><select id="frame" class="slot-select"><option value="">-</option></select></div>
+    <div class="row"><label for="frame">Frame</label><select id="frame" class="slot-select"><option value="">-</option></select></div>
     <div id="frameOpts" style="display:none">
-      <div class="vrow"><span class="vlabel">DFP</span><input type="range" id="fDfpR" min="0" max="0" value="0"><b id="fDfpV">0</b></div>
-      <div class="vrow"><span class="vlabel">EVP</span><input type="range" id="fEvpR" min="0" max="0" value="0"><b id="fEvpV">0</b></div>
+      <div class="vrow"><span class="vlabel">DFP</span><input type="range" id="fDfpR" min="0" max="0" value="0" aria-label="Frame DFP roll"><b id="fDfpV">0</b></div>
+      <div class="vrow"><span class="vlabel">EVP</span><input type="range" id="fEvpR" min="0" max="0" value="0" aria-label="Frame EVP roll"><b id="fEvpV">0</b></div>
     </div>
-    <div class="row"><label>Barrier</label><select id="barrier" class="slot-select"><option value="">-</option></select></div>
+    <div class="row"><label for="barrier">Barrier</label><select id="barrier" class="slot-select"><option value="">-</option></select></div>
     <div id="barrierOpts" style="display:none">
-      <div class="vrow"><span class="vlabel">DFP</span><input type="range" id="bDfpR" min="0" max="0" value="0"><b id="bDfpV">0</b></div>
-      <div class="vrow"><span class="vlabel">EVP</span><input type="range" id="bEvpR" min="0" max="0" value="0"><b id="bEvpV">0</b></div>
+      <div class="vrow"><span class="vlabel">DFP</span><input type="range" id="bDfpR" min="0" max="0" value="0" aria-label="Barrier DFP roll"><b id="bDfpV">0</b></div>
+      <div class="vrow"><span class="vlabel">EVP</span><input type="range" id="bEvpR" min="0" max="0" value="0" aria-label="Barrier EVP roll"><b id="bEvpV">0</b></div>
     </div>
-    <div class="row"><label>Unit 1</label><select id="unit1" class="slot-select unitsel"><option value="">-</option></select></div>
-    <div class="row"><label>Unit 2</label><select id="unit2" class="slot-select unitsel"><option value="">-</option></select></div>
-    <div class="row"><label>Unit 3</label><select id="unit3" class="slot-select unitsel"><option value="">-</option></select></div>
-    <div class="row"><label>Unit 4</label><select id="unit4" class="slot-select unitsel"><option value="">-</option></select></div>
+    <div class="row"><label for="unit1">Unit 1</label><select id="unit1" class="slot-select unitsel"><option value="">-</option></select></div>
+    <div class="row"><label for="unit2">Unit 2</label><select id="unit2" class="slot-select unitsel"><option value="">-</option></select></div>
+    <div class="row"><label for="unit3">Unit 3</label><select id="unit3" class="slot-select unitsel"><option value="">-</option></select></div>
+    <div class="row"><label for="unit4">Unit 4</label><select id="unit4" class="slot-select unitsel"><option value="">-</option></select></div>
     <!--SITEONLY--><div class="row" style="margin-top:6px"><button class="btn" id="addWishBtn" style="padding:5px 12px; font-size:0.78rem">🎯 Add unowned gear to wishlist</button></div>
-    <div class="row varstat" id="addWishNote" style="line-height:1.5"></div><!--/SITEONLY-->
+    <div class="row varstat" id="addWishNote" style="line-height:1.5" aria-live="polite"></div><!--/SITEONLY-->
     <div class="row varstat" id="equipWarn"></div>
   </div>
 
@@ -337,20 +351,20 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <h2>Growth (mag & materials)</h2>
     <div class="subh">Mag <span>LV <b id="magLV">5</b>/200 <span class="warn" id="magWarn"></span> <button class="reset" data-reset="mag">Reset</button></span></div>
     <div class="matgrid">
-      <div class="mrow"><label>DEF <span class="mcap">×1</span></label><input type="number" id="magDef" min="0" max="200" value="5"></div>
-      <div class="mrow"><label>POW <span class="mcap">×2</span></label><input type="number" id="magPow" min="0" max="200" value="0"></div>
-      <div class="mrow"><label>DEX <span class="mcap">×0.5</span></label><input type="number" id="magDex" min="0" max="200" value="0"></div>
-      <div class="mrow"><label>MIND <span class="mcap">×2</span></label><input type="number" id="magMind" min="0" max="200" value="0"></div>
+      <div class="mrow"><label for="magDef">DEF <span class="mcap">×1</span></label><input type="number" id="magDef" min="0" max="200" value="5"></div>
+      <div class="mrow"><label for="magPow">POW <span class="mcap">×2</span></label><input type="number" id="magPow" min="0" max="200" value="0"></div>
+      <div class="mrow"><label for="magDex">DEX <span class="mcap">×0.5</span></label><input type="number" id="magDex" min="0" max="200" value="0"></div>
+      <div class="mrow"><label for="magMind">MIND <span class="mcap">×2</span></label><input type="number" id="magMind" min="0" max="200" value="0"></div>
     </div>
     <div class="subh">Material <span>Total <b id="matTotal">0</b>/<span id="matCap">-</span> <span class="warn" id="matWarn"></span> <button class="reset" data-reset="mat">Reset</button></span></div>
     <div class="matgrid">
-      <div class="mrow"><label>HP <span class="mcap" id="matHPmax"></span></label><input type="number" id="matHP" min="0" max="125" value="0"></div>
-      <div class="mrow"><label>TP <span class="mcap" id="matTPmax"></span></label><input type="number" id="matTP" min="0" max="125" value="0"></div>
-      <div class="mrow"><label>Power</label><input type="number" id="matPow" min="0" max="250" value="0"></div>
-      <div class="mrow"><label>Def</label><input type="number" id="matDef" min="0" max="250" value="0"></div>
-      <div class="mrow"><label>Mind</label><input type="number" id="matMind" min="0" max="250" value="0"></div>
-      <div class="mrow"><label>Evade</label><input type="number" id="matEva" min="0" max="250" value="0"></div>
-      <div class="mrow"><label>Luck</label><input type="number" id="matLck" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matHP">HP <span class="mcap" id="matHPmax"></span></label><input type="number" id="matHP" min="0" max="125" value="0"></div>
+      <div class="mrow"><label for="matTP">TP <span class="mcap" id="matTPmax"></span></label><input type="number" id="matTP" min="0" max="125" value="0"></div>
+      <div class="mrow"><label for="matPow">Power</label><input type="number" id="matPow" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matDef">Def</label><input type="number" id="matDef" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matMind">Mind</label><input type="number" id="matMind" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matEva">Evade</label><input type="number" id="matEva" min="0" max="250" value="0"></div>
+      <div class="mrow"><label for="matLck">Luck</label><input type="number" id="matLck" min="0" max="250" value="0"></div>
     </div>
   </div>
 
@@ -388,12 +402,13 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </ul>
 <p class="note" style="margin-top:10px">Equipment data: <a href="https://wiki.pioneer2.net" target="_blank">wiki.pioneer2.net</a> (Ephinea) / character growth data: vanilla PSOBB / data generated: 2026-07-31</p>
 </div>
-<div class="footer">
+</main>
+<footer class="footer">
 <p>Data sources: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
  (equipment, prices, technique mechanics) / character growth data follows vanilla PSOBB /
  Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">the classic status simulator</a></p>
 <p>Imported inventory data is stored only in your browser (localStorage) and never sent to any server.</p>
-</div>
+</footer>
 </div>
 
 <script>

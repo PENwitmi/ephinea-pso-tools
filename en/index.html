@@ -11,16 +11,16 @@
    ダークはフォトン寄りの濃紺トーン。chip系はゲーム準拠の意味色。 */
 
 :root {
-  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
-  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
   --photon: #31c7e8;
-  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
-  --strike: #9aa8b8;
-  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
-  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
-  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
-  --chip-set: #feecec; --chip-set-t: #d92d20;
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
@@ -44,16 +44,16 @@
   --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
   --chip-unit: #241a3d; --chip-unit-t: #b18aff;
   --chip-set: #391b1b; --chip-set-t: #f97066; }
-:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
-  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
   --photon: #31c7e8;
-  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
-  --strike: #9aa8b8;
-  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
-  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
-  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
-  --chip-set: #feecec; --chip-set-t: #d92d20; }
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a; }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px 14px 80px; }
@@ -96,6 +96,19 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   outline: 2px solid var(--accent); outline-offset: 1px;
 }
 
+
+/* 導入文の器 (h1直下の説明ブロック) */
+.lead { border-left: 3px solid var(--accent); border-image: linear-gradient(180deg, var(--accent), var(--photon)) 1; padding: 2px 0 2px 12px; margin: 4px 0 16px; color: var(--sub); font-size: 0.85rem; }
+.lead p + p { margin-top: 4px; }
+
+/* スクリーンリーダー専用テキスト */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* モーション低減設定の尊重 */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
 /* 汎用テキスト */
 .note { font-size: 0.78rem; color: var(--sub); }
 .warn { color: var(--red); }
@@ -128,13 +141,14 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 </head>
 <body>
 <div class="wrap">
-<div class="nav">
+<nav class="nav" aria-label="Site menu">
   <a class="brand" href="./">Ephinea Tools</a>
   <a class="tab on" href="./">Home / Import</a><a class="tab " href="./simulator/">Simulator</a><a class="tab " href="./inventory/">Item List</a><a class="tab " href="./wishlist/">Wishlist</a>
   <a class="tab" href="/" hreflang="ja">日本語</a><span class="spacer"></span>
   <span class="inv-chip" id="invChip"></span>
-  <button class="theme-btn" id="themeToggle">🌙 Dark</button>
-</div>
+  <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">🌙 Dark</button>
+</nav>
+<main>
 <div class="hero">
   <h1>Ephinea Tools</h1>
   <p style="margin:2px 0 6px; font-size:0.95rem">Unofficial tools for PSO Blue Burst (Ephinea server). Answer <b>"which character's bank was that item in?"</b> and <b>"what does this gear actually do?"</b> right in your browser.</p>
@@ -154,14 +168,14 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
     </ol>
     <p class="note" style="margin:6px 0 0">Note: you can also import an <a href="https://nanakamado7746.github.io/PSOBBCharacterItemViewer/" target="_blank" rel="noopener">EPHINEA CHARACTER VIEWER</a>-exported <b>AllItems_with_slot.txt</b> (English) as before</p>
   </details>
-  <div class="droparea" id="dropArea">Drop the official <b>.psochar / .psobank</b> files here (all at once)<br><span style="font-size:0.75rem">Click to pick files (multiple OK) or drag & drop. AllItems_with_slot.txt also works</span></div>
+  <div class="droparea" id="dropArea" role="button" tabindex="0" aria-label="Choose character data files to import">Drop the official <b>.psochar / .psobank</b> files here (all at once)<br><span style="font-size:0.75rem">Click to pick files (multiple OK) or drag & drop. AllItems_with_slot.txt also works</span></div>
   <input type="file" id="fileInput" multiple hidden>
   <details><summary>Or paste as text</summary>
     <textarea id="pasteArea" rows="5" placeholder="Saber [0/0/0/0|0], Slot: 4&#10;RED RING [20/85|18/25], Slot: 1&#10;..."></textarea>
     <button class="btn" id="pasteBtn" style="margin-top:6px">Import</button>
   </details>
-  <div id="importResult" style="margin-top:10px"></div>
-  <div class="summary" id="importSummary"></div>
+  <div id="importResult" style="margin-top:10px" aria-live="polite"></div>
+  <div class="summary" id="importSummary" aria-live="polite"></div>
   <div style="margin-top:10px">
     <button class="btn" id="clearBtn" style="display:none; background:transparent; color:var(--red); border-color:var(--border)">Delete imported data</button>
   </div>
@@ -182,12 +196,13 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
   </a>
 </div>
 
-<div class="footer">
+</main>
+<footer class="footer">
 <p>Data sources: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
  (equipment, prices, technique mechanics) / character growth data follows vanilla PSOBB /
  Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">the classic status simulator</a></p>
 <p>Imported inventory data is stored only in your browser (localStorage) and never sent to any server.</p>
-</div>
+</footer>
 </div>
 <script>
 
@@ -416,6 +431,7 @@ function psoParseBinaryFiles(fileList) {
 const drop = document.getElementById('dropArea');
 const fileInput = document.getElementById('fileInput');
 drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } });
 drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('drag'); });
 drop.addEventListener('dragleave', () => drop.classList.remove('drag'));
 drop.addEventListener('drop', e => {

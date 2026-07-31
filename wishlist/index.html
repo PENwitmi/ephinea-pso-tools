@@ -10,16 +10,16 @@
    ダークはフォトン寄りの濃紺トーン。chip系はゲーム準拠の意味色。 */
 
 :root {
-  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
-  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
   --photon: #31c7e8;
-  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
-  --strike: #9aa8b8;
-  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
-  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
-  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
-  --chip-set: #feecec; --chip-set-t: #d92d20;
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a;
 }
 @media (prefers-color-scheme: dark) {
   :root { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
@@ -43,16 +43,16 @@
   --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
   --chip-unit: #241a3d; --chip-unit-t: #b18aff;
   --chip-set: #391b1b; --chip-set-t: #f97066; }
-:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
-  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
   --photon: #31c7e8;
-  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
-  --strike: #9aa8b8;
-  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
-  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
-  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
-  --chip-set: #feecec; --chip-set-t: #d92d20; }
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a; }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px 14px 80px; }
@@ -95,6 +95,19 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   outline: 2px solid var(--accent); outline-offset: 1px;
 }
 
+
+/* 導入文の器 (h1直下の説明ブロック) */
+.lead { border-left: 3px solid var(--accent); border-image: linear-gradient(180deg, var(--accent), var(--photon)) 1; padding: 2px 0 2px 12px; margin: 4px 0 16px; color: var(--sub); font-size: 0.85rem; }
+.lead p + p { margin-top: 4px; }
+
+/* スクリーンリーダー専用テキスト */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* モーション低減設定の尊重 */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
 /* 汎用テキスト */
 .note { font-size: 0.78rem; color: var(--sub); }
 .warn { color: var(--red); }
@@ -116,6 +129,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .wcard .wbody { padding: 0 18px 16px; }
 .wcard .sub { font-size: 0.75rem; color: var(--sub); }
 .wcard .ownchip { font-size: 0.72rem; }
+.wcard .wtools { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
 .wcard .rm { cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 8px; color: var(--sub); padding: 3px 10px; font-size: 0.75rem; flex-shrink: 0; }
 .wcard .rm:hover { color: var(--red); border-color: var(--red); }
 .ownrow { margin: 8px 0 2px; font-size: 0.8rem; }
@@ -155,27 +169,29 @@ details.moredrops summary { cursor: pointer; color: var(--accent); font-size: 0.
 </head>
 <body>
 <div class="wrap">
-<div class="nav">
+<nav class="nav" aria-label="サイト内メニュー">
   <a class="brand" href="../">Ephinea Tools</a>
   <a class="tab " href="../">ホーム / データ取込み</a><a class="tab " href="../simulator/">シミュレーター</a><a class="tab " href="../inventory/">アイテム一覧</a><a class="tab on" href="../wishlist/">欲しいもの</a>
   <a class="tab" href="/en/wishlist/" hreflang="en">English</a><span class="spacer"></span>
   <span class="inv-chip" id="invChip"></span>
-  <button class="theme-btn" id="themeToggle">🌙 ダーク</button>
-</div>
+  <button class="theme-btn" id="themeToggle" aria-label="配色テーマ切替">🌙 ダーク</button>
+</nav>
+<main>
 <h1 class="page">🎯 欲しいものリスト</h1>
-<p class="note" style="margin-bottom:6px">欲しいアイテムを登録すると、<b>どの難易度・どのSection IDで誰(どの箱)からドロップするか</b>(確率の良い順)と、<b>Price guide準拠のPD相場</b>が一覧できます。リストはこのブラウザ内に保存されます。</p>
+<div class="lead"><p>欲しいアイテムを登録すると、<b>どの難易度・どのSection IDで誰(どの箱)からドロップするか</b>(確率の良い順)と、<b>Price guide準拠のPD相場</b>が一覧できます。リストはこのブラウザ内に保存されます。</p></div>
 <div class="addrow">
-  <input list="itemcands" id="wAdd" placeholder="アイテム名を入力 (日本語/英語どちらでも。例: レッドリング / Red Ring)">
+  <input list="itemcands" id="wAdd" aria-label="追加するアイテム名" placeholder="アイテム名を入力 (日本語/英語どちらでも。例: レッドリング / Red Ring)">
   <button class="btn" id="wAddBtn">リストに追加</button>
   <datalist id="itemcands"></datalist>
 </div>
 <div id="wList"></div>
-<div class="footer">
+</main>
+<footer class="footer">
 <p>データ出典: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
  (装備・相場・テクニック仕様) / キャラクター成長データはバニラPSOBB準拠 /
  Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">旧ステータスシミュレーター</a></p>
 <p>入力されたインベントリデータはブラウザ内(localStorage)にのみ保存され、サーバーには一切送信されません。</p>
-</div>
+</footer>
 </div>
 <script>
 
@@ -416,8 +432,8 @@ function render() {
     }
     const wiki = `https://wiki.pioneer2.net/w/${encodeURIComponent(name.replace(/ /g, '_'))}`;
     return `<details class="wcard" data-n="${esc(name)}"${folded.includes(name) ? '' : ' open'}>
-      <summary><span class="wtitle">${esc(jp)}</span>${sub}${ownChip}<span class="foldbtn"><span class="when-closed">▼ 詳細をひらく</span><span class="when-open">▲ たたむ</span></span><button class="rm" data-n="${esc(name)}">✕ 削除</button></summary>
-      <div class="wbody"><a class="wikilink" href="${wiki}" target="_blank" rel="noopener">📖 wiki</a>
+      <summary><span class="wtitle">${esc(jp)}</span>${sub}${ownChip}<span class="foldbtn"><span class="when-closed">▼ 詳細をひらく</span><span class="when-open">▲ たたむ</span></span></summary>
+      <div class="wbody"><div class="wtools"><a class="wikilink" href="${wiki}" target="_blank" rel="noopener">📖 wiki</a><button class="rm" data-n="${esc(name)}">✕ リストから削除</button></div>
       ${ownHtml}${priceHTML(name)}${dropsHTML(name)}</div></details>`;
   }).join('');
   box.querySelectorAll('.rm').forEach(b => b.addEventListener('click', e => {
