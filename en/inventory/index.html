@@ -93,14 +93,14 @@ tr.zero { opacity: 0.55; }
 </div>
 <div id="emptyState" class="panel empty" style="display:none">
   <p style="font-size:1.1rem; margin-bottom:8px">📦 No inventory data imported yet</p>
-  <p class="note">First import your <a href="../">Home</a> on the Home page.</p>
+  <p class="note">First import your <a href="../">Home</a>  first.</p>
 </div>
 <div id="app" style="display:none">
 <p style="margin-bottom:4px; font-size:0.92rem">Search and filter every character's inventory, bank and the shared bank in one place. Click a breakdown card below to filter the list.</p>
 <p class="note" style="margin-bottom:14px">Values are shown in <b>PD (Photon Drop)</b> , the item used as Ephinea's de-facto trading currency. Prices follow the<a href="https://wiki.pioneer2.net/w/Price_guide" target="_blank">Price guide</a> (community price list, master generated: 2026-07-29 09:04) and are estimates — actual sales vary with hit%, attributes and demand.</p>
 <div class="cards">
   <div class="card gold"><div class="label">Total value (est.)</div><div class="val" id="cTotal">-</div><div class="sub" id="cMeseta"></div></div>
-  <div class="card"><div class="label">Items</div><div class="val" id="cItems">-</div><div class="sub">rows incl. stacks</div></div>
+  <div class="card"><div class="label">Items</div><div class="val" id="cItems">-</div><div class="sub">stacks counted as one row</div></div>
   <div class="card"><div class="label">Total meseta</div><div class="val" id="cMesetaTotal">-</div><div class="sub">all characters + banks</div></div>
   <div class="card"><div class="label">Top item</div><div class="val" id="cTopVal">-</div><div class="sub" id="cTopName"></div></div>
 </div>
@@ -113,7 +113,7 @@ tr.zero { opacity: 0.55; }
 
 <h2>All items</h2>
 <div class="controls">
-  <input type="search" id="q" placeholder="Search item names & notes…">
+  <input type="search" id="q" placeholder="Search by item name or note…">
   <select id="fcat"><option value="">Category: all</option></select>
   <select id="floc"><option value="">Character: all</option></select>
   <label class="chk"><input type="checkbox" id="fval"> ≥1 PD only</label>

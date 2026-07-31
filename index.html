@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ephinea Tools — PSOBB ステータスシミュレーター & アイテム一覧</title>
-<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)と、bank/インベントリのアイテム一覧(検索・フィルタ・PD評価付き)。データはブラウザ内にのみ保存。">
+<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)、アイテム一覧(全キャラ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)。データはブラウザ内にのみ保存。">
 <style>
 :root {
   --bg: #f5f6f8; --card: #ffffff; --text: #1a1d24; --sub: #667085;
@@ -73,9 +73,9 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 </div>
 <div class="hero">
   <h1>Ephinea Tools</h1>
-  <p style="margin:2px 0 6px; font-size:0.95rem">PSO Blue Burst (Ephineaサーバー) の<b>「どのキャラのどの倉庫に何があるか分からない問題」</b>と<b>「この装備、結局どんな効果?問題」</b>を解決する非公式ツールです。</p>
+  <p style="margin:2px 0 6px; font-size:0.95rem">PSO Blue Burst (Ephineaサーバー) 用の非公式ツール集です。<b>「あのアイテムはどのキャラの倉庫だっけ?」</b><b>「この装備はどんな効果?」</b>をブラウザだけで解決できます。</p>
   <div class="note" style="line-height:1.9">
-    <b>1️⃣ キャラクターデータを取り込む</b>(1分・任意) → <b>2️⃣ アイテム一覧</b>で全キャラ・全倉庫を横断検索 → <b>3️⃣ シミュレーター</b>で「家にある装備」からビルドを組む<br>
+    <b>1️⃣ キャラクターデータを取り込む</b>(1分・任意) → <b>2️⃣ アイテム一覧</b>で全キャラ・全倉庫を横断検索 → <b>3️⃣ シミュレーター</b>で持っている装備からビルドを組む<br>
     取込みなしでも、シミュレーターは全装備データ入りでそのまま使えます。
   </div>
 </div>
@@ -110,7 +110,7 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
   </a>
   <a class="toolcard" href="./wishlist/">
     <h3>🎯 欲しいものリスト</h3>
-    <p>欲しいアイテムを登録すると、どの難易度・どのSection IDで誰(どの箱)からどの確率でドロップするかを逆引きできます。PD相場の目安付き。データ取込み済みなら「実はもう持っていた」も分かります。</p>
+    <p>欲しいアイテムを登録すると、どの難易度・どのSection IDで誰(どの箱)からどの確率でドロップするかを逆引きできます。PD相場の目安付き。データを取り込んでいれば、既に持っているものは所持済みとして表示されます。</p>
   </a>
   <a class="toolcard" href="./simulator/">
     <h3>3️⃣ ⚔️ ステータスシミュレーター</h3>

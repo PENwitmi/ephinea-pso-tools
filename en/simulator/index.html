@@ -199,9 +199,9 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
         <th title="From mag stats (DEF ×1 / POW ×2 / DEX→ATA ×0.5 / MIND ×2)">Mag</th>
         <th title="Total from equipped units (listed stats + unit-only effects like V101/Adept); counts toward the cap">Units</th>
         <th title="Exception column: MST and LCK can never exceed the stat cap even when boosted by gear, so those boosts are collected here and compared against the cap">Effects</th>
-        <th title="Base + mats + mag + units + effects; anything over the class cap is wasted">Base total</th>
+        <th title="Base + materials + mag + units + effects. Anything above the stat cap is not applied">Base total</th>
         <th title="This class's stat cap">Cap</th>
-        <th title="Base total − cap. 0✓ = exactly maxed / red +N = overshot (wasted) / -N = N short">Diff</th>
+        <th title="Base total − cap. 0✓ = exactly at cap / +N = over the cap (excess is not applied) / -N = N below the cap">Diff</th>
         <th class="sep" title="Weapon ATP, armor DFP/EVP and set effects; outside the cap, no limit">Gear</th>
         <th title="Capped base total + gear = the value you actually get">Final</th>
       </tr></thead>
@@ -280,7 +280,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
   </div>
 
   <div class="panel">
-    <h2>Growth (set once, rarely changed)</h2>
+    <h2>Growth (mag & materials)</h2>
     <div class="subh">Mag <span>LV <b id="magLV">5</b>/200 <span class="warn" id="magWarn"></span> <button class="reset" data-reset="mag">Reset</button></span></div>
     <div class="matgrid">
       <div class="mrow"><label>DEF <span class="mcap">×1</span></label><input type="number" id="magDef" min="0" max="200" value="5"></div>
@@ -317,14 +317,14 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </div>
 
 <ul class="footnote">
-  <li>"Base total" = base + mats + mag + units + effects (MST/LCK exceptions etc.), before the cap. <b>Red means over the cap = the excess is wasted</b> (over-invested mats/mag/units). Green ✓ = exactly maxed.</li>
-  <li>"Diff" = base total − cap; your material-plan gauge.</li>
+  <li>"Base total" = base + mats + mag + units + effects (MST/LCK exceptions etc.), before the cap. Anything above the cap is <b>shown in red and not applied</b>. Green ✓ means exactly at the cap. </li>
+  <li>"Diff" = base total − cap; a guide for tuning your material and mag allocation. </li>
   <li>"Final" = capped base total + gear (weapon ATP, armor DFP/EVP, set effects). <b>Gear has no cap</b> (wiki Stats: total stats have no limit).</li>
-  <li>What counts toward the cap (per Ephinea admin Matt): <b>mags, units and materials count toward the cap; weapons, armor and shields do not</b>. However, <b>MST and LCK are exceptions — everything, gear included, is capped and can never exceed the limit</b> (these exceptions appear in the Effects column). No item on Ephinea raises the caps themselves.</li>
+  <li>How the cap counts (per Ephinea admin Matt): <b>mags, units and materials count toward the cap; weapons, armor and shields do not</b>. However, <b>MST and LCK are exceptions — everything, gear included, is capped and can never exceed the limit</b> (these exceptions appear in the Effects column). No item on Ephinea raises the caps themselves.</li>
   <li>ATA shows one decimal (internally ×10 integers). Each mag DEX gives +0.5 ATA.</li>
   <li>Variable frame/barrier/weapon stats are set with sliders (default = max roll).</li>
   <li>Non-stacking effects like attack speed apply the highest source only; losing sources are struck through.</li>
-  <li>Effect stacking rules (per primary sources): tech damage = <b>additive</b> (wiki wording + the FOnewearl + Foie Merge = +60% example) / TP cost = <b>multiplicative</b>  / attack speed & V50x = <b>highest only</b>  / Megid pierce does not stack (explicit) /  <b>range boost stacking is documented nowhere and unverified</b>, so overlaps show a single boost (+100%) only.</li>
+  <li>How effects stack: technique power <b>adds up</b> / TP cost reduction <b>multiplies</b> / attack speed & V50x: <b>only the strongest applies</b> / Megid pierce does not stack / <b>range boost stacking is documented nowhere and unverified</b>, so overlaps show a single boost (+100%) only.</li>
 </ul>
 </div>
 
@@ -987,11 +987,11 @@ function renderEffectsPanel(r, state) {
       const parts = TECH_ORDER.filter(t => perTech[t]).map(t => {
         const dup = isRange && perTechCnt[t] > 1;
         if (dup) hasDup = true;
-        return `${t} <b>+${perTech[t]}%</b>${dup ? '<span class="overridden-note">※' + perTechCnt[t] + ' overlapping</span>' : ''}`;
+        return `${t} <b>+${perTech[t]}%</b>${dup ? '<span class="overridden-note">※' + perTechCnt[t] + ' sources overlap</span>' : ''}`;
       });
       if (parts.length) {
-        head += ` <span class="overridden-note">${isRange ? '' : '(additive)'}</span>`;
-        const dupNote = hasDup ? ' <span class="overridden-note">* stacking of range boosts is unverified; showing a single boost only</span>' : '';
+        head += ` <span class="overridden-note">${isRange ? '' : '(adds up when stacked)'}</span>`;
+        const dupNote = hasDup ? ' <span class="overridden-note">※ range-boost stacking is unverified, so only a single boost is shown</span>' : '';
         head = `<div>${head}</div><div class="srcline" style="margin:2px 0 4px"><span class="gval">Effective:</span> ${parts.join('<span class="bd-sep">·</span>')}${hasCond ? ' <span class="overridden-note">* chance-based boosts excluded</span>' : ''}${dupNote}</div>`;
       }
     } else if (ch.stacking === 'sum' && applied.length) {

@@ -199,9 +199,9 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
         <th title="マグの育成値分 (DEF×1 / POW×2 / DEX→ATA×0.5 / MIND×2)">マグ</th>
         <th title="装備中ユニットの合計 (表記ステータス+V101・Adept等のユニット単体効果)。限界値の対象">ユニット</th>
         <th title="例外扱いの強化分。MST・LCKは装備で上げても限界値を超えられないため、装備の分もこの列に集めて限界値と比べます">効果</th>
-        <th title="ベース+マテ+マグ+ユニット+効果の合計。職業の限界値を超えた分は無駄になる">素ステ</th>
+        <th title="ベース+マテ+マグ+ユニット+効果の合計。限界値を超えた分はステータスに反映されません">素ステ</th>
         <th title="この職業がその素ステで到達できる上限">限界値</th>
-        <th title="素ステ − 限界値。0✓=ぴったり理論値 / 赤+N=盛りすぎで無駄 / -N=あとN足りない">差</th>
+        <th title="素ステ − 限界値。0✓=限界値ちょうど / +N=限界値を超過(超過分は反映されない) / -N=限界値まであとN">差</th>
         <th class="sep" title="武器ATP・防具DFP/EVP・セット効果分。限界値の対象外で上限なし">装備</th>
         <th title="限界値で頭打ちした素ステ + 装備分 = 実際に発揮される値">実効値</th>
       </tr></thead>
@@ -280,7 +280,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
   </div>
 
   <div class="panel">
-    <h2>育成（一度決めたらほぼ固定）</h2>
+    <h2>育成 (マグ・マテリアル)</h2>
     <div class="subh">マグ <span>LV <b id="magLV">5</b>/200 <span class="warn" id="magWarn"></span> <button class="reset" data-reset="mag">Reset</button></span></div>
     <div class="matgrid">
       <div class="mrow"><label>DEF <span class="mcap">×1</span></label><input type="number" id="magDef" min="0" max="200" value="5"></div>
@@ -317,14 +317,14 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </div>
 
 <ul class="footnote">
-  <li>「素ステ」= ベース+マテ+マグ+ユニット+効果(MST/LCK例外等)のキャップ前合計。<b>限界値を超えると赤字=超過分は無駄</b>(マテ・マグ・ユニットの過剰投資)。緑✓はジャスト理論値。</li>
-  <li>「差」= 素ステ − 限界値。マテリアル計画の指標。</li>
+  <li>「素ステ」= ベース+マテ+マグ+ユニット+効果(MST/LCK例外等)のキャップ前合計。限界値を超えた分は<b>赤字で表示され、ステータスには反映されません</b>。緑✓は限界値ちょうどです。</li>
+  <li>「差」= 素ステ − 限界値。マテリアルやマグの配分を調整する目安になります。</li>
   <li>「実効値」= 限界値でキャップした素ステ + 装備(武器ATP・防具DFP/EVP・セット効果)。<b>装備分に上限はない</b>(wiki Stats: Total stats have no limit)。</li>
-  <li>キャップの帰属(Ephinea運営Mattの回答に準拠): <b>マグ・ユニット・マテリアルはベース側(キャップ内)、武器・防具・シールド由来はTotal側(キャップ外)</b>。ただし<b>MSTとLCKは例外で、装備由来を含む全てがキャップ内・限界値を絶対に超えられない</b>(この例外分が「効果」列に表示される)。Ephineaに限界値自体を引き上げるアイテムは存在しない。</li>
+  <li>限界値の数え方(Ephinea運営Mattの回答に基づく): <b>マグ・ユニット・マテリアルはベース側(キャップ内)、武器・防具・シールド由来はTotal側(キャップ外)</b>。ただし<b>MSTとLCKは例外で、装備由来を含む全てがキャップ内・限界値を絶対に超えられない</b>(この例外分が「効果」列に表示される)。Ephineaに限界値自体を引き上げるアイテムは存在しない。</li>
   <li>ATAは小数1桁まで表示(ゲーム内部は×10整数)。マグDEXは1につきATA+0.5。</li>
   <li>フレーム/バリア/武器の可変ステータスはスライダーで個体値を指定(初期値=最大)。</li>
   <li>攻撃速度など重複しない効果は最大値のみ適用。負けた効果は打ち消し表示。</li>
-  <li>効果の合成規則(一次情報準拠): テク威力=<b>加算</b>(wiki明文+FOnewearl+Foie Merge=+60%の例示) / TP消費軽減=<b>乗算</b> / 攻撃速度・V50x=<b>最大のみ</b> / Megid貫通=重複無効(明文) / <b>テク範囲の重複合成はどの一次情報にも記載がなく未確証</b>のため、重複時は単一分(+100%)のみ表示。</li>
+  <li>効果の重なり方: テクニック威力は<b>加算</b> / TP消費軽減は<b>乗算</b> / 攻撃速度・V50xは<b>最大のものだけ適用</b> / メギド貫通は重複させても効果なし / <b>テク範囲の重複合成はどの一次情報にも記載がなく未確証</b>のため、重複時は単一分(+100%)のみ表示。</li>
 </ul>
 </div>
 
@@ -987,11 +987,11 @@ function renderEffectsPanel(r, state) {
       const parts = TECH_ORDER.filter(t => perTech[t]).map(t => {
         const dup = isRange && perTechCnt[t] > 1;
         if (dup) hasDup = true;
-        return `${t} <b>+${perTech[t]}%</b>${dup ? '<span class="overridden-note">※' + perTechCnt[t] + '重複</span>' : ''}`;
+        return `${t} <b>+${perTech[t]}%</b>${dup ? '<span class="overridden-note">※' + perTechCnt[t] + '件が重複</span>' : ''}`;
       });
       if (parts.length) {
-        head += ` <span class="overridden-note">${isRange ? '' : '(加算合成)'}</span>`;
-        const dupNote = hasDup ? ' <span class="overridden-note">※範囲の重複合成は未確証のため単一分のみ表示</span>' : '';
+        head += ` <span class="overridden-note">${isRange ? '' : '(重複時は加算)'}</span>`;
+        const dupNote = hasDup ? ' <span class="overridden-note">※範囲アップは重複時の挙動が確認できていないため、1つ分のみ表示しています</span>' : '';
         head = `<div>${head}</div><div class="srcline" style="margin:2px 0 4px"><span class="gval">実効:</span> ${parts.join('<span class="bd-sep">·</span>')}${hasCond ? ' <span class="overridden-note">※確率発動分は含まず</span>' : ''}${dupNote}</div>`;
       }
     } else if (ch.stacking === 'sum' && applied.length) {
