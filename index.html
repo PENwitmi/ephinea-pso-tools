@@ -87,6 +87,10 @@ h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; b
 .reset { border: 1px solid var(--border); background: var(--card); color: var(--sub); border-radius: 8px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer; }
 .reset:hover { color: var(--accent); border-color: var(--accent); }
 
+/* クリック可能カードのホバー手応え (全ページ統一) */
+.toolcard, .catrow, .wcard, .card { transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s; }
+.toolcard:hover, .catrow:hover, .wcard:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(11, 127, 194, 0.12); transform: translateY(-1px); }
+
 /* 汎用テキスト */
 .note { font-size: 0.78rem; color: var(--sub); }
 .warn { color: var(--red); }
@@ -109,6 +113,9 @@ textarea { width: 100%; font-size: 0.75rem; background: var(--bg); color: var(--
 .nextbtn { text-decoration: none; display: inline-block; }
 details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); margin-top: 8px; }
 </style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%230b7fc2%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2331c7e8%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20x%3D%279%27%20y%3D%274%27%20width%3D%2714%27%20height%3D%2724%27%20rx%3D%276%27%20fill%3D%27url(%23g)%27%2F%3E%3C%2Fsvg%3E">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7fa">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e141c">
 <link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/">
 <link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/">
 <link rel="alternate" hreflang="en" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/">
@@ -160,13 +167,13 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
     <h3>2️⃣ 📦 アイテム一覧</h3>
     <p>「あのレア武器どのキャラの倉庫だっけ?」を解決。全キャラの所持品・個人倉庫・共有倉庫をまとめて検索・絞り込み。ついでに相場(Price guide準拠のPD評価)の目安も分かります。</p>
   </a>
-  <a class="toolcard" href="./wishlist/">
-    <h3>🎯 欲しいものリスト</h3>
-    <p>欲しいアイテムを登録すると、どの難易度・どのSection IDで誰(どの箱)からどの確率でドロップするかを逆引きできます。PD相場の目安付き。データを取り込んでいれば、既に持っているものは所持済みとして表示されます。</p>
-  </a>
   <a class="toolcard" href="./simulator/">
     <h3>3️⃣ ⚔️ ステータスシミュレーター</h3>
     <p>職業・レベル・マグ・マテリアル・装備を選ぶと、ステータスと装備効果が一目で分かります。「この効果はどの装備から出ているのか」「攻撃速度はどれが優先されるのか」「Thirteenのセット効果は何と組めば発動するのか」まで表示。データを取り込むと所持品に🔖が付き、持っている装備だけでビルドを検討できます。</p>
+  </a>
+  <a class="toolcard" href="./wishlist/">
+    <h3>🎯 欲しいものリスト</h3>
+    <p>欲しいアイテムを登録すると、どの難易度・どのSection IDで誰(どの箱)からどの確率でドロップするかを逆引きできます。PD相場の目安付き。データを取り込んでいれば、既に持っているものは所持済みとして表示されます。</p>
   </a>
 </div>
 
