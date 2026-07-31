@@ -198,7 +198,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
         <th title="From materials used (+2 each)">Mats</th>
         <th title="From mag stats (DEF ×1 / POW ×2 / DEX→ATA ×0.5 / MIND ×2)">Mag</th>
         <th title="Total from equipped units (listed stats + unit-only effects like V101/Adept); counts toward the cap">Units</th>
-        <th title="Exceptions that count toward the cap despite not coming from units (e.g. gear-derived MST/LCK boosts)">Effects</th>
+        <th title="Exception column: MST and LCK can never exceed the stat cap even when boosted by gear, so those boosts are collected here and compared against the cap">Effects</th>
         <th title="Base + mats + mag + units + effects; anything over the class cap is wasted">Base total</th>
         <th title="This class's stat cap">Cap</th>
         <th title="Base total − cap. 0✓ = exactly maxed / red +N = overshot (wasted) / -N = N short">Diff</th>
@@ -940,7 +940,7 @@ function renderEffectsPanel(r, state) {
         ).join('<span class="bd-sep">·</span>');
         // 効果ゾーン(MST/LCK例外)には「なぜ装備由来なのにここに居るのか」の説明を添える
         const capNote = (zone === 'cap' && (stat === 'mst' || stat === 'lck'))
-          ? ' <span class="overridden-note">※ MST/LCK always count toward the cap, even from gear (Ephinea rule)</span>' : '';
+          ? ' <span class="overridden-note">※ MST/LCK can never exceed the stat cap even when boosted by gear, so this appears here instead of the Gear column</span>' : '';
         return `<div class="bd-line"><span class="bd-zone">${zlabel} <b>${ztotal > 0 ? '+' : ''}${fv(ztotal)}</b> =</span> ${items}${capNote}</div>`;
       }).filter(Boolean).join('');
       html += `<div class="bd-row"><span class="bd-stat">${STAT_JP[stat]}</span><div class="bd-lines">${lines}</div></div>`;
@@ -1068,7 +1068,7 @@ function renderEquipCards(state) {
           // 装備由来の全ステ系強化はMST・LCK分だけベース側でキャップされる(Ephinea仕様)。
           // Red Ringの+20がATP等は装備列・MST/LCKは効果列に分かれる理由をその場で説明する
           if (slot !== 'unit' && ['ability', 'stats5', 'all_stats'].includes(m.channel)) {
-            s += ' <span class="overridden-note">※ the MST/LCK portion counts toward the cap (Effects column) even though it comes from gear — Ephinea rule</span>';
+            s += ' <span class="overridden-note">※ Exception: MST and LCK can never exceed the stat cap, even when boosted by gear (that part is shown in the Effects column)</span>';
           }
           return s;
         }).join(', ');
