@@ -4,42 +4,94 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Item List — Ephinea Tools</title>
-<style>
+<style>/* Ephinea Tools 共通テーマ (単一ソース)
+   全4ページ+Simulatorのローカル版に埋め込まれる。
+   パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
+   ダークはフォトン寄りの濃紺トーン。chip系はゲーム準拠の意味色。 */
+
 :root {
-  --bg: #f5f6f8; --card: #ffffff; --text: #1a1d24; --sub: #667085;
-  --border: #e4e7ec; --accent: #4f6af0; --accent-soft: #eef1fe;
-  --gold: #b7791f; --gold-soft: #fdf3e0; --red: #d92d20; --green: #12805c;
+  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
+  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+  --photon: #31c7e8;
+  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #9aa8b8;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
+  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
+  --chip-set: #feecec; --chip-set-t: #d92d20;
 }
 @media (prefers-color-scheme: dark) {
-  :root { --bg: #12141a; --card: #1c1f28; --text: #e8eaf0; --sub: #98a2b3;
-    --border: #2c313d; --accent: #7c93f5; --accent-soft: #232a44;
-    --gold: #e0a94f; --gold-soft: #322817; --red: #f97066; --green: #3ccb95; }
+  :root { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
+    --border: #24313f; --accent: #3db4f2; --accent-soft: #10293c;
+    --photon: #31c7e8;
+    --gold: #e0a94f; --gold-soft: #2f2510; --red: #f97066; --green: #3ccb95;
+    --strike: #5d6f82;
+    --chip-weapon: #132a3e; --chip-weapon-t: #6cb8f7;
+    --chip-frame: #102b20; --chip-frame-t: #3ccb95;
+    --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
+    --chip-unit: #241a3d; --chip-unit-t: #b18aff;
+    --chip-set: #391b1b; --chip-set-t: #f97066; }
 }
-:root[data-theme="dark"] { --bg: #12141a; --card: #1c1f28; --text: #e8eaf0; --sub: #98a2b3;
-  --border: #2c313d; --accent: #7c93f5; --accent-soft: #232a44;
-  --gold: #e0a94f; --gold-soft: #322817; --red: #f97066; --green: #3ccb95; }
-:root[data-theme="light"] { --bg: #f5f6f8; --card: #ffffff; --text: #1a1d24; --sub: #667085;
-  --border: #e4e7ec; --accent: #4f6af0; --accent-soft: #eef1fe;
-  --gold: #b7791f; --gold-soft: #fdf3e0; --red: #d92d20; --green: #12805c; }
+:root[data-theme="dark"] { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
+  --border: #24313f; --accent: #3db4f2; --accent-soft: #10293c;
+  --photon: #31c7e8;
+  --gold: #e0a94f; --gold-soft: #2f2510; --red: #f97066; --green: #3ccb95;
+  --strike: #5d6f82;
+  --chip-weapon: #132a3e; --chip-weapon-t: #6cb8f7;
+  --chip-frame: #102b20; --chip-frame-t: #3ccb95;
+  --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
+  --chip-unit: #241a3d; --chip-unit-t: #b18aff;
+  --chip-set: #391b1b; --chip-set-t: #f97066; }
+:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
+  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+  --photon: #31c7e8;
+  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #9aa8b8;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
+  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
+  --chip-set: #feecec; --chip-set-t: #d92d20; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px 14px 80px; }
 .wrap { max-width: 1200px; margin: 0 auto; }
 a { color: var(--accent); }
+
+/* ナビ (全ページ共通) */
 .nav { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; font-size: 0.88rem; }
-.nav .brand { font-weight: 800; font-size: 1.05rem; color: var(--text); text-decoration: none; }
+.nav .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.05rem; color: var(--text); text-decoration: none; }
+.nav .brand::before { content: ''; width: 9px; height: 20px; border-radius: 4px; background: linear-gradient(160deg, var(--accent), var(--photon)); }
 .nav a.tab { text-decoration: none; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+.nav a.tab:hover { border-color: var(--accent); }
 .nav a.tab.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
 .nav .spacer { flex: 1; }
 .nav .inv-chip { font-size: 0.75rem; color: var(--sub); }
 .theme-btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 99px; padding: 4px 12px; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
+
+/* 見出し */
+h1.page { display: flex; align-items: center; gap: 10px; font-size: 1.3rem; margin-bottom: 4px; }
+h2.sec { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; margin: 22px 0 10px; }
+h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; border-radius: 2px; background: linear-gradient(180deg, var(--accent), var(--photon)); }
+
+/* パネル(カード) */
 .panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
-.panel h2 { font-size: 1rem; margin-bottom: 10px; }
-.footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
-.footer a { color: var(--sub); }
-.btn { border: 1px solid var(--border); background: var(--accent-soft); color: var(--accent); border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+.panel > h2 { display: flex; align-items: center; gap: 8px; font-size: 1rem; margin-bottom: 10px; }
+.panel > h2 .grow { flex: 1; }
+
+/* ボタン階層: .btn=主要アクション(塗り) / .reset=補助(枠線) */
+.btn { border: 1px solid var(--accent); background: var(--accent); color: #ffffff; border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.reset { border: 1px solid var(--border); background: var(--card); color: var(--sub); border-radius: 8px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer; }
+.reset:hover { color: var(--accent); border-color: var(--accent); }
+
+/* 汎用テキスト */
 .note { font-size: 0.78rem; color: var(--sub); }
 .warn { color: var(--red); }
 .ok { color: var(--green); font-weight: 700; }
+.footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
+.footer a { color: var(--sub); }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
@@ -48,7 +100,6 @@ a { color: var(--accent); }
 .card .sub { font-size: 0.72rem; color: var(--sub); margin-top: 2px; }
 .card.gold { background: var(--gold-soft); border-color: var(--gold); }
 .card.gold .val { color: var(--gold); }
-h2 { font-size: 1.05rem; margin: 24px 0 10px; }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
 .controls input[type=search], .controls select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 0.85rem; }
 .controls input[type=search] { flex: 1 1 200px; min-width: 160px; }
@@ -57,7 +108,7 @@ h2 { font-size: 1.05rem; margin: 24px 0 10px; }
 .tblwrap { overflow-x: auto; background: var(--card); border: 1px solid var(--border); border-radius: 12px; }
 table { width: 100%; border-collapse: collapse; font-size: 0.82rem; min-width: 760px; }
 th, td { padding: 7px 10px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
-th { position: sticky; top: 0; background: var(--card); font-size: 0.72rem; color: var(--sub); cursor: pointer; user-select: none; z-index: 1; }
+th { position: sticky; top: 0; background: var(--accent-soft); font-size: 0.72rem; color: var(--text); cursor: pointer; user-select: none; z-index: 1; }
 th .arrow { opacity: 0.5; font-size: 0.65rem; }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 td .notetxt { display: block; white-space: normal; font-size: 0.72rem; color: var(--sub); }
@@ -96,7 +147,8 @@ tr.zero { opacity: 0.55; }
   <p class="note">First import your <a href="../">Home</a>  first.</p>
 </div>
 <div id="app" style="display:none">
-<p style="margin-bottom:4px; font-size:0.92rem">Search and filter every character's inventory, bank and the shared bank in one place. Click a breakdown card below to filter the list.</p>
+<h1 class="page">📦 Item List</h1>
+<p class="note" style="margin-bottom:4px; font-size:0.92rem">Search and filter every character's inventory, bank and the shared bank in one place. Click a breakdown card below to filter the list.</p>
 <p class="note" style="margin-bottom:14px">Values are shown in <b>PD (Photon Drop)</b> , the item used as Ephinea's de-facto trading currency. Prices follow the<a href="https://wiki.pioneer2.net/w/Price_guide" target="_blank">Price guide</a> (community price list, master generated: 2026-07-29 09:04) and are estimates — actual sales vary with hit%, attributes and demand.</p>
 <div class="cards">
   <div class="card gold"><div class="label">Total value (est.)</div><div class="val" id="cTotal">-</div><div class="sub" id="cMeseta"></div></div>
@@ -105,13 +157,13 @@ tr.zero { opacity: 0.55; }
   <div class="card"><div class="label">Top item</div><div class="val" id="cTopVal">-</div><div class="sub" id="cTopName"></div></div>
 </div>
 
-<h2>By category <span style="font-size:0.72rem;font-weight:400;color:var(--sub)">click to filter</span></h2>
+<h2 class="sec">By category <span style="font-size:0.72rem;font-weight:400;color:var(--sub)">click to filter</span></h2>
 <div class="catgrid" id="catgrid"></div>
 
-<h2>By character <span style="font-size:0.72rem;font-weight:400;color:var(--sub)">click to filter</span></h2>
+<h2 class="sec">By character <span style="font-size:0.72rem;font-weight:400;color:var(--sub)">click to filter</span></h2>
 <div class="catgrid" id="chargrid"></div>
 
-<h2>All items</h2>
+<h2 class="sec">All items</h2>
 <div class="controls">
   <input type="search" id="q" placeholder="Search by item name or note…">
   <select id="fcat"><option value="">Category: all</option></select>

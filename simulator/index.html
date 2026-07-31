@@ -5,65 +5,104 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ステータスシミュレーター — Ephinea Tools</title>
 <style>
+/* Ephinea Tools 共通テーマ (単一ソース)
+   全4ページ+シミュレーターのローカル版に埋め込まれる。
+   パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
+   ダークはフォトン寄りの濃紺トーン。chip系はゲーム準拠の意味色。 */
+
 :root {
-  --bg: #f5f6f8; --card: #ffffff; --text: #1a1d24; --sub: #667085;
-  --border: #e4e7ec; --accent: #4f6af0; --accent-soft: #eef1fe;
-  --gold: #b7791f; --gold-soft: #fdf3e0; --red: #d92d20; --green: #12805c;
-  --strike: #98a2b3;
-  --chip-weapon: #e8f4fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #eefbf1; --chip-frame-t: #12805c;
-  --chip-barrier: #fdf3e0; --chip-barrier-t: #b7791f;
-  --chip-unit: #f4ebfe; --chip-unit-t: #7a3ce7;
-  --chip-set: #ffefef; --chip-set-t: #d92d20;
+  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
+  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+  --photon: #31c7e8;
+  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #9aa8b8;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
+  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
+  --chip-set: #feecec; --chip-set-t: #d92d20;
 }
 @media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #12141a; --card: #1c1f28; --text: #e8eaf0; --sub: #98a2b3;
-    --border: #2c313d; --accent: #7c93f5; --accent-soft: #232a44;
-    --gold: #e0a94f; --gold-soft: #322817; --red: #f97066; --green: #3ccb95;
-    --strike: #667085;
-    --chip-weapon: #16283a; --chip-weapon-t: #6cb2f7;
-    --chip-frame: #14291c; --chip-frame-t: #3ccb95;
-    --chip-barrier: #322817; --chip-barrier-t: #e0a94f;
-    --chip-unit: #271a3d; --chip-unit-t: #b18aff;
-    --chip-set: #391b1b; --chip-set-t: #f97066;
-  }
+  :root { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
+    --border: #24313f; --accent: #3db4f2; --accent-soft: #10293c;
+    --photon: #31c7e8;
+    --gold: #e0a94f; --gold-soft: #2f2510; --red: #f97066; --green: #3ccb95;
+    --strike: #5d6f82;
+    --chip-weapon: #132a3e; --chip-weapon-t: #6cb8f7;
+    --chip-frame: #102b20; --chip-frame-t: #3ccb95;
+    --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
+    --chip-unit: #241a3d; --chip-unit-t: #b18aff;
+    --chip-set: #391b1b; --chip-set-t: #f97066; }
 }
-/* 手動テーマ切替 (data-theme がOS設定より優先) */
-:root[data-theme="dark"] {
-  --bg: #12141a; --card: #1c1f28; --text: #e8eaf0; --sub: #98a2b3;
-  --border: #2c313d; --accent: #7c93f5; --accent-soft: #232a44;
-  --gold: #e0a94f; --gold-soft: #322817; --red: #f97066; --green: #3ccb95;
-  --strike: #667085;
-  --chip-weapon: #16283a; --chip-weapon-t: #6cb2f7;
-  --chip-frame: #14291c; --chip-frame-t: #3ccb95;
-  --chip-barrier: #322817; --chip-barrier-t: #e0a94f;
-  --chip-unit: #271a3d; --chip-unit-t: #b18aff;
-  --chip-set: #391b1b; --chip-set-t: #f97066;
-}
-:root[data-theme="light"] {
-  --bg: #f5f6f8; --card: #ffffff; --text: #1a1d24; --sub: #667085;
-  --border: #e4e7ec; --accent: #4f6af0; --accent-soft: #eef1fe;
-  --gold: #b7791f; --gold-soft: #fdf3e0; --red: #d92d20; --green: #12805c;
-  --strike: #98a2b3;
-  --chip-weapon: #e8f4fd; --chip-weapon-t: #0b6bcb;
-  --chip-frame: #eefbf1; --chip-frame-t: #12805c;
-  --chip-barrier: #fdf3e0; --chip-barrier-t: #b7791f;
-  --chip-unit: #f4ebfe; --chip-unit-t: #7a3ce7;
-  --chip-set: #ffefef; --chip-set-t: #d92d20;
-}
-.titlebar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.theme-btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 99px; padding: 4px 12px; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
+:root[data-theme="dark"] { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
+  --border: #24313f; --accent: #3db4f2; --accent-soft: #10293c;
+  --photon: #31c7e8;
+  --gold: #e0a94f; --gold-soft: #2f2510; --red: #f97066; --green: #3ccb95;
+  --strike: #5d6f82;
+  --chip-weapon: #132a3e; --chip-weapon-t: #6cb8f7;
+  --chip-frame: #102b20; --chip-frame-t: #3ccb95;
+  --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
+  --chip-unit: #241a3d; --chip-unit-t: #b18aff;
+  --chip-set: #391b1b; --chip-set-t: #f97066; }
+:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #5b6b7e;
+  --border: #dde5ee; --accent: #0b7fc2; --accent-soft: #e6f4fc;
+  --photon: #31c7e8;
+  --gold: #a9761a; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #9aa8b8;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0b6bcb;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0f7a58;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #a9761a;
+  --chip-unit: #f1ecfe; --chip-unit-t: #6d3ae0;
+  --chip-set: #feecec; --chip-set-t: #d92d20; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.55; padding: 20px 14px 80px; font-size: 14px; }
-.wrap { max-width: 1280px; margin: 0 auto; }
+body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px 14px 80px; }
+.wrap { max-width: 1200px; margin: 0 auto; }
+a { color: var(--accent); }
+
+/* ナビ (全ページ共通) */
+.nav { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; font-size: 0.88rem; }
+.nav .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.05rem; color: var(--text); text-decoration: none; }
+.nav .brand::before { content: ''; width: 9px; height: 20px; border-radius: 4px; background: linear-gradient(160deg, var(--accent), var(--photon)); }
+.nav a.tab { text-decoration: none; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+.nav a.tab:hover { border-color: var(--accent); }
+.nav a.tab.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.nav .spacer { flex: 1; }
+.nav .inv-chip { font-size: 0.75rem; color: var(--sub); }
+.theme-btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 99px; padding: 4px 12px; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
+
+/* 見出し */
+h1.page { display: flex; align-items: center; gap: 10px; font-size: 1.3rem; margin-bottom: 4px; }
+h2.sec { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; margin: 22px 0 10px; }
+h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; border-radius: 2px; background: linear-gradient(180deg, var(--accent), var(--photon)); }
+
+/* パネル(カード) */
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+.panel > h2 { display: flex; align-items: center; gap: 8px; font-size: 1rem; margin-bottom: 10px; }
+.panel > h2 .grow { flex: 1; }
+
+/* ボタン階層: .btn=主要アクション(塗り) / .reset=補助(枠線) */
+.btn { border: 1px solid var(--accent); background: var(--accent); color: #ffffff; border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.reset { border: 1px solid var(--border); background: var(--card); color: var(--sub); border-radius: 8px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer; }
+.reset:hover { color: var(--accent); border-color: var(--accent); }
+
+/* 汎用テキスト */
+.note { font-size: 0.78rem; color: var(--sub); }
+.warn { color: var(--red); }
+.ok { color: var(--green); font-weight: 700; }
+.footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
+.footer a { color: var(--sub); }
+
+.titlebar { display: flex; align-items: center; gap: 10px; }
+.titlebar .theme-btn { margin-left: auto; }
 h1 { font-size: 1.3rem; margin-bottom: 2px; }
 .meta { color: var(--sub); font-size: 0.75rem; margin-bottom: 16px; }
 .meta a { color: var(--accent); }
 .layout { display: grid; grid-template-columns: 340px 1fr; gap: 14px; align-items: start; }
 @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
 /* 詳細表は通常フロー。スクロールで画面外に出たら、固定オーバーレイの1行バーが現れる */
-.compact-strip { display: none; position: fixed; top: 8px; left: 50%; transform: translateX(-50%); width: min(1252px, calc(100% - 28px)); z-index: 50; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 7px 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.14); flex-wrap: wrap; gap: 2px 16px; align-items: center; cursor: pointer; font-size: 0.8rem; }
+.compact-strip { display: none; position: fixed; top: 8px; left: 50%; transform: translateX(-50%); width: min(1172px, calc(100% - 28px)); z-index: 50; background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 7px 14px; box-shadow: 0 4px 16px rgba(0,0,0,0.14); flex-wrap: wrap; gap: 2px 16px; align-items: center; cursor: pointer; font-size: 0.8rem; }
 .compact-strip .cs { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .compact-strip .cs-k { color: var(--sub); font-size: 0.72rem; margin-right: 3px; }
 .compact-strip .over { color: var(--red); font-weight: 600; }
@@ -79,9 +118,7 @@ th.sep, td.sep { border-left: 2px solid var(--accent-soft); }
 td.total { font-weight: 700; }
 @keyframes cellflash { 0% { background: var(--gold-soft); } 100% { background: transparent; } }
 td.flash { animation: cellflash 0.9s ease-out; }
-.panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; }
-.panel h2 { font-size: 0.85rem; margin-bottom: 8px; color: var(--sub); letter-spacing: 0.04em; display: flex; align-items: center; justify-content: space-between; }
-.panel h2 .reset { font-size: 0.7rem; color: var(--accent); cursor: pointer; background: none; border: 1px solid var(--border); border-radius: 6px; padding: 1px 8px; }
+.panel > h2 .reset { margin-left: auto; }
 .row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap; }
 .row label { font-size: 0.78rem; color: var(--sub); min-width: 58px; }
 .vrow { display: grid; grid-template-columns: 44px 1fr 52px; align-items: center; gap: 6px; margin: 4px 0 4px 58px; }
@@ -150,22 +187,15 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 .candidate { color: var(--sub); }
 .candidate .hint { color: var(--gold); }
 .empty-note { color: var(--sub); font-size: 0.78rem; }
-.warn { color: var(--red); font-size: 0.75rem; }
+.warn { font-size: 0.75rem; }
 .own-badge { font-size: 0.68rem; }
 .equipcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
 .eqcard { border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; font-size: 0.78rem; }
 .eqcard .ename { font-weight: 700; margin-bottom: 2px; }
 .eqcard .estat { color: var(--sub); }
 .eqcard ul { margin-left: 1.1em; }
-.footnote { margin-top: 18px; font-size: 0.72rem; color: var(--sub); }
-.footnote li { margin-left: 1.2em; margin-top: 3px; }
-
-.nav { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; font-size: 0.88rem; }
-.nav .brand { font-weight: 800; font-size: 1.05rem; color: var(--text); text-decoration: none; }
-.nav a.tab { text-decoration: none; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
-.nav a.tab.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
-.nav .spacer { flex: 1; }
-.nav .inv-chip { font-size: 0.75rem; color: var(--sub); }
+.footnote { font-size: 0.78rem; color: var(--sub); line-height: 1.7; }
+.footnote li { margin-left: 1.2em; margin-top: 4px; }
 </style>
 <link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/simulator/">
 <link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/simulator/">
@@ -181,11 +211,11 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
   <a class="tab" href="/en/simulator/" hreflang="en">English</a><span class="spacer"></span>
   <span class="inv-chip" id="invChipS"></span>
   <button class="theme-btn" id="themeToggle">🌙 ダーク</button>
-</div><p style="margin-bottom:10px;font-size:0.78rem;color:var(--sub)">使い方: ① 職業とレベルを選ぶ → ② 装備・マグ・マテリアルを設定 → 上の表にステータス、右の「効果一望パネル」に装備効果の内訳と優先関係が表示されます。各列の意味は見出しにマウスを乗せると確認できます。</p>
-<div class="titlebar">
-  <h1>PSOBB Ephinea ステータスシミュレーター</h1>
 </div>
-<p class="meta">装備データ: <a href="https://wiki.pioneer2.net" target="_blank">wiki.pioneer2.net</a> (Ephinea) / キャラデータ: バニラBB準拠 / 生成: 2026-07-31</p>
+<div class="titlebar">
+  <h1 class="page">⚔️ ステータスシミュレーター</h1>
+</div>
+<p class="note" style="margin-bottom:12px">使い方: ① 職業とレベルを選ぶ → ② 装備・マグ・マテリアルを設定 → 上の表にステータス、「効果一望パネル」に装備効果の内訳と優先関係が表示されます。各列の意味は見出しにマウスを乗せると確認できます。</p>
 
 <div id="stickySentinel"></div>
 <div class="sticky-results" id="stickyResults">
@@ -220,7 +250,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <h2>プリセット</h2>
     <div class="row">
       <input type="text" id="presetName" placeholder="ビルド名" style="flex:1;min-width:0">
-      <button class="reset" id="presetSave">保存</button>
+      <button class="btn" id="presetSave" style="padding:4px 12px; font-size:0.78rem">保存</button>
     </div>
     <div id="presetList" class="preset-list"></div>
     <div class="row" style="gap:6px; margin-top:6px">
@@ -230,7 +260,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     </div>
     <details class="copies"><summary>テキスト貼り付けで読み込み</summary>
       <textarea id="presetPaste" rows="3" style="width:100%; margin-top:4px; font-size:0.72rem; background:var(--bg); color:var(--text); border:1px solid var(--border); border-radius:8px; padding:6px" placeholder="書き出したJSONを貼り付け"></textarea>
-      <button class="reset" id="presetPasteBtn" style="margin-top:4px">取り込む</button>
+      <button class="btn" id="presetPasteBtn" style="margin-top:4px; padding:4px 12px; font-size:0.78rem">取り込む</button>
     </details>
     <div class="varstat" id="presetNote"></div>
   </div>
@@ -274,7 +304,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <div class="row"><label>ユニット2</label><select id="unit2" class="slot-select unitsel"><option value="">-</option></select></div>
     <div class="row"><label>ユニット3</label><select id="unit3" class="slot-select unitsel"><option value="">-</option></select></div>
     <div class="row"><label>ユニット4</label><select id="unit4" class="slot-select unitsel"><option value="">-</option></select></div>
-    <!--SITEONLY--><div class="row" style="margin-top:6px"><button class="reset" id="addWishBtn">🎯 未所持の装備を欲しいものリストへ</button></div>
+    <!--SITEONLY--><div class="row" style="margin-top:6px"><button class="btn" id="addWishBtn" style="padding:5px 12px; font-size:0.78rem">🎯 未所持の装備を欲しいものリストへ</button></div>
     <div class="row varstat" id="addWishNote" style="line-height:1.5"></div><!--/SITEONLY-->
     <div class="row varstat" id="equipWarn"></div>
   </div>
@@ -316,6 +346,8 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 </div>
 </div>
 
+<div class="panel">
+<h2>仕様と計算の前提</h2>
 <ul class="footnote">
   <li>「素ステ」= ベース+マテ+マグ+ユニット+効果(MST/LCK例外等)のキャップ前合計。限界値を超えた分は<b>赤字で表示され、ステータスには反映されません</b>。緑✓は限界値ちょうどです。</li>
   <li>「差」= 素ステ − 限界値。マテリアルやマグの配分を調整する目安になります。</li>
@@ -324,8 +356,16 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
   <li>ATAは小数1桁まで表示(ゲーム内部は×10整数)。マグDEXは1につきATA+0.5。</li>
   <li>フレーム/バリア/武器の可変ステータスはスライダーで個体値を指定(初期値=最大)。</li>
   <li>攻撃速度など重複しない効果は最大値のみ適用。負けた効果は打ち消し表示。</li>
-  <li>効果の重なり方: テクニック威力は<b>加算</b> / TP消費軽減は<b>乗算</b> / 攻撃速度・V50xは<b>最大のものだけ適用</b> / メギド貫通は重複させても効果なし / <b>テク範囲の重複合成はどの一次情報にも記載がなく未確証</b>のため、重複時は単一分(+100%)のみ表示。</li>
+  <li>効果の重なり方: テクニック威力は<b>加算</b> / TP消費軽減は<b>乗算</b> / 攻撃速度・V50xは<b>最大のものだけ適用</b> / メギド貫通は重複させても効果なし / テクニック範囲アップは重複時の挙動が確認できていないため、1つ分のみ表示しています。</li>
 </ul>
+<p class="note" style="margin-top:10px">装備データ: <a href="https://wiki.pioneer2.net" target="_blank">wiki.pioneer2.net</a> (Ephinea) / キャラクター成長データ: バニラPSOBB準拠 / データ生成: 2026-07-31</p>
+</div>
+<div class="footer">
+<p>データ出典: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
+ (装備・相場・テクニック仕様) / キャラクター成長データはバニラPSOBB準拠 /
+ Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">旧ステータスシミュレーター</a></p>
+<p>入力されたインベントリデータはブラウザ内(localStorage)にのみ保存され、サーバーには一切送信されません。</p>
+</div>
 </div>
 
 <script>
