@@ -158,20 +158,28 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .gobtn { width: 100%; padding: 10px; font-size: 0.95rem; margin-top: 10px; }
 .magres { border: 1px solid var(--border); border-radius: 12px; background: var(--card);
           padding: 14px 16px; margin-bottom: 12px; }
-.reshead { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline;
+.reshead { display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
            border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; }
-.reshead .cost { font-size: 1.05rem; font-weight: 700; }
-.reshead .time { color: var(--sub); font-size: 0.85rem; }
+.echip { font-size: 0.78rem; border: 1px solid var(--border); border-radius: 99px;
+         padding: 2px 10px; color: var(--sub); white-space: nowrap; }
+.echip.good { border-color: var(--green); color: var(--green); font-weight: 600; }
+.echip.hard { border-color: var(--red); color: var(--red); font-weight: 600; }
 .reshead .route { margin-left: auto; font-size: 0.8rem; color: var(--accent);
                   background: var(--accent-soft); border-radius: 99px; padding: 2px 10px; }
 .formpath { font-size: 0.84rem; margin-bottom: 4px; }
 .formpath .cur { font-weight: 700; }
 .pbline { font-size: 0.82rem; color: var(--sub); margin-bottom: 10px; }
-.phase { margin-top: 12px; }
+.seghead { margin: 14px 0 2px; padding: 8px 10px; border-radius: 8px;
+           background: var(--accent-soft); font-size: 0.84rem; }
+.seghead .segwho { color: var(--accent); font-weight: 700; margin-right: 8px; }
+.seghead .pass { color: var(--sub); font-size: 0.76rem; margin-left: 8px; }
+.segchars { margin-top: 4px; font-size: 0.8rem; display: flex; flex-wrap: wrap;
+            gap: 4px 8px; align-items: center; }
+.phase { margin-top: 10px; }
 .phase > h4 { margin: 0 0 6px; font-size: 0.82rem; display: flex; flex-wrap: wrap;
               align-items: center; gap: 6px; }
-.phase .who { font-weight: normal; color: var(--sub); font-size: 0.78rem; }
-.phase .nochar { color: var(--red); }
+.who { font-weight: normal; color: var(--sub); font-size: 0.78rem; }
+.nochar { color: var(--red); }
 .steps { font-size: 0.86rem; }
 .steps div { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 4px 0;
              border-bottom: 1px dotted var(--border); align-items: baseline; }
@@ -188,7 +196,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 <link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/mag/">
 <link rel="alternate" hreflang="en" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/mag/">
 <link rel="alternate" hreflang="x-default" href="https://ephinea-pso-tools.nishimoto-learning.jp/mag/">
-<meta name="description" content="Mag planner for PSOBB Ephinea. Enter your target stats and get the exact feeding order, which character to hand the mag to at each evolution, the Photon Blasts you will learn, and rare/cell mag routes.">
+<meta name="description" content="Mag planner for PSOBB Ephinea. Enter your target stats and get the exact feeding order, ranked by how easy the plan is to actually execute: fewest hand-offs between characters and as few switches of food as possible. Covers rare mags, mag cells and the bank trick.">
 </head>
 <body>
 <nav class="nav" aria-label="Site menu">
@@ -200,7 +208,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 </nav>
 <main class="wrap">
 <h1>🧬 Mag Planner</h1>
-<p class="lead">Set your target stats and get the exact feeding order — which character to hand the mag to at each evolution, the Photon Blasts you will learn, and how long it will take.</p>
+<p class="lead">Set your target stats and get the exact feeding order. It does not aim for the fastest route but for <b>the easiest one to actually carry out</b>: plans are ranked so that the ones needing fewest hand-offs between characters, and letting you keep feeding the same thing without thinking, come first.</p>
 
 <div class="maglayout">
 <div class="maginputs">
@@ -224,7 +232,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
       <div class="optrow" style="align-items:start"><label>PBs to avoid</label>
         <div class="pbpick" id="magAvoid"></div></div>
       <div class="chkrow"><input type="checkbox" id="magBank">
-        <label for="magBank">Use the bank trick <span class="hint">keeps DEF low but takes 3× longer</span></label></div>
+        <label for="magBank">Use the bank trick <span class="hint">keeps DEF low, but you must re-bank after every single item</span></label></div>
       <div class="chkrow"><input type="checkbox" id="magOwn">
         <label for="magOwn">Only use characters I have</label></div>
       <div class="chkrow"><input type="checkbox" id="magNoCell">
@@ -243,8 +251,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   <div style="padding:10px 4px 2px">
   <p>Based on the official Ephinea wiki feeding tables and evolution conditions. It works backwards by <b>fixing the stats at each evolution first, then choosing food</b>. Since stats never decrease, every intermediate state must stay at or below the target — which narrows the candidates to a finite set.</p>
   <p class="note">Steps are given as "N of one food". When two foods must be combined to make progress, it shows a ratio like "[A×7 + B×1] ×15 sets" — you never need to alternate one at a time.</p>
-  <p>The third evolution (Lv50) depends on <b>class, the ordering of your stats, and whether the Section ID is even or odd</b>. The fourth evolution (rare mag) happens <b>from Lv100</b>, and once it does the form never changes again.</p>
-  <p class="note">Times assume 3 items per 3 minutes 30 seconds. Using the bank trick is counted as 3× longer.</p>
+  <p>The third evolution (Lv50) depends on <b>class, the ordering of your stats, and whether the Section ID is even or odd</b>. The fourth evolution (rare mag) happens <b>from Lv100</b>, and once it does the form never changes again. Rare-mag plans are listed first precisely because everything after that point is just feeding, with no evolution to worry about.</p>
+  <p class="note">Plans are ordered by <b>how little hassle they are</b>: (1) fewest ratio steps, (2) fewest hand-offs, (3) fewest steps, (4) fewest kinds of food. Total item count and time are deliberately not part of the ranking — how many items you feed has almost no bearing on how easy a plan is to follow.</p>
   </div>
 </details>
 </main>
@@ -311,7 +319,7 @@ function jpName(name) {
   let m = name.match(/^([A-Za-z]+) LV(\d+) Disk$/i);
   if (m) {
     const t = JPN.tech_jp[m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()];
-    if (t) return `${t} Lv${m[2]} ディスク`;
+    if (t) return `${t} Lv${m[2]} Disk`;
   }
   m = name.match(/^(.+) LV(\d+)$/i);
   if (m) {
@@ -319,7 +327,7 @@ function jpName(name) {
     if (b) return `${b} Lv${m[2]}`;
   }
   m = name.match(/^(\d+) MESETA$/i);
-  if (m) return `${Number(m[1]).toLocaleString()} メセタ`;
+  if (m) return `${Number(m[1]).toLocaleString()} meseta`;
   return name;
 }
 function jpRaw(raw, name) {
@@ -432,7 +440,7 @@ class Mag {
   bankRound() { for (const s of MSTATS) if (this.exp[s] % 2 === 1) this.exp[s] -= 1; return this; }
   feed(item, bank) {
     const g = FEED[this.feedTable][item];
-    if (!g) throw new Error('未知の餌: ' + item);
+    if (!g) throw new Error('Unknown food: ' + item);
     for (const s of MSTATS) {
       if (this.level >= 200) break;
       this.exp[s] += g[MKEY[s]];
@@ -548,7 +556,7 @@ class Mag {
 
 // ============ 給餌手順 (mag_planner/tools/mag_planner.py の移植) ============
 // 「1種類の餌をN個」のブロック列にする。人間が実行できる形にするのが目的。
-function planBlocks(mag, target, bank, preferCycle, maxBlocks, maxFeed) {
+function planBlocks(mag, target, bank, preferCycle, sticky, maxBlocks, maxFeed) {
   maxBlocks = maxBlocks || 40; maxFeed = maxFeed || 6000;
   const tgt = Array.isArray(target)
     ? { DEF: target[0], POW: target[1], DEX: target[2], MIND: target[3] } : target;
@@ -556,12 +564,15 @@ function planBlocks(mag, target, bank, preferCycle, maxBlocks, maxFeed) {
   while (blocks.length < maxBlocks && fed < maxFeed) {
     if (MSTATS.every(s => tgt[s] - mag.stats[s] <= 0)) break;
     const table = FEED[mag.feedTable];
+    // sticky=true なら直前と同じ餌を優先して続け、手順の数そのものを減らす
+    const last = blocks.length ? blocks[blocks.length - 1] : null;
+    const prev = (sticky && last && last.items.length === 1) ? last.items[0][0] : null;
     // 単一ブロックをFirst import your使うと伸ばしやすいステを上限まで使い切って詰むことがある。
     // 一度失敗したら preferCycle でサイクル優First import your切り替える
     const blk = preferCycle
       ? (cycleBlock(mag, tgt, table, bank, maxFeed - fed, true)
-         || singleBlock(mag, tgt, table, bank, maxFeed - fed))
-      : (singleBlock(mag, tgt, table, bank, maxFeed - fed)
+         || singleBlock(mag, tgt, table, bank, maxFeed - fed, prev))
+      : (singleBlock(mag, tgt, table, bank, maxFeed - fed, prev)
          || cycleBlock(mag, tgt, table, bank, maxFeed - fed, false));
     if (!blk) break;
     blocks.push(blk); fed += blk.n;
@@ -573,8 +584,10 @@ function mkBlock(items, repeat, n, mag, form) {
   return { items: items, repeat: repeat, n: n, form: form, after: mag.snapshot() };
 }
 
-// 1種類の餌を、超過の直前まで与える
-function singleBlock(mag, tgt, table, bank, budget) {
+// 1種類の餌を、超過の直前まで与える。
+// preferItem = 直前のブロックで与えていた餌。リスクが同じなら同じ餌を続ける
+// (ブロックは進化のたびに切れるので、続けられれば mergeBlocks で1行にまとまる)
+function singleBlock(mag, tgt, table, bank, budget, preferItem) {
   const short = {}; MSTATS.forEach(s => short[s] = tgt[s] - mag.stats[s]);
   const cands = [];
   for (const [item, v] of Object.entries(table)) {
@@ -584,10 +597,11 @@ function singleBlock(mag, tgt, table, bank, budget) {
     // もう足りているステを伸ばす量がリスク(超過は取り返せない)
     let risk = 0;
     MSTATS.forEach(s => { if (short[s] <= 0) risk += Math.max(0, v[MKEY[s]]); });
-    cands.push([risk, -gain, item]);
+    cands.push([risk, item === preferItem ? 0 : 1, -gain, item]);
   }
-  cands.sort((a, b) => a[0] - b[0] || a[1] - b[1] || (a[2] < b[2] ? -1 : 1));
-  for (const [, , item] of cands) {
+  cands.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]
+                       || (a[3] < b[3] ? -1 : 1));
+  for (const [, , , item] of cands) {
     let n = 0; const formBefore = mag.form;
     while (n < budget) {
       const probe = mag.clone(); probe.feed(item, bank);
@@ -732,16 +746,34 @@ function handOver(mag, cls, gender, sid) {
   if (sid) mag.sectionId = sid;
   return mag;
 }
-// 単一ブロック優先で詰んだらサイクル優先で組み直す
+// 給餌ブロック列の「面倒さ」。小さいほど simple。
+// このプランナーが最小化したいのは所要時間ではなく手間なので、餌の総数は含めない。
+// 比率で2種類を混ぜるサイクルは数えながら与える必要があり、圧倒的に面倒
+function blocksEase(blocks) {
+  const cycles = blocks.filter(b => b.items.length > 1).length;
+  const kinds = new Set(); blocks.forEach(b => b.items.forEach(i => kinds.add(i[0])));
+  return [cycles, blocks.length, kinds.size];
+}
+const cmpEase = (a, b) => {
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return 0;
+};
+// 3通りの組み方を試して、成功した中から一番簡単なものを採る
+//   sticky: 直前と同じ餌を続けられるだけ続ける(手順が最も少なくなりやすい)
+//   単一優先/サイクル優先: sticky や単一だけでは詰む場合の保険
 function runTo(mag, goal, bank) {
-  let blocks = [];
-  for (const prefer of [false, true]) {
-    const m = mag.clone();
-    const r = planBlocks(m, goal, bank, prefer);
-    blocks = r[1];
-    if (MSTATS.every(s => r[0].stats[s] === goal[s])) return [r[0], blocks];
+  let best = null, blocks = [];
+  for (const [preferCycle, sticky] of [[false, true], [false, false], [true, false]]) {
+    const r = planBlocks(mag.clone(), goal, bank, preferCycle, sticky);
+    if (!MSTATS.every(s => r[0].stats[s] === goal[s])) {
+      if (!blocks.length) blocks = r[1];
+      continue;
+    }
+    const e = blocksEase(r[1]);
+    if (!best || cmpEase(e, best[0]) < 0) best = [e, r[0], r[1]];
+    if (e[0] === 0 && sticky) break;   // just keep feeding the same thingで済む = 最も簡単
   }
-  return [null, blocks];
+  return best ? [best[1], best[2]] : [null, blocks];
 }
 function pbOk(pbs, want, avoid, done) {
   if (avoid && avoid.length && pbs.some(p => avoid.includes(p))) return false;
@@ -771,15 +803,66 @@ const classesOf = chars => (chars && chars.length)
 const charOf = (chars, cls, gender) => (chars || []).find(
   c => c.class === cls && (!gender || c.gender === gender)) || null;
 
+// 工程がChar に要求する条件。工程ごとに厳しさが違う。
+// 第1/第2進化は職業だけ(IDは不問)、第3進化は職業+Section IDの偶奇、
+// 第4進化は職業+性別+IDが完全一致でないと同じ結果にならない
+function reqOf(ph) {
+  const mode = (ph.idFree || !ph.sid) ? 'any' : (ph.parity ? 'parity' : 'exact');
+  return { cls: ph.cls, gender: ph.gender || null,
+           sid: mode === 'any' ? null : ph.sid, mode: mode };
+}
+// 2つの工程を同じChar で担当できるなら合成した条件を返す。無理なら null
+function mergeReq(a, b) {
+  if (!a) return Object.assign({}, b);
+  if (a.cls !== b.cls) return null;
+  if (a.gender && b.gender && a.gender !== b.gender) return null;
+  const gender = a.gender || b.gender;
+  const rank = { any: 0, parity: 1, exact: 2 };
+  const lo = rank[a.mode] >= rank[b.mode] ? b : a;
+  const hi = rank[a.mode] >= rank[b.mode] ? a : b;
+  if (hi.mode === 'any') return { cls: a.cls, gender: gender, sid: null, mode: 'any' };
+  if (lo.mode === 'any') return { cls: a.cls, gender: gender, sid: hi.sid, mode: hi.mode };
+  const li = SIDS.indexOf(lo.sid), hj = SIDS.indexOf(hi.sid);
+  if (lo.mode === 'exact') { if (lo.sid !== hi.sid) return null; }
+  else if (li % 2 !== hj % 2) return null;
+  return { cls: a.cls, gender: gender, sid: hi.sid, mode: hi.mode };
+}
+// 工程を「同じChar が担当できる区間」にまとめる。区間の境目が受け渡し
+function segmentsOf(phases) {
+  const segs = [];
+  for (const ph of phases) {
+    if (!ph.cls) {                    // 給餌だけの工程は直前の担当のまま
+      if (segs.length) segs[segs.length - 1].phases.push(ph);
+      else segs.push({ req: null, phases: [ph] });
+      continue;
+    }
+    const r = reqOf(ph);
+    const last = segs.length ? segs[segs.length - 1] : null;
+    const merged = last ? mergeReq(last.req, r) : null;
+    if (last && merged) { last.req = merged; last.phases.push(ph); }
+    else segs.push({ req: r, phases: [ph] });
+  }
+  return segs;
+}
+// 途中で「別のChar に渡す」回数。渡さずに済むほど簡単
+const handOffs = phases =>
+  Math.max(0, segmentsOf(phases).filter(s => s.req).length - 1);
+// 案そのものの面倒さ。優先順位は 比率給餌 > 受け渡し回数 > 手順数 > 餌の種類
+function planEase(p) {
+  const blocks = [];
+  p.phases.forEach(ph => ph.blocks.forEach(b => blocks.push(b)));
+  const [cycles, nblocks, kinds] = blocksEase(blocks);
+  return [cycles, handOffs(p.phases), nblocks, kinds];
+}
+
 function prune(states, keep) {
   const byForm = new Map();
   states.forEach(st => {
-    const n = st.phases.reduce((a, p) => a + p.blocks.reduce((x, b) => x + b.n, 0), 0);
     if (!byForm.has(st.mag.form)) byForm.set(st.mag.form, []);
-    byForm.get(st.mag.form).push([n, st]);
+    byForm.get(st.mag.form).push([planEase(st), st]);
   });
   const out = [];
-  byForm.forEach(lst => { lst.sort((a, b) => a[0] - b[0]);
+  byForm.forEach(lst => { lst.sort((a, b) => cmpEase(a[0], b[0]));
     lst.slice(0, keep).forEach(x => out.push(x[1])); });
   return out;
 }
@@ -797,28 +880,30 @@ function finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm) {
     if (wantForm && form4 !== wantForm) continue;
     for (let lv = 100; lv <= final; lv += 10) {
       const [hit] = ordered(lv, st.mag.stats, tgt, 3, w => evalEq(w, eq));
-      let done = false;
+      let best = null;
       for (const w3 of hit) {
         let m = st.mag.clone();
         handOver(m, c4, g4, sid);
         const r1 = runTo(m, w3, bank);
         m = r1[0];
         if (!m || m.form !== form4 || !pbOk(m.pbs, wantPbs, avoidPbs)) continue;
-        const tail = [{ label: `Lv50→${lv} 【hand to a ${GENDER_JP[g4]} ${CLASS_JP[c4]} / ID ${sid}】`,
+        const tail = [{ label: `Lv50→${lv} ← ${magJp(form4)} is locked in here (the form never changes after this)`,
                         cls: c4, gender: g4, sid: sid, rare: form4,
                         blocks: r1[1], after: m.snapshot() }];
         if (lv < final) {
           const r2 = runTo(m, tgt, bank);
           if (!r2[0]) continue;
           m = r2[0];
-          tail.push({ label: `Lv${lv}→target`, blocks: r2[1], after: m.snapshot() });
+          tail.push({ label: `Lv${lv}→target (form is locked; raise freely)`,
+                      blocks: r2[1], after: m.snapshot() });
         }
         if (!pbOk(m.pbs, wantPbs, avoidPbs, true)) continue;
         if (wantForm && m.form !== wantForm) continue;
         const p = pack(st, tail, m); p.rare = form4;
-        out.push(p); done = true; break;
+        const e = planEase(p);      // 同じレベルで確定できる案のof which 簡単な方を採る
+        if (!best || cmpEase(e, best[0]) < 0) best = [e, p];
       }
-      if (done) break;
+      if (best) { out.push(best[1]); break; }
     }
   }
   const r = runTo(st.mag.clone(), tgt, bank);
@@ -878,7 +963,7 @@ function magSolve(target, opt) {
       hits[r[0].form] = (hits[r[0].form] || 0) + 1;
       if (hits[r[0].form] > keep) continue;
       stage1.push({ mag: r[0], c1: c1,
-        phases: [{ label: `Lv5→35 【raise on a ${CLASS_JP[c1]}】`, cls: c1,
+        phases: [{ label: 'Lv5→35', cls: c1,
                    // 第1進化は職業のみ、第2進化はChar 非依存。IDは問わない
                    idFree: true, blocks: r[1], after: r[0].snapshot() }] });
     }
@@ -909,7 +994,7 @@ function magSolve(target, opt) {
         if (hits[r[0].form] > keep) continue;
         stage2.push({ mag: r[0], c1: st.c1,
           phases: st.phases.concat([{
-            label: `Lv35→50 【${c3 !== st.c1 ? 'hand to a ' : 'stay on the '}${CLASS_JP[c3]}】`,
+            label: 'Lv35→50',
             // 第3進化は Section ID の偶奇でも分かれるので、計算に使ったIDを残す
             cls: c3, sid: m.sectionId, parity: true,
             blocks: r[1], after: r[0].snapshot() }]) });
@@ -930,7 +1015,12 @@ function magSolve(target, opt) {
     finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm).forEach(p => results.push(p));
     if (results.length >= stopAfter * 4) break;
   }
-  results.sort((a, b) => (a.rare == null) - (b.rare == null) || a.items - b.items);
+  // Rare magをFirst import your出すのは、一度なれば形態が固定され以降は何も気にせず伸ばせるから。
+  // その中では簡単な順。餌の総数は最後の同点処理にだけ使い、300個単位でしか見ない
+  // (何個あげたかは手間にほぼ影響しないため)
+  results.sort((a, b) => (a.rare == null) - (b.rare == null)
+    || cmpEase(planEase(a), planEase(b))
+    || Math.round(a.items / 300) - Math.round(b.items / 300));
   results = results.concat(cellResults);
   if (opt.onlyCell) results = results.filter(p => p.cell === opt.onlyCell);
   if (!results.length && wantForm) notes.push(explainForm(wantForm, tgt));
@@ -1014,7 +1104,7 @@ function buildStatRows() {
     <div class="magrow">
       <label for="mg${s}">${STAT_LABEL[s]}</label>
       <input type="range" id="mg${s}r" min="0" max="200" value="${DEFAULT_TARGET[s]}"
-             aria-label="${STAT_LABEL[s]} スライダー">
+             aria-label="${STAT_LABEL[s]} slider">
       <input type="number" id="mg${s}" min="0" max="200" value="${DEFAULT_TARGET[s]}"
              aria-label="${STAT_LABEL[s]}">
     </div>`).join('');
@@ -1053,7 +1143,8 @@ function buildOptions() {
   document.getElementById('magRare').innerHTML = '<option value="">No preference</option>'
     + rares.map(n => `<option value="${n}">${esc(jpName(n))}</option>`).join('');
   document.getElementById('magAvoid').innerHTML = Object.keys(PB_JP)
-    .map(p => `<button type="button" class="pbtog" data-pb="${esc(p)}">${esc(PB_JP[p])}</button>`).join('');
+    // 英語ページでは pbJp() が英語名を返す(PB_JP を直接引くと和名が出てしまう)
+    .map(p => `<button type="button" class="pbtog" data-pb="${esc(p)}">${esc(pbJp(p))}</button>`).join('');
   document.querySelectorAll('#magAvoid .pbtog').forEach(b =>
     b.addEventListener('click', () => b.classList.toggle('on')));
   // wiki推奨プラン
@@ -1071,40 +1162,53 @@ function buildOptions() {
 }
 
 // ---- 結果の描画 ----
-const FEED_PER_SET = 3, MIN_PER_SET = 3.5;
-function timeText(items, bank) {
-  const mins = Math.ceil(items / FEED_PER_SET) * MIN_PER_SET * (bank ? 3 : 1);
-  if (mins < 60) return `約${Math.round(mins)}分`;
-  const h = mins / 60;
-  return h < 24 ? `about ${h.toFixed(1)} h` : `about ${(h / 24).toFixed(1)} days (${Math.round(h)} h)`;
+// 出すのは「どれだけ手間が少ないか」。餌の総数や所要時間は載せない
+// (何個あげたか・何時間かかるかは、育てやすさにほとんど関係しないため)
+function easeHTML(r) {
+  const [cyc, hands, blocks, kinds] = planEase(r);
+  const chip = (t, cls) => `<span class="echip ${cls || ''}">${t}</span>`;
+  return chip(hands === 0 ? 'no hand-off (one character does it all)' : `${hands} hand-off${hands > 1 ? 's' : ''}`,
+              hands === 0 ? 'good' : '')
+       + chip(cyc === 0 ? 'just keep feeding the same thing' : `${cyc} ratio step${cyc > 1 ? 's' : ''}`,
+              cyc === 0 ? 'good' : 'hard')
+       + chip(`${blocks} steps`) + chip(`${kinds} kinds of food`);
 }
-// importedみChar から、その工程を任せられる人を探して名前を出す。
-// 工程ごとに必要な条件が違う: 第1/第2進化は職業だけ、第3進化は職業+IDの偶奇、
-// 第4進化は職業+性別+IDが完全一致でないと同じ結果にならない
-function whoText(ph) {
-  if (!ph.cls) return '';
+// 区間(=同じChar が担当できるひとまとまり)に必要な条件を一文にする
+function reqText(req) {
+  // 英語版では語順が逆になる(「Hunterfemale」→「female Hunter」)ので対訳表で丸ごと差し替える
+  const who = (req.gender ? GENDER_JP[req.gender] + ' ' : '') + CLASS_JP[req.cls];
+  if (req.mode === 'exact') return `${who} / ID ${req.sid}`;
+  if (req.mode === 'parity')
+    return `${who} / an ${sidIndex(req.sid) % 2 === 0 ? 'even' : 'odd'} Section ID`;
+  return `${who} (any Section ID)`;
+}
+// importedみChar から、その区間を任せられる人を探して名前を出す。
+// 条件は区間全体の合成なので、ここに出た人は最後まで通しで担当できる
+function reqChars(req) {
   const inv = loadInventory();
   const chars = (inv && inv.chars) ? Object.values(inv.chars) : [];
-  const want = ph.sid ? sidIndex(ph.sid) : -1;
-  const hit = chars.filter(c => {
-    if (classKeyOf(c.cls) !== ph.cls) return false;
-    if (ph.gender && genderOf(c.cls) !== ph.gender) return false;
-    if (ph.idFree || want < 0) return true;
+  const want = req.sid ? sidIndex(req.sid) : -1;
+  return chars.filter(c => {
+    if (classKeyOf(c.cls) !== req.cls) return false;
+    if (req.gender && genderOf(c.cls) !== req.gender) return false;
+    if (req.mode === 'any' || want < 0) return true;
     const i = sidIndex(c.sectionId);
     if (i < 0) return false;
-    // parity=true は偶奇が合えばよい(第3進化)。それ以外はID完全一致(第4進化)
-    return ph.parity ? (i % 2 === want % 2) : i === want;
+    return req.mode === 'parity' ? (i % 2 === want % 2) : i === want;
   });
-  if (!hit.length) {
-    const who = CLASS_JP[ph.cls] + (ph.gender ? GENDER_JP[ph.gender] : '');
-    const idNote = ph.sid ? (ph.parity
-      ? `・${sidIndex(ph.sid) % 2 === 0 ? '偶数' : '奇数'}側のSection ID` : `・ID ${ph.sid}`) : '';
-    return `<span class="who nochar">No matching character (needs ${who}${idNote})</span>`;
-  }
-  const shown = hit.slice(0, 2).map(c =>
-    `<span class="idtag sid-${sidIndex(c.sectionId)}">${esc(c.sectionId)}</span> ${esc(c.name)}`);
-  const more = hit.length > 2 ? ` <span class="who">${hit.length - 2} more</span>` : '';
-  return ' ' + shown.join(' / ') + more;
+}
+function segHeadHTML(req, idx, total) {
+  const hit = reqChars(req);
+  const who = total > 1 ? `character ${idx} of ${total}` : 'who raises it';
+  const pass = idx > 1 ? '<span class="pass">← hand the mag over here</span>' : '';
+  const names = hit.length
+    ? hit.slice(0, 3).map(c =>
+        `<span class="idtag sid-${sidIndex(c.sectionId)}">${esc(c.sectionId)}</span> ${esc(c.name)}`)
+        .join(' / ') + (hit.length > 3 ? ` <span class="who">${hit.length - 3} more</span>` : '')
+    : '<span class="who nochar">no imported character matches</span>'
+      + (loadInventory() ? ' <span class="who">tick "only use my characters" to re-plan with the ones you have</span>' : '');
+  return `<div class="seghead"><span class="segwho">${who}</span>`
+       + `<b>${esc(reqText(req))}</b>${pass}<div class="segchars">${names}</div></div>`;
 }
 // 職業名(HUnewearl 等) → HU/RA/FO と性別
 const classKeyOf = n => String(n).slice(0, 2).toUpperCase();
@@ -1117,24 +1221,31 @@ function blockText(b) {
     return `<span class="cyc">[${body}] ×${b.repeat} sets</span> <span class="st">${b.n} total</span>`;
   return body;
 }
-function resultHTML(r, bank, idx) {
+function resultHTML(r, idx) {
   const m = r.mag;
   const path = ['Mag'].concat(m.log.map(e => e.to));
   const route = r.cell ? `via mag cell ${esc(r.cell)}`
     : r.rare ? `via rare mag ${esc(jpName(r.rare))}` : 'without a rare mag';
-  const phases = r.phases.filter(p => p.blocks.length || !p.after).map(p => {
-    const steps = p.blocks.map(b => {
-      const a = b.after;
-      return `<div><span>${blockText(b)}</span><span class="st">Lv${a.level} `
-           + `${MSTATS.map(s => a.stats[s]).join('/')}</span></div>`;
+  // 工程を「担当Char が変わらない区間」に束ねて、Char 条件は区間の見出しに1回だけ出す
+  const segs = segmentsOf(r.phases);
+  const total = segs.filter(s => s.req).length;
+  let segNo = 0;
+  const phases = segs.map(seg => {
+    const head = seg.req ? segHeadHTML(seg.req, ++segNo, total) : '';
+    const body = seg.phases.filter(p => p.blocks.length || !p.after).map(p => {
+      const steps = p.blocks.map(b => {
+        const a = b.after;
+        return `<div><span>${blockText(b)}</span><span class="st">Lv${a.level} `
+             + `${MSTATS.map(s => a.stats[s]).join('/')}</span></div>`;
+      }).join('');
+      return `<div class="phase"><h4>${esc(p.label)}</h4>`
+           + `<div class="steps">${steps}</div></div>`;
     }).join('');
-    return `<div class="phase"><h4>${esc(p.label)}<span class="who">${whoText(p)}</span></h4>`
-         + `<div class="steps">${steps}</div></div>`;
+    return head + body;
   }).join('');
   return `<div class="magres">
     <div class="reshead">
-      <span class="cost">${r.items.toLocaleString()} items</span>
-      <span class="time">${timeText(r.items, bank)}</span>
+      ${easeHTML(r)}
       <span class="route">${route}</span>
     </div>
     <div class="formpath">${path.map((n, i) =>
@@ -1178,7 +1289,7 @@ function calc() {
         + 'Try relaxing the target or the preferences.</div>';
       return;
     }
-    out.innerHTML = noteHtml + res.map((r, i) => resultHTML(r, bank, i)).join('');
+    out.innerHTML = noteHtml + res.map((r, i) => resultHTML(r, i)).join('');
     out.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => {
       const r = LAST[+b.dataset.sim];
       const st = r.mag.stats;
