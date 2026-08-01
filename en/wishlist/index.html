@@ -159,6 +159,20 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .droptbl td { padding: 4px 8px; border-bottom: 1px solid var(--border); }
 .droptbl .rate { font-variant-numeric: tabular-nums; font-weight: 600; }
 /* .idtag(Section IDタグ)の定義は tools/theme.css に集約 */
+/* 自分のChar で狙えるかを見せる部分 */
+.charfilter { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.cfchip { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+          border: 1px solid var(--border); background: var(--card); color: var(--text);
+          border-radius: 99px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; }
+.cfchip:hover { border-color: var(--accent); }
+.cfchip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.cfchip .who { font-weight: normal; color: var(--sub); font-size: 0.76rem; }
+.cfchip.on .who { color: var(--accent); }
+.cfnote { font-size: 0.82rem; color: var(--sub); margin: 0 0 12px; }
+.mychars { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+           margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.mychars .mylabel { font-size: 0.76rem; color: var(--sub); }
+.mychar { display: inline-flex; align-items: center; gap: 5px; font-size: 0.84rem; }
 .empty { color: var(--sub); font-size: 0.85rem; padding: 30px 0; text-align: center; }
 .warn { color: var(--red); font-size: 0.8rem; }
 details.moredrops summary { cursor: pointer; color: var(--accent); font-size: 0.78rem; margin-top: 4px; }
@@ -190,6 +204,8 @@ details.moredrops summary { cursor: pointer; color: var(--accent); font-size: 0.
   <button class="btn" id="wAddBtn">Add to list</button>
   <datalist id="itemcands"></datalist>
 </div>
+<div class="charfilter" id="charFilter" hidden></div>
+<div class="cfnote" id="cfNote" hidden></div>
 <div id="wList"></div>
 </main>
 <footer class="footer">
@@ -215,6 +231,28 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   localStorage.setItem('pso_theme', __theme);
   applyTheme(__theme);
 });
+
+// ---- Section ID (複数ページで使う。色は theme.css の .idtag.sid-N) ----
+const SIDS = ['Viridia', 'Greenill', 'Skyly', 'Bluefull', 'Purplenum',
+              'Pinkal', 'Redria', 'Oran', 'Yellowboze', 'Whitill'];
+// importedみデータ側は大文字(PINKAL)なので、大小を無視して番号を引く
+const sidIndex = sid => SIDS.findIndex(x => x.toLowerCase() === String(sid || '').toLowerCase());
+
+// ---- importedみ済みChar を Section ID ごとにまとめる ----
+// 返り値: [{sid: 番号, name: 'Whitill', chars: ['まるちbyPEN', '倉庫byPEN']}, ...]
+function charsBySid() {
+  const inv = loadInventory();
+  const all = (inv && inv.chars) ? Object.values(inv.chars) : [];
+  const by = new Map();
+  all.forEach(c => {
+    const i = sidIndex(c.sectionId);
+    if (i < 0) return;
+    if (!by.has(i)) by.set(i, []);
+    by.get(i).push(c.name);
+  });
+  return [...by.entries()].sort((a, b) => a[0] - b[0])
+    .map(([sid, chars]) => ({ sid, name: SIDS[sid], chars }));
+}
 
 // ---- HTMLエスケープ (複数ページで使う) ----
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
@@ -377,7 +415,6 @@ function sealedHTML(name) {
 }
 const DIFFS = ['Normal', 'Hard', 'Very Hard', 'Ultimate'];
 const DIFFS_JP = ['Normal', 'Hard', 'Very Hard', 'Ultimate'];
-const SIDS = ['Viridia', 'Greenill', 'Skyly', 'Bluefull', 'Purplenum', 'Pinkal', 'Redria', 'Oran', 'Yellowboze', 'Whitill'];
 const WL_KEY = 'pso_wishlist';
 
 // ---- 正規名の解決 (英名・和名どちらの入力も受ける) ----
@@ -499,7 +536,33 @@ function dropsHTML(name) {
     html += `<details class="moredrops"><summary>Show ${rest.length} more locations</summary>` +
             head + rest.map(row).join('') + '</table></details>';
   }
-  return html;
+  // 表に出ているIDのof which 、手持ちChar が該当するものを下に添える(いなければ何も出さない)。
+  // 折りたたみに隠れている分も含めて判定する
+  return html + myCharsHTML(rows);
+}
+
+// そのアイテムのドロップに、自分のChar のSection IDが含まれていれば名前を出す
+function myCharsHTML(rows) {
+  const sids = new Set(rows.map(d => d[3]));
+  const hit = charsBySid().filter(g => sids.has(g.sid));
+  if (!hit.length) return '';
+  const items = hit.map(g =>
+    `<span class="mychar"><span class="idtag sid-${g.sid}">${g.name}</span>`
+    + `${g.chars.map(esc).join('・')}</span>`).join('');
+  return `<div class="mychars"><span class="mylabel">Your characters who can farm this</span>`
+       + `${items}</div>`;
+}
+
+// そのアイテムが落ちるSection ID番号の集合 (絞り込み用。ドロップ記録が無ければ null)
+function dropSids(name) {
+  const key = jpKey(name);
+  let k = Object.keys(DROPS).find(n => jpKey(n) === key);
+  if (!k) {
+    const rev = SEALED_REV[key];          // 封印武器は封印体のドロップを見る
+    if (rev) k = Object.keys(DROPS).find(n => jpKey(n) === jpKey(rev.sealed));
+  }
+  if (!k) return null;
+  return new Set(DROPS[k].map(d => d[3]));
 }
 
 // ---- カード描画 (折りたたみ状態は保存して次回も維持) ----
@@ -507,11 +570,56 @@ const FOLD_KEY = 'pso_wishlist_folded';
 function loadFolded() { try { return JSON.parse(localStorage.getItem(FOLD_KEY)) || []; } catch (e) { return []; } }
 function saveFolded(a) { localStorage.setItem(FOLD_KEY, JSON.stringify(a)); }
 
+const CHAR_KEY = 'pso_wishlist_char';
+function loadCharSid() {
+  const v = localStorage.getItem(CHAR_KEY);
+  return v === null || v === '' ? null : Number(v);
+}
+function saveCharSid(v) {
+  if (v === null) localStorage.removeItem(CHAR_KEY); else localStorage.setItem(CHAR_KEY, String(v));
+}
+
+// 上部のChar 別絞り込み。importedみデータが無ければ何も出さない
+function renderCharFilter(wl) {
+  const bar = document.getElementById('charFilter');
+  const note = document.getElementById('cfNote');
+  const groups = charsBySid();
+  if (!groups.length) { bar.hidden = true; note.hidden = true; return; }
+  const cur = loadCharSid();
+  bar.hidden = false;
+  bar.innerHTML = `<button class="cfchip ${cur === null ? 'on' : ''}" data-sid="">All</button>`
+    + groups.map(g => `<button class="cfchip ${cur === g.sid ? 'on' : ''}" data-sid="${g.sid}">`
+        + `<span class="idtag sid-${g.sid}">${g.name}</span>`
+        + `<span class="who">${g.chars.map(esc).join('・')}</span></button>`).join('');
+  bar.querySelectorAll('.cfchip').forEach(b => b.addEventListener('click', () => {
+    saveCharSid(b.dataset.sid === '' ? null : Number(b.dataset.sid));
+    render();
+  }));
+  if (cur === null) { note.hidden = true; return; }
+  const g = groups.find(x => x.sid === cur);
+  const hit = wl.filter(n => (dropSids(n) || new Set()).has(cur)).length;
+  const nodrop = wl.filter(n => dropSids(n) === null).length;
+  note.hidden = false;
+  note.innerHTML = `${g ? esc(g.chars.join('・')) : ''} (${g ? g.name : ''})  can farm: `
+    + `<b>${hit}</b> / ${wl.length}`
+    + (nodrop ? ` — of which <b>${nodrop}</b> with no drop data are hidden` : '');
+}
+
 function render() {
-  const wl = loadWL();
+  const wlAll = loadWL();
   const box = document.getElementById('wList');
-  if (!wl.length) {
+  renderCharFilter(wlAll);
+  const cur = loadCharSid();
+  // Char を選んでいるときは、そのSection IDで落ちるものだけに絞る
+  const wl = cur === null ? wlAll
+    : wlAll.filter(n => (dropSids(n) || new Set()).has(cur));
+  if (!wlAll.length) {
     box.innerHTML = '<div class="empty">Nothing here yet. Add an item name above.</div>';
+    return;
+  }
+  if (!wl.length) {
+    box.innerHTML = '<div class="empty">選んだChar のSection IDで狙えるものはリスト内にありません。'
+      + '上の「All」に戻すと全件表示されます。</div>';
     return;
   }
   const folded = loadFolded();

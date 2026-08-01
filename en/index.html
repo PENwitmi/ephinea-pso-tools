@@ -237,6 +237,28 @@ document.getElementById('themeToggle').addEventListener('click', () => {
   applyTheme(__theme);
 });
 
+// ---- Section ID (複数ページで使う。色は theme.css の .idtag.sid-N) ----
+const SIDS = ['Viridia', 'Greenill', 'Skyly', 'Bluefull', 'Purplenum',
+              'Pinkal', 'Redria', 'Oran', 'Yellowboze', 'Whitill'];
+// importedみデータ側は大文字(PINKAL)なので、大小を無視して番号を引く
+const sidIndex = sid => SIDS.findIndex(x => x.toLowerCase() === String(sid || '').toLowerCase());
+
+// ---- importedみ済みChar を Section ID ごとにまとめる ----
+// 返り値: [{sid: 番号, name: 'Whitill', chars: ['まるちbyPEN', '倉庫byPEN']}, ...]
+function charsBySid() {
+  const inv = loadInventory();
+  const all = (inv && inv.chars) ? Object.values(inv.chars) : [];
+  const by = new Map();
+  all.forEach(c => {
+    const i = sidIndex(c.sectionId);
+    if (i < 0) return;
+    if (!by.has(i)) by.set(i, []);
+    by.get(i).push(c.name);
+  });
+  return [...by.entries()].sort((a, b) => a[0] - b[0])
+    .map(([sid, chars]) => ({ sid, name: SIDS[sid], chars }));
+}
+
 // ---- HTMLエスケープ (複数ページで使う) ----
 function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
 
