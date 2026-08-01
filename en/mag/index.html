@@ -236,6 +236,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .lockmsg { color: var(--green); font-weight: 700; }
 .tlsub { font-size: 0.76rem; color: var(--sub); margin-top: 3px; }
 .tlreq { margin-top: 4px; }
+.whentbl { border-collapse: collapse; font-size: 0.82rem; margin: 8px 0; width: 100%; }
+.whentbl th, .whentbl td { border: 1px solid var(--border); padding: 5px 8px;
+                           text-align: left; vertical-align: top; }
+.whentbl th { background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
+       font-size: 0.92em; }
 .magnote { font-size: 0.84rem; color: var(--sub); margin: 8px 0; }
 .resbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .frozen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
@@ -329,7 +335,18 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   <div style="padding:10px 4px 2px">
   <p>Based on the official Ephinea wiki feeding tables and evolution conditions. It works backwards by <b>fixing the stats at each evolution first, then choosing food</b>. Since stats never decrease, every intermediate state must stay at or below the target — which narrows the candidates to a finite set.</p>
   <p class="note">Steps are given as "N of one food". When two foods must be combined to make progress, it shows a ratio like "[A×7 + B×1] ×15 sets" — you never need to alternate one at a time.</p>
-  <p>The third evolution (Lv50) depends on <b>class, the ordering of your stats, and whether the Section ID is even or odd</b>. The fourth evolution (rare mag) happens <b>from Lv100</b>, and once it does the form never changes again. Rare-mag plans are listed first precisely because everything after that point is just feeding, with no evolution to worry about.</p>
+  <h3>When does the character matter?</h3>
+  <p>The form is judged at the <b>instant</b> the mag reaches a checkpoint level. The character matters only at that instant — at any other time it makes no difference who feeds it. The flip side: <b>if a different character is holding it at that instant, you get a different form</b>.</p>
+  <table class="whentbl">
+    <tr><th>Evolution</th><th>Judged at</th><th>What matters</th></tr>
+    <tr><td>1st</td><td>mag Lv10</td><td>class (HU / RA / FO)</td></tr>
+    <tr><td>2nd</td><td>mag Lv35</td><td><b>the character does not matter</b> (decided by the current form and stats alone)</td></tr>
+    <tr><td>3rd</td><td>from mag Lv50, <b>re-judged every 5 levels, any number of times</b></td><td>class + whether the Section ID is even or odd</td></tr>
+    <tr><td>4th<br>(rare mag)</td><td>from mag Lv100</td><td>class + gender + Section ID. <b>Once it happens, nothing is ever judged again</b></td></tr>
+  </table>
+  <p class="note">So the stretch that needs care is <b>from mag Lv50 until the rare mag locks in</b>. It is re-judged every 5 levels there, so handing it to a character other than the one specified will silently turn it into a different form. After the rare mag, no judgement happens at all, so you can hand it to anyone.</p>
+  <p class="note">Hand the mag between characters through the <b>account-wide common bank</b>. Type <code>/bank</code> in chat to open it, deposit the mag, then withdraw it on another character.</p>
+  <p>Rare-mag plans are listed first because everything after that point is just feeding, with no evolution to worry about.</p>
   <p class="note">Plans are ordered by <b>how little hassle they are</b>: (1) fewest ratio steps, (2) fewest hand-offs, (3) fewest steps, (4) fewest kinds of food. Total item count and time are deliberately not part of the ranking — how many items you feed has almost no bearing on how easy a plan is to follow.</p>
   </div>
 </details>
@@ -1481,6 +1498,18 @@ function timeline(plan) {
     ev.zone = strict ? 'strict' : 'free';
     if (strict && ev.kind === 'feed' && ev.evos.some(e => e.locks)) strict = false;
   });
+  // 各Char が「どの進化を迎えることになるか」。ここを書かないと
+  // 「なぜこのChar なのか」「いつまで持たせるのか」が伝わらない。
+  // holdThrough = MagLv50以降(第3形態のof which )を含む区間。5レベルごとに判定し直されるので、
+  // 「進化の瞬間だけ」ではなく、その区間ずっと同じChar で持つ必要がある
+  let cur = null;
+  out.forEach(ev => {
+    if (ev.kind === 'hand') { cur = ev; ev.covers = []; ev.holdThrough = false; }
+    else if (ev.kind === 'feed' && cur) {
+      cur.covers.push(...ev.evos);
+      if (ev.zone === 'strict' && ev.b.after.level >= 50) cur.holdThrough = true;
+    }
+  });
   return out;
 }
 
@@ -1527,11 +1556,22 @@ function stepHTML(ev, done, next) {
          + `Cell mags never evolve, so any character can raise it`
          + `${m.no_pb ? '. This form cannot hold a Photon Blast' : ''}</div>`;
   } else if (ev.kind === 'hand') {
+    const covers = (ev.covers || []).filter(e => e.form);
     body = `<div class="tlmain">${ev.at === 1 ? 'Give the mag to a character' : 'Hand the mag to a different character'}`
          + `${ev.total > 1 ? ` (character ${ev.at} of ${ev.total})` : ''}</div>`
+         + (ev.at > 1 ? '<div class="tlsub">How: deposit the mag into the common bank on the character holding it now, '
+             + 'then withdraw it on the next character (type <code>/bank</code> in chat)</div>' : '')
          + `<div class="tlreq">${charReqHTML(ev.alt)}</div>`
-         + `<div class="tlsub">Evolution is judged from the character holding the mag at that moment: `
-         + `their class and Section ID</div>`;
+         + (covers.length
+             ? `<div class="tlsub">Evolutions this character will be holding it for: `
+               + covers.map(e => `MagLv${e.level} ${esc(jpName(e.form))}`).join(' / ')
+               + '。' + (ev.holdThrough
+                 ? 'From mag Lv50 the form is re-judged every 5 levels, so '
+                   + '<b>do not move it to another character during this stretch</b></div>'
+                 : '<b>The character only matters at the instant of the evolution</b>, so '
+                   + 'feeding the single item that reaches that evolution on this character is enough; '
+                   + 'everything before it can be fed by anyone</div>')
+             : '');
   } else {
     const a = ev.b.after;
     body = `<div class="tlmain">${blockText(ev.b)}</div>`
@@ -1551,7 +1591,9 @@ function zoneHead(zone, plan, tl) {
     return `<div class="zhead zstrict"><b>${at ? `Until it becomes ${esc(jpName(at.form))} at mag Lv${at.level}, `
         + `` : ''}feed exactly these numbers</b>`
       + '<div class="zsub">One extra item pushes the mag past a level checkpoint and it turns into a different form; '
-      + 'from then on the same food raises different stats. This cannot be undone</div></div>';
+      + 'from then on the same food raises different stats. This cannot be undone. '
+      + '<b>From mag Lv50 the form is re-judged every 5 levels</b>, so '
+      + 'do not let a character of another class or Section ID hold it during this stretch</div></div>';
   }
   const goal = plan.mag;
   const lock = tl.find(e => e.evos && e.evos.some(x => x.locks));
@@ -1559,7 +1601,9 @@ function zoneHead(zone, plan, tl) {
   return `<div class="zhead zfree"><b>${at ? `From mag Lv${at.level} on, ` : ''}`
     + 'the exact counts no longer matter</b>'
     + `<div class="zsub">The mag never evolves again. Counts and order can drift, as long as you end at`
-    + ` ${statLine(goal.stats)} you get the same ${esc(jpName(goal.form))}</div></div>`;
+    + ` ${statLine(goal.stats)} you get the same ${esc(jpName(goal.form))}. `
+    + '<b>The character is free too</b> — no evolution is ever judged again, so '
+    + 'anyone may hold it and anyone may feed it</div></div>';
 }
 function stepsHTML(r, done) {
   const tl = timeline(r);

@@ -236,6 +236,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .lockmsg { color: var(--green); font-weight: 700; }
 .tlsub { font-size: 0.76rem; color: var(--sub); margin-top: 3px; }
 .tlreq { margin-top: 4px; }
+.whentbl { border-collapse: collapse; font-size: 0.82rem; margin: 8px 0; width: 100%; }
+.whentbl th, .whentbl td { border: 1px solid var(--border); padding: 5px 8px;
+                           text-align: left; vertical-align: top; }
+.whentbl th { background: var(--accent-soft); color: var(--accent); white-space: nowrap; }
+code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
+       font-size: 0.92em; }
 .magnote { font-size: 0.84rem; color: var(--sub); margin: 8px 0; }
 .resbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .frozen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
@@ -329,7 +335,18 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   <div style="padding:10px 4px 2px">
   <p>Ephinea公式wikiの給餌テーブル・進化条件をもとに、<b>進化の瞬間のステータスを先に決めてから餌を選ぶ</b>方式で逆算しています。ステータスは減らないので、途中の状態は必ず最終目標以下になります。この制約で候補が有限個に絞れます。</p>
   <p class="note">手順は「1種類の餌をN個」のまとまりで出します。2種類を組み合わせないと進めない場面では「[A×7 + B×1] を15セット」のように比率で示します。1個ずつ交互に与える必要はありません。</p>
-  <p>第3進化(Lv50)は<b>職業とステータスの大小関係に加えてSection IDの偶奇</b>で分かれます。第4進化(レアマグ)は<b>Lv100以降</b>で、一度なると形態は変わりません。レアマグ経由の案を先に出しているのは、そこから先は進化を気にせず伸ばすだけになるからです。</p>
+  <h3>キャラはいつ効くのか</h3>
+  <p>形態はマグのレベルが節目に届いた<b>瞬間</b>に判定されます。キャラが効くのはその瞬間だけで、それ以外のときは誰が餌をやっても結果は同じです。逆に言うと、<b>判定の瞬間に違うキャラが持っていると別の形態になります</b>。</p>
+  <table class="whentbl">
+    <tr><th>進化</th><th>判定されるタイミング</th><th>効くもの</th></tr>
+    <tr><td>第1進化</td><td>マグLv10</td><td>ジョブ (HU / RA / FO)</td></tr>
+    <tr><td>第2進化</td><td>マグLv35</td><td><b>キャラは関係ありません</b> (いまの形態とステータスだけで決まる)</td></tr>
+    <tr><td>第3進化</td><td>マグLv50 以降、<b>5レベルごとに何度でも</b></td><td>ジョブ + Section IDの偶奇</td></tr>
+    <tr><td>第4進化<br>(レアマグ)</td><td>マグLv100 以降</td><td>ジョブ + 性別 + Section ID。<b>一度なると二度と判定されません</b></td></tr>
+  </table>
+  <p class="note">つまり気を遣うのは <b>マグLv50 から レアマグになるまで</b> の区間です。ここは5レベルごとに判定し直されるので、指定と違うキャラに持たせると途中で別の形態に化けます。レアマグになった後は判定そのものが起きないので、誰に渡してもかまいません。</p>
+  <p class="note">キャラ間の受け渡しは<b>アカウント共通の共有倉庫</b>を使います。チャットで <code>/bank</code> と打つと開き、預けたマグを別のキャラで取り出せます。</p>
+  <p>レアマグ経由の案を先に出しているのは、そこから先は進化を気にせず伸ばすだけになるからです。</p>
   <p class="note">並び順は<b>手間の少なさ</b>です。① 比率で混ぜる箇所が少ない ② 受け渡しが少ない ③ 手順が少ない ④ 餌の種類が少ない、の順で比べています。餌の総数や所要時間は評価に入れていません(何個あげたかは育てやすさにほとんど関係しないため)。</p>
   </div>
 </details>
@@ -1481,6 +1498,18 @@ function timeline(plan) {
     ev.zone = strict ? 'strict' : 'free';
     if (strict && ev.kind === 'feed' && ev.evos.some(e => e.locks)) strict = false;
   });
+  // 各キャラが「どの進化を迎えることになるか」。ここを書かないと
+  // 「なぜこのキャラなのか」「いつまで持たせるのか」が伝わらない。
+  // holdThrough = マグLv50以降(第3形態のうち)を含む区間。5レベルごとに判定し直されるので、
+  // 「進化の瞬間だけ」ではなく、その区間ずっと同じキャラで持つ必要がある
+  let cur = null;
+  out.forEach(ev => {
+    if (ev.kind === 'hand') { cur = ev; ev.covers = []; ev.holdThrough = false; }
+    else if (ev.kind === 'feed' && cur) {
+      cur.covers.push(...ev.evos);
+      if (ev.zone === 'strict' && ev.b.after.level >= 50) cur.holdThrough = true;
+    }
+  });
   return out;
 }
 
@@ -1527,11 +1556,22 @@ function stepHTML(ev, done, next) {
          + `セルマグは進化しないので、育てるキャラは誰でもかまいません`
          + `${m.no_pb ? '。この形態はフォトンブラストを持てません' : ''}</div>`;
   } else if (ev.kind === 'hand') {
+    const covers = (ev.covers || []).filter(e => e.form);
     body = `<div class="tlmain">${ev.at === 1 ? 'マグを持たせる' : '別のキャラに持ち替える'}`
          + `${ev.total > 1 ? ` (${ev.total}人のうち${ev.at}人目)` : ''}</div>`
+         + (ev.at > 1 ? '<div class="tlsub">渡し方: いま持っているキャラで共有倉庫に預け、'
+             + '次のキャラで取り出します (チャットで <code>/bank</code>)</div>' : '')
          + `<div class="tlreq">${charReqHTML(ev.alt)}</div>`
-         + `<div class="tlsub">進化の条件は、そのときマグを装備しているキャラの`
-         + `ジョブ・Section IDで判定されます</div>`;
+         + (covers.length
+             ? `<div class="tlsub">このキャラで迎える進化: `
+               + covers.map(e => `マグLv${e.level} ${esc(jpName(e.form))}`).join(' / ')
+               + '。' + (ev.holdThrough
+                 ? 'マグLv50 から先は5レベルごとに形態が判定し直されるので、'
+                   + '<b>この工程のあいだは別のキャラに移さないでください</b></div>'
+                 : '<b>キャラが効くのは進化が判定される瞬間だけ</b>なので、'
+                   + 'その進化に届く1個をこのキャラで与えれば、'
+                   + 'そこまでの餌は誰が与えても結果は同じです</div>')
+             : '');
   } else {
     const a = ev.b.after;
     body = `<div class="tlmain">${blockText(ev.b)} あげる</div>`
@@ -1551,7 +1591,9 @@ function zoneHead(zone, plan, tl) {
     return `<div class="zhead zstrict"><b>${at ? `マグLv${at.level} で`
         + `${esc(jpName(at.form))}になるまでは、` : ''}餌の個数をこのとおり守ってください</b>`
       + '<div class="zsub">1個でも多く与えるとマグのレベルが先に進んで別の形態になり、'
-      + 'それ以降は同じ餌でも上がるステータスが変わります。取り消せません</div></div>';
+      + 'それ以降は同じ餌でも上がるステータスが変わります。取り消せません。'
+      + '<b>マグLv50 から先は5レベルごとに形態が判定し直される</b>ので、'
+      + 'この間は指定と違うジョブ・Section IDのキャラに持たせないでください</div></div>';
   }
   const goal = plan.mag;
   const lock = tl.find(e => e.evos && e.evos.some(x => x.locks));
@@ -1559,7 +1601,9 @@ function zoneHead(zone, plan, tl) {
   return `<div class="zhead zfree"><b>${at ? `マグLv${at.level} から先は、` : ''}`
     + '餌の個数がずれても大丈夫です</b>'
     + `<div class="zsub">マグはもう進化しません。餌の個数や順番がずれても、最後に`
-    + ` ${statLine(goal.stats)} へ届けば同じ ${esc(jpName(goal.form))} になります</div></div>`;
+    + ` ${statLine(goal.stats)} へ届けば同じ ${esc(jpName(goal.form))} になります。`
+    + '<b>キャラも自由です</b>。もう進化の判定が起きないので、'
+    + '誰に持たせても、誰が餌をやってもかまいません</div></div>';
 }
 function stepsHTML(r, done) {
   const tl = timeline(r);
