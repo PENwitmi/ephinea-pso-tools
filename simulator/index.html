@@ -113,8 +113,21 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .note { font-size: 0.78rem; color: var(--sub); }
 .warn { color: var(--red); }
 .ok { color: var(--green); font-weight: 700; }
+.empty-note { color: var(--sub); font-size: 0.78rem; }
 .footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
 .footer a { color: var(--sub); }
+
+/* 保存一覧 (シミュレーターのビルド / マグ育成のプラン)。
+   両方のページで同じ表示にするため、ここに集約している */
+.preset-list { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.preset-row { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+.preset-row .pname { flex: 1; min-width: 0; cursor: pointer; color: var(--accent);
+                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preset-row .pname:hover { text-decoration: underline; }
+.preset-row .pdel, .preset-row .pren { cursor: pointer; color: var(--strike); border: none;
+                                       background: none; font-size: 0.8rem; padding: 0 2px; }
+.preset-row .pdel:hover { color: var(--red); }
+.preset-row .pren:hover { color: var(--accent); }
 
 /* Section ID の色。公式ドロップチャート準拠(背景色・文字色とも)。
    色は変数で持ち、タグ・カードの識別帯など複数の見せ方で使い回す */
@@ -175,12 +188,8 @@ td.flash { animation: cellflash 0.9s ease-out; }
 .matgrid .mcap { font-size: 0.68rem; color: var(--sub); }
 .cols2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 @media (max-width: 1100px) { .cols2 { grid-template-columns: 1fr; } }
-.preset-list { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
-.preset-row { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
-.preset-row .pname { flex: 1; min-width: 0; cursor: pointer; color: var(--accent); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.preset-row .pname:hover { text-decoration: underline; }
-.preset-row .pdel { cursor: pointer; color: var(--strike); border: none; background: none; font-size: 0.8rem; }
-.preset-row .pdel:hover { color: var(--red); }
+/* .preset-list / .preset-row / .pname / .pdel / .empty-note は tools/theme.css に集約
+   (マグ育成の保存一覧と同じ見た目にするため) */
 details.copies summary { cursor: pointer; font-size: 0.74rem; color: var(--accent); margin-top: 4px; user-select: none; }
 details.copies ul { margin-top: 2px; }
 table.stats tbody tr:nth-child(even) { background: color-mix(in srgb, var(--border) 25%, transparent); }
@@ -229,7 +238,6 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 .overridden-note { color: var(--strike); font-size: 0.72rem; text-decoration: none; }
 .candidate { color: var(--sub); }
 .candidate .hint { color: var(--gold); }
-.empty-note { color: var(--sub); font-size: 0.78rem; }
 .warn { font-size: 0.75rem; }
 .own-badge { font-size: 0.68rem; }
 .equipcards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }

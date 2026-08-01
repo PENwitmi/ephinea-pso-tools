@@ -112,8 +112,21 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .note { font-size: 0.78rem; color: var(--sub); }
 .warn { color: var(--red); }
 .ok { color: var(--green); font-weight: 700; }
+.empty-note { color: var(--sub); font-size: 0.78rem; }
 .footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
 .footer a { color: var(--sub); }
+
+/* 保存一覧 (シミュレーターのビルド / マグ育成のプラン)。
+   両方のページで同じ表示にするため、ここに集約している */
+.preset-list { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.preset-row { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+.preset-row .pname { flex: 1; min-width: 0; cursor: pointer; color: var(--accent);
+                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preset-row .pname:hover { text-decoration: underline; }
+.preset-row .pdel, .preset-row .pren { cursor: pointer; color: var(--strike); border: none;
+                                       background: none; font-size: 0.8rem; padding: 0 2px; }
+.preset-row .pdel:hover { color: var(--red); }
+.preset-row .pren:hover { color: var(--accent); }
 
 /* Section ID の色。公式ドロップチャート準拠(背景色・文字色とも)。
    色は変数で持ち、タグ・カードの識別帯など複数の見せ方で使い回す */
@@ -194,6 +207,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .steps .st { color: var(--sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .steps .cyc { color: var(--accent); font-size: 0.8rem; }
 .magnote { font-size: 0.84rem; color: var(--sub); margin: 8px 0; }
+.resbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.frozen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
+          padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px;
+          background: var(--accent-soft); font-size: 0.84rem; }
+.frozen .btn { padding: 3px 10px; font-size: 0.76rem; margin-left: auto; }
 .magempty { color: var(--sub); text-align: center; padding: 40px 10px; }
 .busy { opacity: 0.5; }
 </style>
@@ -255,6 +273,22 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   </details>
 
   <button class="btn primary gobtn" id="magGo">育て方を計算する</button>
+
+  <div class="panel" style="margin-top:12px">
+    <h2>3. 保存したプラン</h2>
+    <p class="note">育成は何日もかかるので、気に入った案は保存しておくと後から同じ手順を開けます。
+      <b>保存した手順は変わりません</b>(計算し直しません)。</p>
+    <div id="magPlanList" class="preset-list"></div>
+    <div style="display:flex; gap:6px; margin-top:10px">
+      <button class="reset" id="magExport">JSON書き出し</button>
+      <button class="reset" id="magImportBtn">JSON読み込み</button>
+      <input type="file" id="magImportFile" accept=".json,application/json" hidden>
+    </div>
+    <textarea id="magPaste" rows="2" aria-label="書き出したJSONを貼り付け"
+      style="width:100%; margin-top:6px; font-size:0.72rem" placeholder="書き出したJSONを貼り付け"></textarea>
+    <button class="btn" id="magPasteBtn" style="margin-top:4px; padding:4px 10px; font-size:0.76rem">取り込む</button>
+    <div class="magnote" id="magPlanNote" aria-live="polite"></div>
+  </div>
 </div>
 
 <div id="magOut"><div class="magempty">目標を決めて「育て方を計算する」を押してください。</div></div>
@@ -1433,11 +1467,194 @@ function resultHTML(r, idx) {
       ? m.pbs.map(p => esc(pbJp(p))).join(' → ') : 'なし'}</div>
     ${cellNote(r)}${lv100Note(r)}${noCharNote(alts)}
     ${phases}
-    <div style="margin-top:12px"><button class="btn" data-sim="${idx}">このマグでステータスを見る →</button></div>
+    <div class="resbtns">
+      <button class="btn" data-sim="${idx}">このマグでステータスを見る →</button>
+      <button class="btn" data-save="${idx}">💾 この案を保存</button>
+    </div>
   </div>`;
 }
 
+// ---- 入力の読み書き (シミュレーターの readState / applyState と同じ役割) ----
+function readMagState() {
+  return { target: getTarget(),
+    form: document.getElementById('magForm').value,
+    rare: document.getElementById('magRare').value,
+    avoid: [...document.querySelectorAll('#magAvoid .pbtog.on')].map(b => b.dataset.pb),
+    bank: document.getElementById('magBank').checked,
+    own: document.getElementById('magOwn').checked,
+    noCell: document.getElementById('magNoCell').checked,
+    mode: PRESET_MODE,
+    p1: document.getElementById('magP1').value, p2: document.getElementById('magP2').value };
+}
+function applyMagState(st) {
+  if (!st) return;
+  if (st.mode && st.mode !== PRESET_MODE) {
+    PRESET_MODE = st.mode;
+    document.querySelectorAll('.modebtn').forEach(x =>
+      x.classList.toggle('on', x.dataset.mode === st.mode));
+    buildPresets();                     // ここで applyPreset() が目標を書き換える
+  }
+  if (st.p1) { document.getElementById('magP1').value = st.p1; fillP2(); }
+  if (st.p2) document.getElementById('magP2').value = st.p2;
+  if (st.target) setTarget(st.target);  // プリセットより保存した目標を優先する
+  document.getElementById('magForm').value = st.form || '';
+  document.getElementById('magRare').value = st.rare || '';
+  const avoid = st.avoid || [];
+  document.querySelectorAll('#magAvoid .pbtog').forEach(b =>
+    b.classList.toggle('on', avoid.includes(b.dataset.pb)));
+  document.getElementById('magBank').checked = !!st.bank;
+  document.getElementById('magOwn').checked = !!st.own;
+  document.getElementById('magNoCell').checked = !!st.noCell;
+}
+
+// ---- 保存 (localStorage) ----
+// 保存するのは**計算結果そのもの**。育成は何日もかかるので、途中でソルバを直しても
+// 手順が変わらないようにする。プランは素の値だけで描画できる(Mag のメソッドは要らない)
+const MAG_PLANS_KEY = 'pso_mag_plans';
+const MAG_LAST_KEY = 'pso_mag_last';
+const magNote = t => { document.getElementById('magPlanNote').textContent = t; };
+function loadMagPlans() {
+  try { return JSON.parse(localStorage.getItem(MAG_PLANS_KEY)) || {}; } catch (e) { return {}; }
+}
+function saveMagPlans(all) {
+  try { localStorage.setItem(MAG_PLANS_KEY, JSON.stringify(all)); return true; }
+  catch (e) { magNote('保存できませんでした(ブラウザの保存領域が一杯かもしれません)'); return false; }
+}
+// 名前は自動で付ける。狙ったマグと目標が入るので手で付けるより分かりやすい
+function planName(r, all) {
+  const base = `${r.cell ? jpName(r.cellForm) : jpName(r.mag.form)} `
+             + MSTATS.map(s => r.mag.stats[s]).join('/');
+  if (!all[base]) return base;
+  let i = 2;
+  while (all[`${base} (${i})`]) i++;
+  return `${base} (${i})`;
+}
+function renderMagPlanList() {
+  const all = loadMagPlans();
+  const names = Object.keys(all).sort();
+  const box = document.getElementById('magPlanList');
+  box.innerHTML = names.length
+    ? names.map(n => `<div class="preset-row"><span class="pname" data-n="${esc(n)}"
+        title="クリックで読込">📂 ${esc(n)}</span>
+        <button class="pren" data-ren="${esc(n)}" title="名前を変える">✏️</button>
+        <button class="pdel" data-del="${esc(n)}" title="削除">✕</button></div>`).join('')
+    : '<span class="empty-note">保存したプランはありません</span>';
+  box.querySelectorAll('.pname').forEach(el => el.addEventListener('click', () => {
+    const p = loadMagPlans()[el.dataset.n];
+    if (!p) return;
+    applyMagState(p.input);
+    showResults([p.plan], [], { saved: p.saved, name: el.dataset.n });
+    magNote(`「${el.dataset.n}」を読み込みました`);
+  }));
+  box.querySelectorAll('.pren').forEach(el => el.addEventListener('click', () => {
+    const cur = el.dataset.ren;
+    const next = (window.prompt('新しい名前', cur) || '').trim();
+    if (!next || next === cur) return;
+    const a = loadMagPlans();
+    if (a[next]) { magNote(`「${next}」は既にあります`); return; }
+    a[next] = a[cur]; delete a[cur];
+    if (saveMagPlans(a)) { renderMagPlanList(); magNote(`「${next}」に変えました`); }
+  }));
+  box.querySelectorAll('.pdel').forEach(el => el.addEventListener('click', () => {
+    const a = loadMagPlans();
+    delete a[el.dataset.del];
+    if (saveMagPlans(a)) { renderMagPlanList(); magNote(`「${el.dataset.del}」を削除しました`); }
+  }));
+}
+function savePlan(r) {
+  const all = loadMagPlans();
+  const name = planName(r, all);
+  all[name] = { plan: r, input: readMagState(), saved: new Date().toISOString() };
+  if (!saveMagPlans(all)) return;
+  renderMagPlanList();
+  magNote(`「${name}」を保存しました`);
+}
+
+// ---- 書き出し / 読み込み (別ブラウザ・別端末への移行用) ----
+document.getElementById('magExport').addEventListener('click', () => {
+  const plans = loadMagPlans();
+  const text = JSON.stringify({ app: 'pso-mag-planner', version: 1,
+    exported: new Date().toISOString(), plans: plans }, null, 1);
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const d = new Date();
+  a.download = `pso_mag_plans_${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`
+             + `${String(d.getDate()).padStart(2, '0')}.json`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  if (navigator.clipboard) navigator.clipboard.writeText(text).catch(() => {});
+  magNote(`${Object.keys(plans).length}件をJSONで書き出しました(クリップボードにもコピー)`);
+});
+function importMagText(text) {
+  try {
+    const payload = JSON.parse(text);
+    const incoming = payload.plans || payload;     // 素のプラン辞書も受け付ける
+    if (typeof incoming !== 'object' || Array.isArray(incoming)) throw new Error('形式が違います');
+    const all = loadMagPlans();
+    let added = 0, updated = 0;
+    Object.entries(incoming).forEach(([name, p]) => {
+      if (!p || !p.plan || !p.plan.phases) return;
+      if (all[name]) updated++; else added++;
+      all[name] = p;
+    });
+    if (!added && !updated) throw new Error('プランが入っていません');
+    if (!saveMagPlans(all)) return false;
+    renderMagPlanList();
+    magNote(`読み込み完了: 新規${added}件 / 上書き${updated}件`);
+    return true;
+  } catch (err) {
+    magNote('読み込み失敗: JSONの形式を確認してください');
+    return false;
+  }
+}
+document.getElementById('magImportBtn').addEventListener('click', () =>
+  document.getElementById('magImportFile').click());
+document.getElementById('magImportFile').addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (!f) return;
+  const rd = new FileReader();
+  rd.onload = () => { importMagText(rd.result); e.target.value = ''; };
+  rd.readAsText(f);
+});
+document.getElementById('magPasteBtn').addEventListener('click', () => {
+  if (importMagText(document.getElementById('magPaste').value))
+    document.getElementById('magPaste').value = '';
+});
+
+// ---- 結果の表示 (計算した結果でも、保存したプランでも同じ経路を通る) ----
 let LAST = [];
+function showResults(res, notes, frozen) {
+  const out = document.getElementById('magOut');
+  LAST = res;
+  const noteHtml = (notes || []).map(n => `<div class="magnote">※ ${esc(n)}</div>`).join('');
+  if (!res.length) {
+    out.innerHTML = noteHtml
+      + '<div class="magempty">この条件で作れる育て方が見つかりませんでした。'
+      + '目標か「こだわり」を緩めてみてください。</div>';
+    return;
+  }
+  // 保存したプランは計算し直さない。いつ保存したものかを明示し、作り直す手段を添える
+  const head = frozen
+    ? `<div class="frozen">📂 保存したプラン「${esc(frozen.name)}」の手順です`
+      + `${frozen.saved ? ` (${esc(frozen.saved.slice(0, 10))} 保存)` : ''}`
+      + ' <button class="btn" id="magRecalc">いまの条件で計算し直す</button></div>'
+    : '';
+  out.innerHTML = head + noteHtml + res.map((r, i) => resultHTML(r, i)).join('');
+  const rc = document.getElementById('magRecalc');
+  if (rc) rc.addEventListener('click', calc);
+  out.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => {
+    const st = LAST[+b.dataset.sim].mag.stats;
+    let last = {};
+    try { last = JSON.parse(localStorage.getItem('pso_sim_last')) || {}; } catch (e) {}
+    last.mag = { def: st.DEF, pow: st.POW, dex: st.DEX, mind: st.MIND };
+    if (!last.cls) { last.cls = 'humar'; last.lv = 200; }
+    try { localStorage.setItem('pso_sim_last', JSON.stringify(last)); } catch (e) {}
+    location.href = '../simulator/';
+  }));
+  out.querySelectorAll('[data-save]').forEach(b =>
+    b.addEventListener('click', () => savePlan(LAST[+b.dataset.save])));
+}
+
 function calc() {
   const btn = document.getElementById('magGo'), out = document.getElementById('magOut');
   const target = getTarget();
@@ -1459,27 +1676,14 @@ function calc() {
     } catch (err) {
       notes = ['計算中にエラーが起きました: ' + err.message];
     }
-    LAST = res;
     out.classList.remove('busy');
     btn.disabled = false; btn.textContent = '育て方を計算する';
-    const noteHtml = notes.map(n => `<div class="magnote">※ ${esc(n)}</div>`).join('');
-    if (!res.length) {
-      out.innerHTML = noteHtml
-        + '<div class="magempty">この条件で作れる育て方が見つかりませんでした。'
-        + '目標か「こだわり」を緩めてみてください。</div>';
-      return;
-    }
-    out.innerHTML = noteHtml + res.map((r, i) => resultHTML(r, i)).join('');
-    out.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => {
-      const r = LAST[+b.dataset.sim];
-      const st = r.mag.stats;
-      let last = {};
-      try { last = JSON.parse(localStorage.getItem('pso_sim_last')) || {}; } catch (e) {}
-      last.mag = { def: st.DEF, pow: st.POW, dex: st.DEX, mind: st.MIND };
-      if (!last.cls) { last.cls = 'humar'; last.lv = 200; }
-      try { localStorage.setItem('pso_sim_last', JSON.stringify(last)); } catch (e) {}
-      location.href = '../simulator/';
-    }));
+    showResults(res, notes, null);
+    // 次に開いたときのために画面をそのまま残す(こちらも計算し直さない)
+    try {
+      localStorage.setItem(MAG_LAST_KEY,
+        JSON.stringify({ input: readMagState(), results: res, notes: notes }));
+    } catch (e) {}
   }, 20);
 }
 
@@ -1490,6 +1694,12 @@ document.querySelectorAll('.modebtn').forEach(b => b.addEventListener('click', (
   buildPresets();
 }));
 document.getElementById('magGo').addEventListener('click', calc);
+renderMagPlanList();
+// 前回の画面を復元する(計算し直さない)
+try {
+  const last = JSON.parse(localStorage.getItem(MAG_LAST_KEY));
+  if (last && last.results) { applyMagState(last.input); showResults(last.results, last.notes, null); }
+} catch (e) {}
 </script>
 </body>
 </html>
