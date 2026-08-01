@@ -277,7 +277,7 @@ function jpName(name) {
   let m = name.match(/^([A-Za-z]+) LV(\d+) Disk$/i);
   if (m) {
     const t = JPN.tech_jp[m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()];
-    if (t) return `${t} Lv${m[2]} ディスク`;
+    if (t) return `${t} Lv${m[2]} Disk`;
   }
   m = name.match(/^(.+) LV(\d+)$/i);
   if (m) {
@@ -285,7 +285,7 @@ function jpName(name) {
     if (b) return `${b} Lv${m[2]}`;
   }
   m = name.match(/^(\d+) MESETA$/i);
-  if (m) return `${Number(m[1]).toLocaleString()} メセタ`;
+  if (m) return `${Number(m[1]).toLocaleString()} meseta`;
   return name;
 }
 function jpRaw(raw, name) {
