@@ -183,9 +183,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
           padding: 2px 0; font-size: 0.82rem; }
 .seglab { color: var(--sub); font-size: 0.74rem; }
 .segval { display: flex; flex-wrap: wrap; gap: 3px 6px; align-items: center; }
-.sidlegend { display: flex; flex-wrap: wrap; gap: 3px 6px; align-items: center;
-             margin: -4px 0 14px; padding: 6px 10px; border: 1px solid var(--border);
-             border-radius: 8px; background: var(--card); }
 .phase { margin-top: 10px; }
 .phase > h4 { margin: 0 0 6px; font-size: 0.82rem; display: flex; flex-wrap: wrap;
               align-items: center; gap: 6px; }
@@ -220,7 +217,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 <main class="wrap">
 <h1>🧬 マグ育成プランナー</h1>
 <p class="lead">仕上がりのステータスを決めると、<b>どの餌を何個あげるか</b>を順番に出します。狙うのは最短ではなく<b>いちばん楽な育て方</b>で、キャラの受け渡しが少なく、途中で何も考えずに同じ餌を続けられる案から順に並べます。</p>
-<div id="sidLegend"></div>
 
 <div class="maglayout">
 <div class="maginputs">
@@ -1369,11 +1365,6 @@ function segHeadHTML(alt, idx, total) {
   return `<div class="seghead"><div class="segtop"><span class="segwho">👤 ${who}</span>${pass}</div>`
        + rows.join('') + '</div>';
 }
-// Section IDの色の凡例。育て方の条件を色で出すので、対応を先に見せておく
-function sidLegendHTML() {
-  return '<div class="sidlegend"><span class="seglab">Section ID</span>'
-       + SIDS.map(sidTag).join('') + '</div>';
-}
 // 職業名(HUnewearl 等) → HU/RA/FO と性別
 const classKeyOf = n => String(n).slice(0, 2).toUpperCase();
 const genderOf = n => /newearl|caseal|marl$|marl\b/i.test(String(n)) ? 'F'
@@ -1492,7 +1483,6 @@ function calc() {
   }, 20);
 }
 
-document.getElementById('sidLegend').innerHTML = sidLegendHTML();
 buildStatRows(); buildOptions(); updateSum();
 document.querySelectorAll('.modebtn').forEach(b => b.addEventListener('click', () => {
   document.querySelectorAll('.modebtn').forEach(x => x.classList.toggle('on', x === b));
