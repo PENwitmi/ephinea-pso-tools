@@ -187,25 +187,55 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .formpath { font-size: 0.84rem; margin-bottom: 4px; }
 .formpath .cur { font-weight: 700; }
 .pbline { font-size: 0.82rem; color: var(--sub); margin-bottom: 10px; }
-.seghead { margin: 14px 0 2px; padding: 8px 10px; border-radius: 8px;
-           background: var(--accent-soft); font-size: 0.84rem; }
-.segtop { margin-bottom: 4px; }
-.seghead .segwho { color: var(--accent); font-weight: 700; }
-.seghead .pass { color: var(--sub); font-size: 0.76rem; margin-left: 8px; }
-.segrow { display: grid; grid-template-columns: 82px 1fr; gap: 8px; align-items: baseline;
-          padding: 2px 0; font-size: 0.82rem; }
-.seglab { color: var(--sub); font-size: 0.74rem; }
-.segval { display: flex; flex-wrap: wrap; gap: 3px 6px; align-items: center; }
-.phase { margin-top: 10px; }
-.phase > h4 { margin: 0 0 6px; font-size: 0.82rem; display: flex; flex-wrap: wrap;
-              align-items: center; gap: 6px; }
 .who { font-weight: normal; color: var(--sub); font-size: 0.78rem; }
 .nochar { color: var(--red); }
-.steps { font-size: 0.86rem; }
-.steps div { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 4px 0;
-             border-bottom: 1px dotted var(--border); align-items: baseline; }
-.steps .st { color: var(--sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.steps .cyc { color: var(--accent); font-size: 0.8rem; }
+.st { color: var(--sub); font-variant-numeric: tabular-nums; }
+.cyc { color: var(--accent); }
+/* ① 比べる */
+.pickhead { font-size: 0.88rem; margin-bottom: 10px; }
+.magsum { border: 1px solid var(--border); border-radius: 12px; background: var(--card);
+          padding: 14px 16px; margin-bottom: 12px; }
+.sumtop { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline;
+          margin-bottom: 8px; font-size: 0.95rem; }
+.sumpath { font-size: 0.8rem; color: var(--sub); }
+.sumreq { margin-top: 6px; }
+.creq { display: grid; grid-template-columns: 82px 1fr; gap: 8px; align-items: baseline;
+        padding: 2px 0; font-size: 0.82rem; }
+.crlab { color: var(--sub); font-size: 0.74rem; }
+.crval { display: flex; flex-wrap: wrap; gap: 3px 6px; align-items: center; }
+/* ② 実行するチェックリスト */
+.backrow { margin-bottom: 10px; }
+.metarow { display: grid; grid-template-columns: 128px 1fr; gap: 8px; align-items: baseline;
+           font-size: 0.82rem; padding: 2px 0; }
+.zone { border: 1px solid var(--border); border-radius: 10px; margin: 14px 0; overflow: hidden; }
+.zone.strict { border-color: var(--red); }
+.zone.free { border-color: var(--green); }
+.zhead { padding: 8px 12px; font-size: 0.84rem; }
+.zhead.zstrict { background: #feecec; color: var(--red); }
+.zhead.zfree { background: #e8f6f1; color: var(--green); }
+:root[data-theme="dark"] .zhead.zstrict, :root[data-theme="dark"] .zhead.zfree { background: transparent; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .zhead.zstrict,
+  :root:not([data-theme="light"]) .zhead.zfree { background: transparent; }
+}
+.zsub { color: var(--sub); font-size: 0.78rem; margin-top: 3px; }
+.tlrow { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start;
+         padding: 9px 12px; border-top: 1px solid var(--border); }
+.tlrow.is-done { opacity: 0.55; }
+.tlrow.is-next { background: var(--accent-soft); }
+.tlnow { display: inline-block; font-size: 0.7rem; font-weight: 700; color: #ffffff;
+         background: var(--accent); border-radius: 99px; padding: 1px 8px; margin-bottom: 3px; }
+.tlchk { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.tlno { font-variant-numeric: tabular-nums; color: var(--sub); font-size: 0.78rem;
+        min-width: 1.2em; text-align: right; }
+.tlmain { font-size: 0.9rem; }
+.tlstop { font-size: 0.82rem; color: var(--sub); margin-top: 2px;
+          font-variant-numeric: tabular-nums; }
+.tldone { color: var(--green); font-weight: 700; }
+.tlevo { font-size: 0.8rem; margin-top: 3px; color: var(--accent); }
+.lockmsg { color: var(--green); font-weight: 700; }
+.tlsub { font-size: 0.76rem; color: var(--sub); margin-top: 3px; }
+.tlreq { margin-top: 4px; }
 .magnote { font-size: 0.84rem; color: var(--sub); margin: 8px 0; }
 .resbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .frozen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
@@ -255,9 +285,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   </div>
 
   <details class="panel" id="magOpts">
-    <summary><b>2. Preferences</b> <span class="sub">(looks, PBs, bank trick — all optional)</span></summary>
+    <summary><b>2. Preferences</b> <span class="sub">(form, Photon Blasts, the bank trick. You can calculate without setting any of these)</span></summary>
     <div style="padding-top:10px">
-      <div class="optrow"><label for="magForm">Looks</label>
+      <div class="optrow"><label for="magForm">Form</label>
         <select id="magForm"><option value="">No preference</option></select></div>
       <div class="optrow"><label for="magRare">Rare mag</label>
         <select id="magRare"><option value="">No preference</option></select></div>
@@ -1008,15 +1038,13 @@ function finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm) {
         const r1 = runTo(m, w3, bank);
         m = r1[0];
         if (!m || m.form !== form4 || !pbOk(m.pbs, wantPbs, avoidPbs)) continue;
-        const tail = [{ label: `Lv50→${lv} ← ${magJp(form4)} is locked in here (the form never changes after this)`,
-                        cls: c4, gender: g4, sid: sid, rare: form4,
+        const tail = [{ cls: c4, gender: g4, sid: sid, rare: form4,
                         blocks: r1[1], after: m.snapshot() }];
         if (lv < final) {
           const r2 = runTo(m, tgt, bank);
           if (!r2[0]) continue;
           m = r2[0];
-          tail.push({ label: `Lv${lv}→target (form is locked; raise freely)`,
-                      blocks: r2[1], after: m.snapshot() });
+          tail.push({ blocks: r2[1], after: m.snapshot() });
         }
         if (!pbOk(m.pbs, wantPbs, avoidPbs, true)) continue;
         if (wantForm && m.form !== wantForm) continue;
@@ -1030,7 +1058,7 @@ function finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm) {
   const r = runTo(st.mag.clone(), tgt, bank);
   if (r[0] && pbOk(r[0].pbs, wantPbs, avoidPbs, true)
       && (!wantForm || r[0].form === wantForm)) {
-    const p = pack(st, [{ label: 'Lv50→target', blocks: r[1], after: r[0].snapshot() }], r[0]);
+    const p = pack(st, [{ blocks: r[1], after: r[0].snapshot() }], r[0]);
     p.rare = null;
     out.push(p);
   }
@@ -1069,9 +1097,8 @@ function magSolve(target, opt) {
       if (!r[0]) continue;
       cellResults.push({ mag: r[0], items: r[1].reduce((a, b) => a + b.n, 0), rare: null,
         cell: cellName, cellForm: r[0].form,
-        phases: [{ label: `Lv5 【use ${cellName} to become ${magJp(r[0].form)}】`, blocks: [] },
-                 { label: 'To the target (cell mags never evolve, so raise stats freely)',
-                   blocks: r[1], after: r[0].snapshot() }] });
+        phases: [{ cellUse: cellName, blocks: [] },
+                 { blocks: r[1], after: r[0].snapshot() }] });
     }
   }
 
@@ -1089,7 +1116,7 @@ function magSolve(target, opt) {
       hits[r[0].form] = (hits[r[0].form] || 0) + 1;
       if (hits[r[0].form] > keep) continue;
       stage1.push({ mag: r[0], c1: c1,
-        phases: [{ label: 'Lv5→35', cls: c1,
+        phases: [{ cls: c1,
                    // 第1進化は職業のみ、第2進化はChar 非依存。IDは問わない
                    idFree: true, blocks: r[1], after: r[0].snapshot() }] });
     }
@@ -1120,7 +1147,6 @@ function magSolve(target, opt) {
         if (hits[r[0].form] > keep) continue;
         stage2.push({ mag: r[0], c1: st.c1,
           phases: st.phases.concat([{
-            label: 'Lv35→50',
             // 第3進化は Section ID の偶奇でも分かれるので、計算に使ったIDを残す
             cls: c3, sid: m.sectionId, parity: true,
             blocks: r[1], after: r[0].snapshot() }]) });
@@ -1354,124 +1380,231 @@ function applyPreset() {
 }
 
 // ---- 結果の描画 ----
-// 出すのは「どれだけ手間が少ないか」。餌の総数や所要時間は載せない
-// (何個あげたか・何時間かかるかは、育てやすさにほとんど関係しないため)
-function easeHTML(r) {
-  const [cyc, hands, blocks, kinds] = planEase(r);
-  const chip = (t, cls) => `<span class="echip ${cls || ''}">${t}</span>`;
-  return chip(hands === 0 ? 'no hand-off (one character does it all)' : `${hands} hand-off${hands > 1 ? 's' : ''}`,
-              hands === 0 ? 'good' : '')
-       + chip(cyc === 0 ? 'just keep feeding the same thing' : `${cyc} ratio step${cyc > 1 ? 's' : ''}`,
-              cyc === 0 ? 'good' : 'hard')
-       + chip(`${blocks} steps`) + chip(`${kinds} kinds of food`);
-}
-// Section IDを色チップで出す。色の対応は theme.css の .idtag.sid-N (全ページ共通)
+// 画面は2段階。①3案を要約で比べる ②選んだ1案を時系列のチェックリストで実行する。
+// 実行画面はソルバの工程構造をそのまま出さず、「順にやること」1本の列に組み直す。
 const sidTag = name => `<span class="idtag sid-${sidIndex(name)}">${esc(name)}</span>`;
-// importedみChar のof which 、この区間を任せられる人。
-// alt.combos は手順を再生して確かめた組み合わせなので、ここに出た人は必ず同じ結果になる
-function altChars(alt) {
-  const inv = loadInventory();
-  const chars = (inv && inv.chars) ? Object.values(inv.chars) : [];
-  return chars.filter(c => alt.combos.some(x =>
-    x[0] === classKeyOf(c.cls) && x[1] === genderOf(c.cls)
-    && x[2] === canonSid(c.sectionId)));       // importedみデータは大文字(WHITILL)で来る
-}
-// 区間の見出し。使えるジョブとSection IDを**全部**出す(代表1件にしない)
-function segHeadHTML(alt, idx, total) {
-  const who = total > 1 ? `character ${idx} of ${total}` : 'who raises it';
-  const pass = idx > 1 ? '<span class="pass">← hand the mag over here</span>' : '';
-  const jobs = jobNames(alt.classes, alt.genders);
-  const rows = [
-    `<div class="segrow"><span class="seglab">Class</span>`
-    + `<span class="segval">${jobs.map(esc).join(' / ')}</span></div>`,
-    `<div class="segrow"><span class="seglab">Section ID</span>`
-    + `<span class="segval">${alt.section_ids.map(sidTag).join('')}</span></div>`];
-  const hit = altChars(alt);
-  if (hit.length) {
-    rows.push(`<div class="segrow"><span class="seglab">Yours</span><span class="segval">`
-      + hit.slice(0, 4).map(c => `${sidTag(c.sectionId)} ${esc(c.name)}`).join(' ')
-      + (hit.length > 4 ? ` <span class="who">${hit.length - 4} more</span>` : '')
-      + '</span></div>');
-  } else if (loadInventory()) {
-    rows.push('<div class="segrow"><span class="seglab">Yours</span><span class="segval">'
-      + '<span class="nochar">none</span></span></div>');
-  }
-  return `<div class="seghead"><div class="segtop"><span class="segwho">👤 ${who}</span>${pass}</div>`
-       + rows.join('') + '</div>';
-}
+const statLine = st => MSTATS.map(s => `${s}${st[s]}`).join(' ');
 // 職業名(HUnewearl 等) → HU/RA/FO と性別
 const classKeyOf = n => String(n).slice(0, 2).toUpperCase();
 const genderOf = n => /newearl|caseal|marl$|marl\b/i.test(String(n)) ? 'F'
   : /mar$|cast$|newm$/i.test(String(n)) ? 'M' : null;
 
-function blockText(b) {
-  const body = b.items.map(([it, c]) => `${esc(jpName(it))}×${c}`).join(' + ');
-  if (b.repeat > 1 && b.items.length > 1)
-    return `<span class="cyc">[${body}] ×${b.repeat} sets</span> <span class="st">${b.n} total</span>`;
-  return body;
+// 手間の指標。餌の総数や所要時間は載せない
+// (何個あげたか・何時間かかるかは、育てやすさにほとんど関係しないため)
+function easeHTML(r) {
+  const [cyc, hands, blocks, kinds] = planEase(r);
+  const chip = (t, cls) => `<span class="echip ${cls || ''}">${t}</span>`;
+  return chip(hands === 0 ? 'no hand-off (one character does it all)' : `hand over ${hands} time${hands > 1 ? "s" : ""}`,
+              hands === 0 ? 'good' : '')
+       + chip(cyc === 0 ? 'one food at a time, in batches' : `${cyc} step${cyc > 1 ? "s" : ""} mixing two foods`,
+              cyc === 0 ? 'good' : 'hard')
+       // blocks は「餌をやる回数」。手順番号(準備や持ち替えも含む)とは別物なので言い分ける
+       + chip(`${blocks} feeding steps`) + chip(`${kinds} kinds of food`);
 }
-// セルMagは進化しないので誰が育ててもよい. However, セルを使うChar のレベル条件はある
-function cellNote(r) {
-  if (!r.cell) return '';
-  const m = (MAGDATA.cell_mags || {})[r.cellForm] || {};
-  const need = ((m.conditions || [])[0] || {}).char_level;
-  const parts = ['Cell mags never evolve, so any character can raise it'];
-  if (need) parts.push(`using ${r.cell} requires a character at Lv${need} or above`);
-  if (m.no_pb) parts.push('this form cannot hold a Photon Blast');
-  return `<div class="magnote">※ ${parts.join('。')}</div>`;
+const routeText = r => r.cell ? `use mag cell ${esc(r.cell)}`
+  : r.rare ? `make rare mag ${esc(jpName(r.rare))}` : 'no rare mag';
+
+// importedみChar のof which 、この区間を任せられる人。
+// alt.combos は手順を再生して確かめた組み合わせなので、ここに出た人は必ず同じ結果になる
+function altChars(alt) {
+  const inv = loadInventory();
+  const chars = (inv && inv.chars) ? Object.values(inv.chars) : [];
+  const seen = new Set();
+  return chars.filter(c => {
+    if (!alt.combos.some(x => x[0] === classKeyOf(c.cls) && x[1] === genderOf(c.cls)
+        && x[2] === canonSid(c.sectionId))) return false;   // importedみは大文字(WHITILL)で来る
+    const k = c.name + '/' + c.sectionId;    // 同名同IDのSlot が複数ある場合は1人として出す
+    if (seen.has(k)) return false;
+    seen.add(k); return true;
+  });
 }
-// importedみ済みなのに担当できるChar がいない工程があるときだけ、案ごとに1回だけ誘導を出す
-function noCharNote(alts) {
-  if (!loadInventory() || !alts.some(a => !altChars(a).length)) return '';
-  return '<div class="magnote">* No imported character can carry out this plan. '
-       + 'tick "only use my characters" to re-plan with the ones you have</div>';
+function charReqHTML(alt) {
+  const hit = altChars(alt);
+  return `<div class="creq"><span class="crlab">Class</span>`
+       + `<span class="crval">${jobNames(alt.classes, alt.genders).map(esc).join(' / ')}</span></div>`
+       + `<div class="creq"><span class="crlab">Section ID</span>`
+       + `<span class="crval">${alt.section_ids.map(sidTag).join('')}</span></div>`
+       + (loadInventory() ? `<div class="creq"><span class="crlab">Yours</span>`
+           + `<span class="crval">${hit.length
+               ? hit.slice(0, 4).map(c => `${sidTag(c.sectionId)} ${esc(c.name)}`).join(' ')
+                 + (hit.length > 4 ? ` <span class="who">${hit.length - 4} more</span>` : '')
+               : '<span class="nochar">none</span>'}</span></div>` : '');
 }
-// 合計ちょうど100の目標 = 「Lv100でRare magを確定させるだけ」の経過点
-function lv100Note(r) {
-  if (!r.rare || MSTATS.reduce((a, s) => a + r.mag.stats[s], 0) !== 100) return '';
-  return '<div class="magnote">* The rare mag is locked in at Lv100. '
-       + 'From there the form never changes, so you can raise the rest however you like</div>';
+
+// ---- 手順を時系列のイベント列にする ----
+// 進化は plan.mag.log に「実際に何レベルで何になったか」が入っているので、そこから拾う
+// (ブロックは merge されることがあり、ブロック境界だけでは進化のレベルが分からない)
+function timeline(plan) {
+  const out = [];
+  const evos = (plan.mag.log || []).map(e => Object.assign({}, e));
+  let pbCount = 0;
+  // 進化ログを「その手順を終えた時点の形態」になるまで消費する。
+  // レベルで区切らないのは、同じレベルで2回変わることがあるため
+  // (受け渡した直後、まだレベルが上がらないof which に第3進化が再判定されるとこれが起きる)
+  const evoUntil = form => {
+    const got = [];
+    while (evos.length && (!got.length || got[got.length - 1].form !== form)) {
+      const e = evos.shift();
+      // PBは最大3つ。4つ目以降は覚えないので「覚える」と書いてはいけない
+      const pb = (e.pb && pbCount < 3) ? (pbCount++, e.pb) : null;
+      got.push({ level: e.level, form: e.to, pb: pb, locks: e.to === plan.rare });
+    }
+    return got;
+  };
+  const segs = segmentsOf(plan.phases);
+  const alts = alternatives(plan);
+  let handNo = 0, no = 0, from = 5;      // from = その手順を始めるときのMagLv
+  out.push({ kind: 'prep', no: ++no });
+  const cellPh = plan.phases.find(p => p.cellUse);
+  if (cellPh) {
+    evoUntil(plan.cellForm);
+    out.push({ kind: 'cell', no: ++no, cell: cellPh.cellUse, form: plan.cellForm });
+  }
+  for (const seg of segs) {
+    if (seg.req)
+      out.push({ kind: 'hand', no: ++no, alt: alts[handNo], at: ++handNo, total: alts.length });
+    for (const ph of seg.phases) for (const b of ph.blocks) {
+      const evs = b.form === b.after.form ? [] : evoUntil(b.after.form);
+      // 受け渡した直後は、まだレベルが上がらないof which に第3進化が再判定されることがある。
+      // 「あげ始めてすぐ」と書かないと、手順の終わりのレベルと食い違って見える
+      evs.forEach(e => { if (e.level <= from) e.atOnce = true; });
+      out.push({ kind: 'feed', no: ++no, b: b, evos: evs });
+      from = b.after.level;
+    }
+  }
+  const last = out[out.length - 1];
+  if (last && last.kind === 'feed') last.final = true;
+  // Rare magが確定した手順までが「個数厳守」。それ以降は進化しないので個数がずれてよい。
+  // セルMagは最初から進化しない。Rare magにしない案は最後まで再判定が続く
+  let strict = !plan.cell;
+  out.forEach(ev => {
+    ev.zone = strict ? 'strict' : 'free';
+    if (strict && ev.kind === 'feed' && ev.evos.some(e => e.locks)) strict = false;
+  });
+  return out;
 }
-function resultHTML(r, idx) {
-  const m = r.mag;
-  const path = ['Mag'].concat(m.log.map(e => e.to));
-  const route = r.cell ? `via mag cell ${esc(r.cell)}`
-    : r.rare ? `via rare mag ${esc(jpName(r.rare))}` : 'without a rare mag';
-  // 工程を「担当Char が変わらない区間」に束ねて、Char 条件は区間の見出しに1回だけ出す。
-  // 条件は手順の再生で確かめた実際に使える組み合わせ(alternatives)を使う
-  const segs = segmentsOf(r.phases);
+
+// ---- ① 比べる: 手順は出さず、選ぶのに要る情報だけ ----
+function summaryHTML(r, idx) {
   const alts = alternatives(r);
-  const total = segs.filter(s => s.req).length;
-  let segNo = 0;
-  const phases = segs.map(seg => {
-    const head = seg.req ? segHeadHTML(alts[segNo++], segNo, total) : '';
-    const body = seg.phases.filter(p => p.blocks.length || !p.after).map(p => {
-      const steps = p.blocks.map(b => {
-        const a = b.after;
-        return `<div><span>${blockText(b)}</span><span class="st">Lv${a.level} `
-             + `${MSTATS.map(s => a.stats[s]).join('/')}</span></div>`;
-      }).join('');
-      return `<div class="phase"><h4>${esc(p.label)}</h4>`
-           + `<div class="steps">${steps}</div></div>`;
-    }).join('');
-    return head + body;
-  }).join('');
+  const req = alts.length
+    ? alts.map((a, i) => `<div class="sumreq">`
+        + (alts.length > 1 ? `<div class="crlab">character ${i + 1}</div>` : '')
+        + charReqHTML(a) + '</div>').join('')
+    : '<div class="creq"><span class="crval">any character can raise it</span></div>';
+  return `<div class="magsum">
+    <div class="sumtop"><b>${routeText(r)}</b>
+      <span class="sumpath">${['Mag'].concat(r.mag.log.map(e => e.to))
+        .map(n => esc(jpName(n))).join(' → ')}</span></div>
+    <div class="reshead">${easeHTML(r)}</div>
+    ${req}
+    <div class="resbtns"><button class="btn" data-pick="${idx}">Raise with this plan →</button></div>
+  </div>`;
+}
+
+// ---- ② 実行: 番号付きの1本のチェックリスト ----
+function evoLine(e) {
+  const pb = e.pb ? ` and learns the Photon Blast <b>${esc(pbJp(e.pb))}</b>` : '';
+  const lock = e.locks
+    ? ' <span class="lockmsg">← the mag never evolves again after this</span>' : '';
+  return `<div class="tlevo">⚡ ${e.atOnce ? 'right after you start feeding, ' : ''}`
+       + `at mag Lv${e.level} it becomes <b>${esc(jpName(e.form))}</b>${pb}${lock}</div>`;
+}
+function stepHTML(ev, done, next) {
+  const on = done.includes(ev.no);
+  const box = `<label class="tlchk"><input type="checkbox" data-step="${ev.no}"`
+            + `${on ? ' checked' : ''}><span class="tlno">${ev.no}</span></label>`;
+  const now = ev.no === next ? '<span class="tlnow">you are here</span>' : '';
+  let body = '';
+  if (ev.kind === 'prep') {
+    body = '<div class="tlmain">Get a fresh basic mag (mag Lv5)</div>';
+  } else if (ev.kind === 'cell') {
+    const m = (MAGDATA.cell_mags || {})[ev.form] || {};
+    const need = ((m.conditions || [])[0] || {}).char_level;
+    body = `<div class="tlmain">Use the mag cell <b>${esc(ev.cell)}</b> to turn it into `
+         + `<b>${esc(jpName(ev.form))}</b></div>`
+         + `<div class="tlsub">${need ? `The character using it must be Lv${need} or above. ` : ''}`
+         + `Cell mags never evolve, so any character can raise it`
+         + `${m.no_pb ? '. This form cannot hold a Photon Blast' : ''}</div>`;
+  } else if (ev.kind === 'hand') {
+    body = `<div class="tlmain">${ev.at === 1 ? 'Give the mag to a character' : 'Hand the mag to a different character'}`
+         + `${ev.total > 1 ? ` (character ${ev.at} of ${ev.total})` : ''}</div>`
+         + `<div class="tlreq">${charReqHTML(ev.alt)}</div>`
+         + `<div class="tlsub">Evolution is judged from the character holding the mag at that moment: `
+         + `their class and Section ID</div>`;
+  } else {
+    const a = ev.b.after;
+    body = `<div class="tlmain">${blockText(ev.b)}</div>`
+         + `<div class="tlstop">${ev.final ? 'Finished at' : 'Stop when it reads'} → `
+         + `<b>mag Lv${a.level}</b>  ${statLine(a.stats)}`
+         + `${ev.final ? ' <span class="tldone">✔ done</span>' : ''}</div>`
+         + ev.evos.map(evoLine).join('');
+  }
+  return `<div class="tlrow${on ? ' is-done' : ''}${now ? ' is-next' : ''}">${box}`
+       + `<div class="tlbody">${now}${body}</div></div>`;
+}
+// 「個数厳守」と「ずれても大丈夫" 箱で分ける。ここが育て方の一番の勘所
+function zoneHead(zone, plan, tl) {
+  if (zone === 'strict') {
+    const lock = tl.find(e => e.evos && e.evos.some(x => x.locks));
+    const at = lock ? lock.evos.find(x => x.locks) : null;
+    return `<div class="zhead zstrict"><b>${at ? `Until it becomes ${esc(jpName(at.form))} at mag Lv${at.level}, `
+        + `` : ''}feed exactly these numbers</b>`
+      + '<div class="zsub">One extra item pushes the mag past a level checkpoint and it turns into a different form; '
+      + 'from then on the same food raises different stats. This cannot be undone</div></div>';
+  }
+  const goal = plan.mag;
+  const lock = tl.find(e => e.evos && e.evos.some(x => x.locks));
+  const at = lock ? lock.evos.find(x => x.locks) : null;
+  return `<div class="zhead zfree"><b>${at ? `From mag Lv${at.level} on, ` : ''}`
+    + 'the exact counts no longer matter</b>'
+    + `<div class="zsub">The mag never evolves again. Counts and order can drift, as long as you end at`
+    + ` ${statLine(goal.stats)} you get the same ${esc(jpName(goal.form))}</div></div>`;
+}
+function stepsHTML(r, done) {
+  const tl = timeline(r);
+  const parts = [];
+  const first = tl.find(ev => !done.includes(ev.no));
+  const next = first ? first.no : -1;
+  let zone = null;
+  tl.forEach(ev => {
+    if (ev.zone !== zone) {
+      if (zone !== null) parts.push('</div>');
+      parts.push(`<div class="zone ${ev.zone}">` + zoneHead(ev.zone, r, tl));
+      zone = ev.zone;
+    }
+    parts.push(stepHTML(ev, done, next));
+  });
+  if (zone !== null) parts.push('</div>');
+  // 合計ちょうど100の目標は「Rare magを確定させるところまで」の経過点
+  const total = MSTATS.reduce((a, s) => a + r.mag.stats[s], 0);
+  if (r.rare && total === 100) parts.push('<div class="magnote">'
+    + `* This target stops right where ${esc(jpName(r.rare))} is locked in at mag Lv100. `
+    + 'It never evolves after that, so you can decide the remaining stats later</div>');
   return `<div class="magres">
-    <div class="reshead">
-      ${easeHTML(r)}
-      <span class="route">${route}</span>
-    </div>
-    <div class="formpath">${path.map((n, i) =>
-      i === path.length - 1 ? `<span class="cur">${esc(jpName(n))}</span>` : esc(jpName(n))).join(' → ')}</div>
-    <div class="pbline">Photon Blasts: ${m.pbs.length
-      ? m.pbs.map(p => esc(pbJp(p))).join(' → ') : 'None'}</div>
-    ${cellNote(r)}${lv100Note(r)}${noCharNote(alts)}
-    ${phases}
+    <div class="sumtop"><b>${routeText(r)}</b></div>
+    <div class="reshead">${easeHTML(r)}</div>
+    <div class="metarow"><span class="crlab">Form changes</span>
+      <span>${['Mag'].concat(r.mag.log.map(e => e.to))
+        .map((n, i, a) => i === a.length - 1 ? `<b>${esc(jpName(n))}</b>` : esc(jpName(n)))
+        .join(' → ')}</span></div>
+    <div class="metarow"><span class="crlab">Photon Blasts</span>
+      <span>${r.mag.pbs.length ? r.mag.pbs.map(p => esc(pbJp(p))).join(' → ') : 'None'}
+      <span class="who">(one is added at each evolution, up to 3, and cannot be changed later)</span></span></div>
+    ${parts.join('')}
     <div class="resbtns">
-      <button class="btn" data-sim="${idx}">See stats with this mag →</button>
-      <button class="btn" data-save="${idx}">💾 Save this plan</button>
+      <button class="btn" data-sim="0">See stats with this mag →</button>
+      <button class="btn" data-save="0">💾 Save this plan</button>
     </div>
   </div>`;
+}
+
+function blockText(b) {
+  const body = b.items.map(([it, c]) => `${c} × <b>${esc(jpName(it))}</b>`).join(' + ');
+  if (b.repeat > 1 && b.items.length > 1)
+    return `<span class="cyc">[${body}] ×${b.repeat} sets</span> `
+         + `<span class="st">(${b.n} total)</span>`;
+  return body;
 }
 
 // ---- 入力の読み書き (Simulatorの readState / applyState と同じ役割) ----
@@ -1543,7 +1676,8 @@ function renderMagPlanList() {
     const p = loadMagPlans()[el.dataset.n];
     if (!p) return;
     applyMagState(p.input);
-    showResults([p.plan], [], { saved: p.saved, name: el.dataset.n });
+    showResults([p.plan], [], { saved: p.saved, name: el.dataset.n },
+                'run', 0, p.done || []);
     magNote(`Loaded "${el.dataset.n}"`);
   }));
   box.querySelectorAll('.pren').forEach(el => el.addEventListener('click', () => {
@@ -1561,12 +1695,15 @@ function renderMagPlanList() {
     if (saveMagPlans(a)) { renderMagPlanList(); magNote(`Deleted "${el.dataset.del}"`); }
   }));
 }
-function savePlan(r) {
+function savePlan(r, done) {
   const all = loadMagPlans();
-  const name = planName(r, all);
-  all[name] = { plan: r, input: readMagState(), saved: new Date().toISOString() };
+  // すでに開いている保存プランならoverし、名前と進捗を引き継ぐ
+  const name = (FROZEN && all[FROZEN.name]) ? FROZEN.name : planName(r, all);
+  all[name] = { plan: r, input: readMagState(), done: done || [],
+                saved: new Date().toISOString() };
   if (!saveMagPlans(all)) return;
-  renderMagPlanList();
+  FROZEN = { name: name, saved: all[name].saved };
+  renderMagPlanList(); render();
   magNote(`Saved as "${name}"`);
 }
 
@@ -1621,38 +1758,87 @@ document.getElementById('magPasteBtn').addEventListener('click', () => {
     document.getElementById('magPaste').value = '';
 });
 
-// ---- 結果の表示 (計算した結果でも、保存したプランでも同じ経路を通る) ----
-let LAST = [];
-function showResults(res, notes, frozen) {
+// ---- 結果の表示 ----
+// VIEW は2つ。'pick' = 3案を要約で比べる / 'run' = 選んだ1案をチェックリストで実行する
+let LAST = [], NOTES = [], VIEW = 'pick', PICKED = 0, DONE = [], FROZEN = null;
+
+function showResults(res, notes, frozen, view, picked, done) {
+  LAST = res; NOTES = notes || []; FROZEN = frozen || null;
+  VIEW = view || 'pick'; PICKED = picked || 0; DONE = done || [];
+  if (FROZEN) VIEW = 'run';                 // 保存プランは1案なので実行画面から始める
+  render();
+}
+function saveLast() {
+  try {
+    localStorage.setItem(MAG_LAST_KEY, JSON.stringify({ input: readMagState(),
+      results: LAST, notes: NOTES, view: VIEW, picked: PICKED, done: DONE }));
+  } catch (e) {}
+}
+function render() {
   const out = document.getElementById('magOut');
-  LAST = res;
-  const noteHtml = (notes || []).map(n => `<div class="magnote">※ ${esc(n)}</div>`).join('');
-  if (!res.length) {
+  const noteHtml = NOTES.map(n => `<div class="magnote">※ ${esc(n)}</div>`).join('');
+  if (!LAST.length) {
     out.innerHTML = noteHtml
       + '<div class="magempty">No way to raise a mag to this target was found. '
       + 'Try relaxing the target or the preferences.</div>';
     return;
   }
   // 保存したプランは計算し直さない。いつ保存したものかを明示し、作り直す手段を添える
-  const head = frozen
-    ? `<div class="frozen">📂 Steps from the saved plan "${esc(frozen.name)}"`
-      + `${frozen.saved ? ` (saved ${esc(frozen.saved.slice(0, 10))})` : ''}`
+  const head = FROZEN
+    ? `<div class="frozen">📂 Steps from the saved plan "${esc(FROZEN.name)}"`
+      + `${FROZEN.saved ? ` (saved ${esc(FROZEN.saved.slice(0, 10))})` : ''}`
       + ' <button class="btn" id="magRecalc">Recalculate with current settings</button></div>'
     : '';
-  out.innerHTML = head + noteHtml + res.map((r, i) => resultHTML(r, i)).join('');
+  if (VIEW === 'pick') {
+    out.innerHTML = head + noteHtml
+      + `<div class="pickhead">Found ${LAST.length} ways to raise it. `
+      + '<b>Pick one to follow</b>'
+      + (loadInventory() && LAST.every(r => alternatives(r).some(a => !altChars(a).length))
+         ? '<div class="magnote">* None of these plans can be carried out by an imported character. '
+           + 'tick "only use my characters" to re-plan with the ones you have</div>'
+         : '')
+      + '</div>'
+      + LAST.map((r, i) => summaryHTML(r, i)).join('');
+  } else {
+    const back = LAST.length > 1
+      ? '<button class="reset" id="magBack">← see the other plans</button>' : '';
+    out.innerHTML = head + noteHtml + (back ? `<div class="backrow">${back}</div>` : '')
+      + stepsHTML(LAST[PICKED], DONE);
+  }
+  wire();
+}
+function wire() {
+  const out = document.getElementById('magOut');
+  const on = (sel, ev, fn) => out.querySelectorAll(sel).forEach(e => e.addEventListener(ev, fn));
   const rc = document.getElementById('magRecalc');
   if (rc) rc.addEventListener('click', calc);
-  out.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => {
-    const st = LAST[+b.dataset.sim].mag.stats;
+  const bk = document.getElementById('magBack');
+  if (bk) bk.addEventListener('click', () => { VIEW = 'pick'; saveLast(); render(); });
+  on('[data-pick]', 'click', e => {
+    PICKED = +e.currentTarget.dataset.pick; VIEW = 'run'; DONE = [];
+    saveLast(); render();
+    document.getElementById('magOut').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  on('[data-step]', 'change', e => {
+    const n = +e.currentTarget.dataset.step;
+    DONE = e.currentTarget.checked ? [...new Set([...DONE, n])] : DONE.filter(x => x !== n);
+    // 保存済みプランを開いているなら、進捗もそのプランに書き戻す
+    if (FROZEN) {
+      const all = loadMagPlans();
+      if (all[FROZEN.name]) { all[FROZEN.name].done = DONE; saveMagPlans(all); }
+    }
+    saveLast(); render();
+  });
+  on('[data-sim]', 'click', () => {
+    const st = LAST[PICKED].mag.stats;
     let last = {};
     try { last = JSON.parse(localStorage.getItem('pso_sim_last')) || {}; } catch (e) {}
     last.mag = { def: st.DEF, pow: st.POW, dex: st.DEX, mind: st.MIND };
     if (!last.cls) { last.cls = 'humar'; last.lv = 200; }
     try { localStorage.setItem('pso_sim_last', JSON.stringify(last)); } catch (e) {}
     location.href = '../simulator/';
-  }));
-  out.querySelectorAll('[data-save]').forEach(b =>
-    b.addEventListener('click', () => savePlan(LAST[+b.dataset.save])));
+  });
+  on('[data-save]', 'click', () => savePlan(LAST[PICKED], DONE));
 }
 
 function calc() {
@@ -1678,12 +1864,8 @@ function calc() {
     }
     out.classList.remove('busy');
     btn.disabled = false; btn.textContent = 'Calculate';
-    showResults(res, notes, null);
-    // 次に開いたときのために画面をそのまま残す(こちらも計算し直さない)
-    try {
-      localStorage.setItem(MAG_LAST_KEY,
-        JSON.stringify({ input: readMagState(), results: res, notes: notes }));
-    } catch (e) {}
+    showResults(res, notes, null, 'pick', 0, []);
+    saveLast();          // 次に開いたときのために画面をそのまま残す(計算し直さない)
   }, 20);
 }
 
@@ -1695,10 +1877,13 @@ document.querySelectorAll('.modebtn').forEach(b => b.addEventListener('click', (
 }));
 document.getElementById('magGo').addEventListener('click', calc);
 renderMagPlanList();
-// 前回の画面を復元する(計算し直さない)
+// 前回の画面を復元する(計算し直さない)。どの案を選んでどこまで進んだかも戻す
 try {
   const last = JSON.parse(localStorage.getItem(MAG_LAST_KEY));
-  if (last && last.results) { applyMagState(last.input); showResults(last.results, last.notes, null); }
+  if (last && last.results) {
+    applyMagState(last.input);
+    showResults(last.results, last.notes, null, last.view, last.picked, last.done);
+  }
 } catch (e) {}
 </script>
 </body>
