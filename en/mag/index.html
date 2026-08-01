@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mag Planner — Ephinea Tools</title>
+<style>/* Ephinea Tools 共通テーマ (単一ソース)
+   全4ページ+Simulatorのローカル版に埋め込まれる。
+   パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
+   ダークはフォトン寄りの濃紺トーン。chip系はゲーム準拠の意味色。 */
+
+:root {
+  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
+  --photon: #31c7e8;
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
+    --border: #24313f; --accent: #3db4f2; --accent-soft: #10293c;
+    --photon: #31c7e8;
+    --gold: #e0a94f; --gold-soft: #2f2510; --red: #f97066; --green: #3ccb95;
+    --strike: #5d6f82;
+    --chip-weapon: #132a3e; --chip-weapon-t: #6cb8f7;
+    --chip-frame: #102b20; --chip-frame-t: #3ccb95;
+    --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
+    --chip-unit: #241a3d; --chip-unit-t: #b18aff;
+    --chip-set: #391b1b; --chip-set-t: #f97066; }
+}
+:root[data-theme="dark"] { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
+  --border: #24313f; --accent: #3db4f2; --accent-soft: #10293c;
+  --photon: #31c7e8;
+  --gold: #e0a94f; --gold-soft: #2f2510; --red: #f97066; --green: #3ccb95;
+  --strike: #5d6f82;
+  --chip-weapon: #132a3e; --chip-weapon-t: #6cb8f7;
+  --chip-frame: #102b20; --chip-frame-t: #3ccb95;
+  --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
+  --chip-unit: #241a3d; --chip-unit-t: #b18aff;
+  --chip-set: #391b1b; --chip-set-t: #f97066; }
+:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
+  --photon: #31c7e8;
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px 14px 80px; }
+.wrap { max-width: 1200px; margin: 0 auto; }
+a { color: var(--accent); }
+
+/* ナビ (全ページ共通) */
+.nav { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; font-size: 0.88rem; }
+.nav .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.05rem; color: var(--text); text-decoration: none; }
+.nav .brand::before { content: ''; width: 9px; height: 20px; border-radius: 4px; background: linear-gradient(160deg, var(--accent), var(--photon)); }
+.nav a.tab { text-decoration: none; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+.nav a.tab:hover { border-color: var(--accent); }
+.nav a.tab.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.nav .spacer { flex: 1; }
+.nav .inv-chip { font-size: 0.75rem; color: var(--sub); }
+.theme-btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 99px; padding: 4px 12px; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
+
+/* 見出し */
+h1.page { display: flex; align-items: center; gap: 10px; font-size: 1.3rem; margin-bottom: 4px; }
+h2.sec { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; margin: 22px 0 10px; }
+h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; border-radius: 2px; background: linear-gradient(180deg, var(--accent), var(--photon)); }
+
+/* パネル(カード) */
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+.panel > h2 { display: flex; align-items: center; gap: 8px; font-size: 1rem; margin-bottom: 10px; }
+.panel > h2 .grow { flex: 1; }
+
+/* ボタン階層: .btn=主要アクション(塗り) / .reset=補助(枠線) */
+.btn { border: 1px solid var(--accent); background: var(--accent); color: #ffffff; border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.reset { border: 1px solid var(--border); background: var(--card); color: var(--sub); border-radius: 8px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer; }
+.reset:hover { color: var(--accent); border-color: var(--accent); }
+
+/* クリック可能カードのホバー手応え (全ページ統一) */
+.toolcard, .catrow, .wcard, .card { transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s; }
+.toolcard:hover, .catrow:hover, .wcard:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(11, 127, 194, 0.12); transform: translateY(-1px); }
+
+/* フォーカスリング (キーボード操作時の共通表現) */
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+
+
+/* 導入文の器 (h1直下の説明ブロック) */
+.lead { border-left: 3px solid var(--accent); border-image: linear-gradient(180deg, var(--accent), var(--photon)) 1; padding: 2px 0 2px 12px; margin: 4px 0 16px; color: var(--sub); font-size: 0.85rem; }
+.lead p + p { margin-top: 4px; }
+
+/* スクリーンリーダー専用テキスト */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* モーション低減設定の尊重 */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+/* 汎用テキスト */
+.note { font-size: 0.78rem; color: var(--sub); }
+.warn { color: var(--red); }
+.ok { color: var(--green); font-weight: 700; }
+.footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
+.footer a { color: var(--sub); }
+
+/* Section ID の色。公式ドロップチャート準拠(背景色・文字色とも)。
+   色は変数で持ち、タグ・カードの識別帯など複数の見せ方で使い回す */
+.sid-0 { --sid: #00A562; --sid-fg: #FFFFFF; }  /* Viridia */
+.sid-1 { --sid: #76FE43; --sid-fg: #000000; }  /* Greenill */
+.sid-2 { --sid: #59F9F9; --sid-fg: #000000; }  /* Skyly */
+.sid-3 { --sid: #4488FF; --sid-fg: #FFFFFF; }  /* Bluefull */
+.sid-4 { --sid: #CC00FF; --sid-fg: #FFFFFF; }  /* Purplenum */
+.sid-5 { --sid: #FF87CB; --sid-fg: #000000; }  /* Pinkal */
+.sid-6 { --sid: #F70F0F; --sid-fg: #FFFFFF; }  /* Redria */
+.sid-7 { --sid: #F7830F; --sid-fg: #000000; }  /* Oran */
+.sid-8 { --sid: #F7F715; --sid-fg: #000000; }  /* Yellowboze */
+.sid-9 { --sid: #FFFFFF; --sid-fg: #000000; }  /* Whitill */
+.idtag { display: inline-block; padding: 0 8px; border-radius: 99px; font-size: 0.7rem;
+         font-weight: 600; background: var(--sid, var(--accent-soft));
+         color: var(--sid-fg, var(--accent)); border: 1px solid rgba(0,0,0,0.18); }
+
+.maglayout { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 980px) {
+  .maglayout { grid-template-columns: 380px 1fr; align-items: start; }
+  .maginputs { position: sticky; top: 12px; max-height: calc(100vh - 24px); overflow-y: auto; }
+}
+.magrow { display: grid; grid-template-columns: 52px 1fr 62px; align-items: center; gap: 8px;
+          margin-bottom: 6px; }
+.magrow label { font-size: 0.8rem; color: var(--sub); font-weight: 600; }
+.magrow input[type=range] { width: 100%; }
+.magrow input[type=number] { width: 100%; padding: 4px 6px; text-align: right; }
+.magtotal { font-size: 0.85rem; color: var(--sub); margin-top: 6px; display: flex;
+            justify-content: space-between; align-items: center; }
+.magtotal b { font-variant-numeric: tabular-nums; font-size: 1rem; color: var(--text); }
+.optrow { display: grid; grid-template-columns: 84px 1fr; align-items: center; gap: 8px;
+          margin-bottom: 7px; font-size: 0.84rem; }
+.optrow > label { color: var(--sub); font-size: 0.78rem; }
+.optrow select, .optrow input { width: 100%; padding: 4px 6px; }
+.pbpick { display: flex; flex-wrap: wrap; gap: 5px; }
+.pbtog { cursor: pointer; border: 1px solid var(--border); background: var(--card);
+         color: var(--text); border-radius: 99px; padding: 3px 10px; font-size: 0.78rem; }
+.pbtog.on { border-color: var(--red); background: #feecec; color: var(--red); font-weight: 600; }
+.chkrow { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; margin: 5px 0; }
+.chkrow label { cursor: pointer; }
+.chkrow .hint { color: var(--sub); font-size: 0.74rem; }
+.gobtn { width: 100%; padding: 10px; font-size: 0.95rem; margin-top: 10px; }
+.magres { border: 1px solid var(--border); border-radius: 12px; background: var(--card);
+          padding: 14px 16px; margin-bottom: 12px; }
+.reshead { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline;
+           border-bottom: 1px solid var(--border); padding-bottom: 8px; margin-bottom: 10px; }
+.reshead .cost { font-size: 1.05rem; font-weight: 700; }
+.reshead .time { color: var(--sub); font-size: 0.85rem; }
+.reshead .route { margin-left: auto; font-size: 0.8rem; color: var(--accent);
+                  background: var(--accent-soft); border-radius: 99px; padding: 2px 10px; }
+.formpath { font-size: 0.84rem; margin-bottom: 4px; }
+.formpath .cur { font-weight: 700; }
+.pbline { font-size: 0.82rem; color: var(--sub); margin-bottom: 10px; }
+.phase { margin-top: 12px; }
+.phase > h4 { margin: 0 0 6px; font-size: 0.82rem; display: flex; flex-wrap: wrap;
+              align-items: center; gap: 6px; }
+.phase .who { font-weight: normal; color: var(--sub); font-size: 0.78rem; }
+.phase .nochar { color: var(--red); }
+.steps { font-size: 0.86rem; }
+.steps div { display: grid; grid-template-columns: 1fr auto; gap: 10px; padding: 4px 0;
+             border-bottom: 1px dotted var(--border); align-items: baseline; }
+.steps .st { color: var(--sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.steps .cyc { color: var(--accent); font-size: 0.8rem; }
+.magnote { font-size: 0.84rem; color: var(--sub); margin: 8px 0; }
+.magempty { color: var(--sub); text-align: center; padding: 40px 10px; }
+.busy { opacity: 0.5; }
+</style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%230b7fc2%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2331c7e8%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20x%3D%279%27%20y%3D%274%27%20width%3D%2714%27%20height%3D%2724%27%20rx%3D%276%27%20fill%3D%27url(%23g)%27%2F%3E%3C%2Fsvg%3E">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7fa">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e141c">
+<link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/mag/">
+<link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/mag/">
+<link rel="alternate" hreflang="en" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/mag/">
+<link rel="alternate" hreflang="x-default" href="https://ephinea-pso-tools.nishimoto-learning.jp/mag/">
+<meta name="description" content="Mag planner for PSOBB Ephinea. Enter your target stats and get the exact feeding order, which character to hand the mag to at each evolution, the Photon Blasts you will learn, and rare/cell mag routes.">
+</head>
+<body>
+<nav class="nav" aria-label="Site menu">
+  <a class="brand" href="../">Ephinea Tools</a>
+  <a class="tab " href="../">Home / Import</a><a class="tab " href="../characters/">Character</a><a class="tab " href="../simulator/">Simulator</a><a class="tab on" href="../mag/">Mag</a><a class="tab " href="../inventory/">Item List</a><a class="tab " href="../wishlist/">Wishlist</a>
+  <a class="tab" href="/mag/" hreflang="ja">日本語</a><span class="spacer"></span>
+  <span class="inv-chip" id="invChip"></span>
+  <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">🌙 Dark</button>
+</nav>
+<main class="wrap">
+<h1>🧬 Mag Planner</h1>
+<p class="lead">Set your target stats and get the exact feeding order — which character to hand the mag to at each evolution, the Photon Blasts you will learn, and how long it will take.</p>
+
+<div class="maglayout">
+<div class="maginputs">
+  <div class="panel">
+    <h2>1. Target stats</h2>
+    <div class="optrow" style="grid-template-columns:1fr">
+      <select id="magPreset"><option value="">Load a recommended wiki plan…</option></select>
+    </div>
+    <div id="magStats"></div>
+    <div class="magtotal"><span>Total (mag level)</span><span><b id="magSum">200</b> / 200</span></div>
+    <div class="magnote" id="magSumWarn"></div>
+  </div>
+
+  <details class="panel" id="magOpts">
+    <summary><b>2. Preferences</b> <span class="sub">(looks, PBs, bank trick — all optional)</span></summary>
+    <div style="padding-top:10px">
+      <div class="optrow"><label for="magForm">Looks</label>
+        <select id="magForm"><option value="">No preference</option></select></div>
+      <div class="optrow"><label for="magRare">Rare mag</label>
+        <select id="magRare"><option value="">No preference</option></select></div>
+      <div class="optrow" style="align-items:start"><label>PBs to avoid</label>
+        <div class="pbpick" id="magAvoid"></div></div>
+      <div class="chkrow"><input type="checkbox" id="magBank">
+        <label for="magBank">Use the bank trick <span class="hint">keeps DEF low but takes 3× longer</span></label></div>
+      <div class="chkrow"><input type="checkbox" id="magOwn">
+        <label for="magOwn">Only use characters I have</label></div>
+      <div class="chkrow"><input type="checkbox" id="magNoCell">
+        <label for="magNoCell">Don't use mag cells</label></div>
+    </div>
+  </details>
+
+  <button class="btn primary gobtn" id="magGo">Calculate</button>
+</div>
+
+<div id="magOut"><div class="magempty">Set your target and press "Calculate".</div></div>
+</div>
+
+<details class="panel" style="margin-top:20px">
+  <summary>About this calculation</summary>
+  <div style="padding:10px 4px 2px">
+  <p>Based on the official Ephinea wiki feeding tables and evolution conditions. It works backwards by <b>fixing the stats at each evolution first, then choosing food</b>. Since stats never decrease, every intermediate state must stay at or below the target — which narrows the candidates to a finite set.</p>
+  <p class="note">Steps are given as "N of one food". When two foods must be combined to make progress, it shows a ratio like "[A×7 + B×1] ×15 sets" — you never need to alternate one at a time.</p>
+  <p>The third evolution (Lv50) depends on <b>class, the ordering of your stats, and whether the Section ID is even or odd</b>. The fourth evolution (rare mag) happens <b>from Lv100</b>, and once it does the form never changes again.</p>
+  <p class="note">Times assume 3 items per 3 minutes 30 seconds. Using the bank trick is counted as 3× longer.</p>
+  </div>
+</details>
+</main>
+<footer class="footer">
+<p>Data sources: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
+ (equipment, prices, technique mechanics) / character growth data follows vanilla PSOBB /
+ Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">the classic status simulator</a></p>
+<p>Imported inventory data is stored only in your browser (localStorage) and never sent to any server.</p>
+</footer>
+<script>
+
+// ---- テーマ ----
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  const b = document.getElementById('themeToggle');
+  if (b) b.textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+let __theme = localStorage.getItem('pso_theme')
+  || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+applyTheme(__theme);
+document.getElementById('themeToggle').addEventListener('click', () => {
+  __theme = __theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem('pso_theme', __theme);
+  applyTheme(__theme);
+});
+
+// ---- Section ID (複数ページで使う。色は theme.css の .idtag.sid-N) ----
+const SIDS = ['Viridia', 'Greenill', 'Skyly', 'Bluefull', 'Purplenum',
+              'Pinkal', 'Redria', 'Oran', 'Yellowboze', 'Whitill'];
+// importedみデータ側は大文字(PINKAL)なので、大小を無視して番号を引く
+const sidIndex = sid => SIDS.findIndex(x => x.toLowerCase() === String(sid || '').toLowerCase());
+
+// ---- importedみ済みChar を Section ID ごとにまとめる ----
+// 返り値: [{sid: 番号, name: 'Whitill', chars: ['まるちbyPEN', '倉庫byPEN']}, ...]
+function charsBySid() {
+  const inv = loadInventory();
+  const all = (inv && inv.chars) ? Object.values(inv.chars) : [];
+  const by = new Map();
+  all.forEach(c => {
+    const i = sidIndex(c.sectionId);
+    if (i < 0) return;
+    if (!by.has(i)) by.set(i, []);
+    by.get(i).push(c.name);
+  });
+  return [...by.entries()].sort((a, b) => a[0] - b[0])
+    .map(([sid, chars]) => ({ sid, name: SIDS[sid], chars }));
+}
+
+// ---- HTMLエスケープ (複数ページで使う) ----
+function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+
+// ---- インベントリストレージ ----
+// ---- 日本語表示辞書 (内部キーは常に英語名。英語ページでは空オブジェクト) ----
+const JPN = {};
+const JPN_CF = {};
+// 記号のゆれ(引用符・コロン・ハイフン)を吸収して辞書を引く。
+// ただし「+」はアイテム名の一部(マザーガーブ+)なので落とさない
+const jpKey = s => s.toLowerCase().replace(/[^a-z0-9+]+/g, '');
+if (JPN.names) Object.entries(JPN.names).forEach(([en, jp]) => { JPN_CF[jpKey(en)] = jp; });
+function jpName(name) {
+  if (!JPN.names || !name) return name;
+  const hit = JPN_CF[jpKey(name)];
+  if (hit) return hit;
+  let m = name.match(/^([A-Za-z]+) LV(\d+) Disk$/i);
+  if (m) {
+    const t = JPN.tech_jp[m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()];
+    if (t) return `${t} Lv${m[2]} ディスク`;
+  }
+  m = name.match(/^(.+) LV(\d+)$/i);
+  if (m) {
+    const b = JPN_CF[jpKey(m[1])];
+    if (b) return `${b} Lv${m[2]}`;
+  }
+  m = name.match(/^(\d+) MESETA$/i);
+  if (m) return `${Number(m[1]).toLocaleString()} メセタ`;
+  return name;
+}
+function jpRaw(raw, name) {
+  const jp = jpName(name);
+  if (jp === name) return raw;
+  return raw.toLowerCase().startsWith(name.toLowerCase()) ? jp + raw.slice(name.length) : jp;
+}
+
+const INV_KEY = 'pso_inventory';
+function loadInventory() {
+  try { return JSON.parse(localStorage.getItem(INV_KEY)); } catch (e) { return null; }
+}
+function updateInvChip() {
+  const inv = loadInventory();
+  const el = document.getElementById('invChip');
+  if (!el) return;
+  el.textContent = inv && inv.items && inv.items.length
+    ? `📦 ${inv.items.length} items imported (${(inv.imported || '').slice(0, 10)})`
+    : '📦 No data imported';
+}
+updateInvChip();
+
+// ---- インベントリテキストのパーサ (AllItems_with_slot.txt形式) ----
+const PSO_SPECIALS = new Set(['Hell','Chaos','Spirit','Shadow','Panic','Charge','Blizzard','Arrest','Hold',
+  'Berserk',"Demon's",'Havoc','Fill','Dark','Thunder','Dim','Bind',"Devil's",'Draw','Heart','Mind','Soul',
+  'Geist',"King's",'Lord','Master','Gush','Heat','Fire','Flame','Burning','Frost','Freeze','Ice','Seize',
+  'Riot','Storm','Tempest']);
+
+function parseInventoryText(text) {
+  const items = [];
+  text.split(/\r?\n/).forEach(ln => {
+    const m = ln.match(/^(.*?), Slot: (.+)$/);
+    if (!m) return;
+    const it = { raw: m[1].trim(), slot: m[2].trim(), name: null, grind: 0,
+                 special: null, stats: null, hit: null, qty: 1, extra: [] };
+    let s = it.raw;
+    let mm = s.match(/ x(\d+)$/);
+    if (mm) { it.qty = +mm[1]; s = s.slice(0, mm.index); }
+    mm = s.match(/\[(-?\d+)\/(-?\d+)\/(-?\d+)\/(-?\d+)\|(-?\d+)\]/);
+    if (mm) { it.stats = [+mm[1], +mm[2], +mm[3], +mm[4]]; it.hit = +mm[5]; s = s.replace(mm[0], ''); }
+    mm = s.match(/ \+(\d+)/);
+    if (mm) { it.grind = +mm[1]; s = s.replace(mm[0], ''); }
+    for (const br of [...s.matchAll(/\[([^\]]*)\]/g)].map(x => x[1])) {
+      if (PSO_SPECIALS.has(br) && it.special === null) it.special = br;
+      else it.extra.push(br);
+      s = s.replace('[' + br + ']', '');
+    }
+    it.name = s.replace(/\s+/g, ' ').trim();
+    if (it.name) { it.id = items.length + 1; items.push(it); }
+  });
+  return items;
+}
+
+const MAGDATA = {"_meta":{"generated":"2026-08-01","sources":["https://wiki.pioneer2.net/w/Mag_feeding_tables","https://wiki.pioneer2.net/w/Mags"],"note":"進化条件は raw_conditions(原文)と conditions(構造化)を併記。stat_rules の \"Others\" は他3Stats全てより大きいことを表す。"},"rules":{"level_per_exp":100,"max_level":200,"max_stat":200,"start":"5 DEF (Lv5)","feed_interval_sec":210,"feed_per_interval":3,"synchro_range":[0,120],"iq_range":[0,200],"synchro_on_death":-5,"evolution_levels":[10,35,50],"evolution_after_50_every":5,"fourth_evolution_from":100,"fourth_evolution_is_final":true,"note":"各Statsの経験値100ごとに+1Lv。Lv=4ステの合計。マイナスの餌でも既に上がったレベルは下がらない","cell_mags_note":"Magセルを使うと形態が変わる(セルMag)。**全セルMagは給餌テーブル7を使う**。Table 7 はDEF/POW/DEXがマイナスの餌を持つため「上げたくないステを上げない」制御がしやすく、通常ルートでは作れない構成(例 5/0/0/195)が作れる。マークⅢは「Lv60+のChar  + 基本Mag」なので育成の最初期からTable 7に入れる。セルMagは第4進化の一種でStatsによる進化はしないが、セルを重ねて進化する系統がある(Mark III → … → Dreamcast / Devil's Wing → Tail)","fourth_evolution_note":"第4進化(Rare mag)はLv100から。wikiは「Lv100から10レベルごと」と書く一方で「Lv100を過ぎて未進化なら条件を満たすChar に渡して1回給餌すれば進化する」とも書いているため、取りこぼさないようLv100以降は毎回判定する。**一度なると形態は固定でPBも増えない**(手持ちの Sato LV200 [5.98/95.98/100.98/0.98] は等式を満たさないがシャトのまま)"},"feed_tables":{"0":{"Monomate":{"def":5,"pow":40,"dex":5,"mind":0,"sync":3,"iq":3},"Dimate":{"def":10,"pow":45,"dex":5,"mind":0,"sync":3,"iq":3},"Trimate":{"def":15,"pow":50,"dex":10,"mind":0,"sync":4,"iq":4},"Monofluid":{"def":5,"pow":0,"dex":5,"mind":40,"sync":3,"iq":3},"Difluid":{"def":10,"pow":0,"dex":5,"mind":45,"sync":3,"iq":3},"Trifluid":{"def":15,"pow":0,"dex":10,"mind":50,"sync":4,"iq":4},"Antidote":{"def":5,"pow":10,"dex":40,"mind":0,"sync":3,"iq":3},"Antiparalysis":{"def":5,"pow":0,"dex":44,"mind":10,"sync":3,"iq":3},"Sol Atomizer":{"def":15,"pow":30,"dex":15,"mind":25,"sync":4,"iq":1},"Moon Atomizer":{"def":15,"pow":25,"dex":15,"mind":30,"sync":4,"iq":1},"Star Atomizer":{"def":25,"pow":25,"dex":25,"mind":25,"sync":6,"iq":5}},"1":{"Monomate":{"def":5,"pow":10,"dex":0,"mind":-1,"sync":0,"iq":0},"Dimate":{"def":6,"pow":15,"dex":3,"mind":-3,"sync":2,"iq":1},"Trimate":{"def":12,"pow":21,"dex":4,"mind":-7,"sync":3,"iq":2},"Monofluid":{"def":5,"pow":0,"dex":0,"mind":8,"sync":0,"iq":0},"Difluid":{"def":7,"pow":0,"dex":3,"mind":13,"sync":2,"iq":1},"Trifluid":{"def":7,"pow":-7,"dex":6,"mind":19,"sync":3,"iq":2},"Antidote":{"def":0,"pow":5,"dex":15,"mind":0,"sync":0,"iq":1},"Antiparalysis":{"def":-1,"pow":0,"dex":14,"mind":5,"sync":2,"iq":0},"Sol Atomizer":{"def":10,"pow":11,"dex":8,"mind":0,"sync":-2,"iq":2},"Moon Atomizer":{"def":9,"pow":0,"dex":9,"mind":11,"sync":3,"iq":-2},"Star Atomizer":{"def":14,"pow":9,"dex":18,"mind":11,"sync":4,"iq":3}},"2":{"Monomate":{"def":1,"pow":9,"dex":0,"mind":-5,"sync":0,"iq":-1},"Dimate":{"def":1,"pow":13,"dex":0,"mind":-10,"sync":3,"iq":0},"Trimate":{"def":8,"pow":16,"dex":2,"mind":-15,"sync":4,"iq":1},"Monofluid":{"def":0,"pow":-5,"dex":0,"mind":9,"sync":0,"iq":-1},"Difluid":{"def":4,"pow":-10,"dex":0,"mind":13,"sync":3,"iq":0},"Trifluid":{"def":6,"pow":-15,"dex":5,"mind":17,"sync":3,"iq":2},"Antidote":{"def":-5,"pow":4,"dex":12,"mind":-5,"sync":-1,"iq":1},"Antiparalysis":{"def":-5,"pow":-6,"dex":11,"mind":4,"sync":0,"iq":0},"Sol Atomizer":{"def":0,"pow":11,"dex":3,"mind":-5,"sync":4,"iq":-2},"Moon Atomizer":{"def":4,"pow":-5,"dex":0,"mind":11,"sync":-1,"iq":1},"Star Atomizer":{"def":7,"pow":8,"dex":6,"mind":9,"sync":4,"iq":2}},"3":{"Monomate":{"def":0,"pow":3,"dex":0,"mind":0,"sync":0,"iq":-1},"Dimate":{"def":5,"pow":7,"dex":0,"mind":-5,"sync":2,"iq":0},"Trimate":{"def":4,"pow":14,"dex":6,"mind":-10,"sync":3,"iq":1},"Monofluid":{"def":0,"pow":0,"dex":0,"mind":4,"sync":0,"iq":0},"Difluid":{"def":4,"pow":-5,"dex":0,"mind":8,"sync":0,"iq":1},"Trifluid":{"def":4,"pow":-10,"dex":3,"mind":15,"sync":2,"iq":2},"Antidote":{"def":0,"pow":0,"dex":7,"mind":0,"sync":-3,"iq":3},"Antiparalysis":{"def":-4,"pow":-5,"dex":20,"mind":-5,"sync":3,"iq":0},"Sol Atomizer":{"def":-10,"pow":9,"dex":6,"mind":9,"sync":3,"iq":-2},"Moon Atomizer":{"def":8,"pow":5,"dex":-8,"mind":7,"sync":-2,"iq":2},"Star Atomizer":{"def":7,"pow":7,"dex":7,"mind":7,"sync":3,"iq":2}},"4":{"Monomate":{"def":-5,"pow":9,"dex":-5,"mind":0,"sync":2,"iq":-1},"Dimate":{"def":0,"pow":11,"dex":0,"mind":-10,"sync":2,"iq":0},"Trimate":{"def":4,"pow":14,"dex":0,"mind":-15,"sync":0,"iq":1},"Monofluid":{"def":-5,"pow":0,"dex":-6,"mind":10,"sync":2,"iq":-1},"Difluid":{"def":0,"pow":-10,"dex":0,"mind":11,"sync":2,"iq":0},"Trifluid":{"def":4,"pow":-15,"dex":0,"mind":15,"sync":0,"iq":1},"Antidote":{"def":-5,"pow":-5,"dex":16,"mind":-5,"sync":2,"iq":-1},"Antiparalysis":{"def":7,"pow":-3,"dex":0,"mind":-3,"sync":-2,"iq":3},"Sol Atomizer":{"def":5,"pow":21,"dex":-5,"mind":-20,"sync":4,"iq":-2},"Moon Atomizer":{"def":-5,"pow":-20,"dex":5,"mind":21,"sync":3,"iq":0},"Star Atomizer":{"def":4,"pow":6,"dex":8,"mind":5,"sync":3,"iq":2}},"5":{"Monomate":{"def":-4,"pow":13,"dex":-5,"mind":-5,"sync":2,"iq":-1},"Dimate":{"def":0,"pow":16,"dex":0,"mind":-15,"sync":0,"iq":1},"Trimate":{"def":3,"pow":19,"dex":-2,"mind":-18,"sync":2,"iq":0},"Monofluid":{"def":-4,"pow":-5,"dex":-5,"mind":13,"sync":2,"iq":-1},"Difluid":{"def":0,"pow":-15,"dex":0,"mind":16,"sync":0,"iq":1},"Trifluid":{"def":3,"pow":-20,"dex":0,"mind":19,"sync":2,"iq":0},"Antidote":{"def":5,"pow":-6,"dex":6,"mind":-5,"sync":0,"iq":1},"Antiparalysis":{"def":0,"pow":-4,"dex":14,"mind":-10,"sync":-1,"iq":1},"Sol Atomizer":{"def":4,"pow":17,"dex":-5,"mind":-15,"sync":4,"iq":-1},"Moon Atomizer":{"def":-10,"pow":-15,"dex":5,"mind":21,"sync":2,"iq":0},"Star Atomizer":{"def":2,"pow":8,"dex":3,"mind":6,"sync":3,"iq":2}},"6":{"Monomate":{"def":-3,"pow":9,"dex":-3,"mind":-4,"sync":-1,"iq":1},"Dimate":{"def":0,"pow":11,"dex":0,"mind":-10,"sync":2,"iq":0},"Trimate":{"def":2,"pow":15,"dex":0,"mind":-16,"sync":2,"iq":0},"Monofluid":{"def":-3,"pow":-4,"dex":-3,"mind":9,"sync":-1,"iq":1},"Difluid":{"def":0,"pow":-10,"dex":0,"mind":11,"sync":2,"iq":0},"Trifluid":{"def":-2,"pow":-15,"dex":0,"mind":19,"sync":2,"iq":0},"Antidote":{"def":0,"pow":6,"dex":9,"mind":-15,"sync":2,"iq":-1},"Antiparalysis":{"def":0,"pow":-15,"dex":9,"mind":6,"sync":-2,"iq":3},"Sol Atomizer":{"def":9,"pow":-20,"dex":-5,"mind":17,"sync":3,"iq":-1},"Moon Atomizer":{"def":-5,"pow":20,"dex":5,"mind":-20,"sync":0,"iq":2},"Star Atomizer":{"def":0,"pow":11,"dex":0,"mind":11,"sync":3,"iq":2}},"7":{"Monomate":{"def":-4,"pow":21,"dex":-15,"mind":-5,"sync":-1,"iq":0},"Dimate":{"def":-1,"pow":27,"dex":-10,"mind":-16,"sync":0,"iq":1},"Trimate":{"def":5,"pow":29,"dex":-7,"mind":-25,"sync":2,"iq":0},"Monofluid":{"def":-10,"pow":-5,"dex":-10,"mind":21,"sync":-1,"iq":0},"Difluid":{"def":-5,"pow":-16,"dex":-5,"mind":25,"sync":0,"iq":1},"Trifluid":{"def":-7,"pow":-25,"dex":6,"mind":29,"sync":2,"iq":0},"Antidote":{"def":-10,"pow":-10,"dex":28,"mind":-10,"sync":-1,"iq":1},"Antiparalysis":{"def":9,"pow":-18,"dex":24,"mind":-15,"sync":2,"iq":-1},"Sol Atomizer":{"def":19,"pow":18,"dex":-15,"mind":-20,"sync":2,"iq":1},"Moon Atomizer":{"def":-15,"pow":-20,"dex":19,"mind":18,"sync":2,"iq":1},"Star Atomizer":{"def":3,"pow":7,"dex":3,"mind":3,"sync":4,"iq":2}}},"feed_table_targets":{"0":"Stage 0 : Mag","1":"Stage 1 : Kalki ; Varuna ; Vritra","2":"Stage 2 : Ashvinau ; Namuci ; Marutah ; Rudra ; Sumba","3":"Stage 2 : Mitra ; Tapas ; Surya","4":"Stage 2 : Vayu Stage 3 : Apsaras ; Bhirava ; Kaitabha ; Kama ; Kumara ; Ushasu ; Varaha","5":"Stage 3 : Durga ; Garuda ; Ila ; Nandin ; Ribhava ; Sita ; Soma ; Yaksa Stage 4 : Deva ; Rukmin ; Sato","6":"Stage 3 : Andhaka ; Bana ; Kabanda ; Madhu ; Marica ; Naga ; Naraka ; Ravana Stage 4 : Bhima ; Pushan ; Rati","7":"Stage 4 : Diwari ; Nidra ; Savitri ; all cell Mags"},"mags":{"Mag":{"stage":0,"pb":null,"feed_table":"0","conditions":[],"raw_conditions":"Character creation Box drops"},"Varuna":{"stage":1,"pb":"Farlla","feed_table":"1","conditions":[{"raw":"HU evolves Mag","class":"HU","section_ids":null,"stat_rules":[],"stat_min":{},"evolves_from":"Mag"}],"raw_conditions":"HU evolves Mag"},"Kalki":{"stage":1,"pb":"Estlla","feed_table":"1","conditions":[{"raw":"RA evolves Mag","class":"RA","section_ids":null,"stat_rules":[],"stat_min":{},"evolves_from":"Mag"}],"raw_conditions":"RA evolves Mag"},"Vritra":{"stage":1,"pb":"Leilla","feed_table":"1","conditions":[{"raw":"FO evolves Mag","class":"FO","section_ids":null,"stat_rules":[],"stat_min":{},"evolves_from":"Mag"}],"raw_conditions":"FO evolves Mag"},"Rudra":{"stage":2,"pb":"Golla","feed_table":"2","conditions":[{"raw":"POW > Others","class":null,"section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"Others"}],"stat_min":{},"evolves_from":"Varuna"}],"raw_conditions":"POW > Others Evolves from Varuna"},"Marutah":{"stage":2,"pb":"Pilla","feed_table":"2","conditions":[{"raw":"DEX > Others","class":null,"section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"Others"}],"stat_min":{},"evolves_from":"Varuna"}],"raw_conditions":"DEX > Others Evolves from Varuna"},"Vayu":{"stage":2,"pb":"Mylla & Youlla","feed_table":"4","conditions":[{"raw":"MIND > Others","class":null,"section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"Others"}],"stat_min":{},"evolves_from":"Varuna"}],"raw_conditions":"MIND > Others Evolves from Varuna"},"Surya":{"stage":2,"pb":"Golla","feed_table":"3","conditions":[{"raw":"POW > Others","class":null,"section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"Others"}],"stat_min":{},"evolves_from":"Kalki"}],"raw_conditions":"POW > Others Evolves from Kalki"},"Mitra":{"stage":2,"pb":"Pilla","feed_table":"3","conditions":[{"raw":"DEX > Others","class":null,"section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"Others"}],"stat_min":{},"evolves_from":"Kalki"}],"raw_conditions":"DEX > Others Evolves from Kalki"},"Tapas":{"stage":2,"pb":"Mylla & Youlla","feed_table":"3","conditions":[{"raw":"MIND > Others","class":null,"section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"Others"}],"stat_min":{},"evolves_from":"Kalki"}],"raw_conditions":"MIND > Others Evolves from Kalki"},"Sumba":{"stage":2,"pb":"Golla","feed_table":"2","conditions":[{"raw":"POW > Others","class":null,"section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"Others"}],"stat_min":{},"evolves_from":"Vritra"}],"raw_conditions":"POW > Others Evolves from Vritra"},"Ashvinau":{"stage":2,"pb":"Pilla","feed_table":"2","conditions":[{"raw":"DEX > Others","class":null,"section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"Others"}],"stat_min":{},"evolves_from":"Vritra"}],"raw_conditions":"DEX > Others Evolves from Vritra"},"Namuci":{"stage":2,"pb":"Mylla & Youlla","feed_table":"2","conditions":[{"raw":"MIND > Others","class":null,"section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"Others"}],"stat_min":{},"evolves_from":"Vritra"}],"raw_conditions":"MIND > Others Evolves from Vritra"},"Andhaka":{"stage":3,"pb":"Estlla","feed_table":"6","conditions":[{"raw":"FO (All IDs) DEF ≥ 45, POW > Others","class":"FO","section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"Others"}],"stat_min":{"DEF":45},"evolves_from":null}],"raw_conditions":"FO (All IDs) DEF ≥ 45, POW > Others"},"Apsaras":{"stage":3,"pb":"Estlla","feed_table":"4","conditions":[{"raw":"HU POW ≥ MIND > DEX","class":"HU","section_ids":null,"stat_rules":[{"lhs":"POW","op":"≥","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"RA MIND > DEX > POW","class":"RA","section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"DEX"},{"lhs":"DEX","op":">","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU POW ≥ MIND > DEX RA MIND > DEX > POW"},"Bana":{"stage":3,"pb":"Estlla","feed_table":"6","conditions":[{"raw":"HU MIND > POW ≥ DEX","class":"HU","section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"POW"},{"lhs":"POW","op":"≥","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"FO (All ID) DEF ≥ 45, DEX ≥ POW","class":"FO","section_ids":null,"stat_rules":[{"lhs":"DEX","op":"≥","rhs":"POW"}],"stat_min":{"DEF":45},"evolves_from":null},{"raw":"FO (All ID) DEF ≥ 45, MIND ≥ POW","class":"FO","section_ids":null,"stat_rules":[{"lhs":"MIND","op":"≥","rhs":"POW"}],"stat_min":{"DEF":45},"evolves_from":null}],"raw_conditions":"HU MIND > POW ≥ DEX FO (All ID) DEF ≥ 45, DEX ≥ POW FO (All ID) DEF ≥ 45, MIND ≥ POW"},"Bhirava":{"stage":3,"pb":"Pilla","feed_table":"4","conditions":[{"raw":"HU POW ≥ MIND > DEX","class":"HU","section_ids":null,"stat_rules":[{"lhs":"POW","op":"≥","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"RA POW > MIND > DEX","class":"RA","section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"RA DEX ≥ POW > MIND","class":"RA","section_ids":null,"stat_rules":[{"lhs":"DEX","op":"≥","rhs":"POW"},{"lhs":"POW","op":">","rhs":"MIND"}],"stat_min":{},"evolves_from":null},{"raw":"FO DEX > MIND ≥ POW","class":"FO","section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"MIND"},{"lhs":"MIND","op":"≥","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU POW ≥ MIND > DEX RA POW > MIND > DEX RA DEX ≥ POW > MIND FO DEX > MIND ≥ POW"},"Durga":{"stage":3,"pb":"Estlla","feed_table":"5","conditions":[{"raw":"RA MIND > DEX > POW","class":"RA","section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"DEX"},{"lhs":"DEX","op":">","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"RA MIND > DEX > POW"},"Garuda":{"stage":3,"pb":"Pilla","feed_table":"5","conditions":[{"raw":"HU DEX > POW > MIND","class":"HU","section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"POW"},{"lhs":"POW","op":">","rhs":"MIND"}],"stat_min":{},"evolves_from":null},{"raw":"FO DEX > POW > MIND","class":"FO","section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"POW"},{"lhs":"POW","op":">","rhs":"MIND"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU DEX > POW > MIND FO DEX > POW > MIND"},"Ila":{"stage":3,"pb":"Mylla & Youlla","feed_table":"5","conditions":[{"raw":"HU DEX > POW > MIND","class":"HU","section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"POW"},{"lhs":"POW","op":">","rhs":"MIND"}],"stat_min":{},"evolves_from":null},{"raw":"FO MIND ≥ DEX > POW","class":"FO","section_ids":null,"stat_rules":[{"lhs":"MIND","op":"≥","rhs":"DEX"},{"lhs":"DEX","op":">","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU DEX > POW > MIND FO MIND ≥ DEX > POW"},"Kabanda":{"stage":3,"pb":"Mylla & Youlla","feed_table":"6","conditions":[{"raw":"HU MIND > POW ≥ DEX","class":"HU","section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"POW"},{"lhs":"POW","op":"≥","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"RA MIND > POW ≥ DEX","class":"RA","section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"POW"},{"lhs":"POW","op":"≥","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"FO MIND ≥ DEX > POW","class":"FO","section_ids":null,"stat_rules":[{"lhs":"MIND","op":"≥","rhs":"DEX"},{"lhs":"DEX","op":">","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU MIND > POW ≥ DEX RA MIND > POW ≥ DEX FO MIND ≥ DEX > POW"},"Kaitabha":{"stage":3,"pb":"Mylla & Youlla","feed_table":"4","conditions":[{"raw":"RA POW > MIND > DEX","class":"RA","section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"RA DEX ≥ POW > MIND","class":"RA","section_ids":null,"stat_rules":[{"lhs":"DEX","op":"≥","rhs":"POW"},{"lhs":"POW","op":">","rhs":"MIND"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"RA POW > MIND > DEX RA DEX ≥ POW > MIND"},"Kama":{"stage":3,"pb":"Pilla","feed_table":"4","conditions":[{"raw":"HU POW ≥ DEX ≥ MIND","class":"HU","section_ids":null,"stat_rules":[{"lhs":"POW","op":"≥","rhs":"DEX"},{"lhs":"DEX","op":"≥","rhs":"MIND"}],"stat_min":{},"evolves_from":null},{"raw":"HU DEX = MIND > POW","class":"HU","section_ids":null,"stat_rules":[{"lhs":"DEX","op":"=","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"POW"}],"stat_min":{},"evolves_from":null},{"raw":"RA POW > DEX ≥ MIND","class":"RA","section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"DEX"},{"lhs":"DEX","op":"≥","rhs":"MIND"}],"stat_min":{},"evolves_from":null},{"raw":"RA DEX ≥ MIND ≥ POW","class":"RA","section_ids":null,"stat_rules":[{"lhs":"DEX","op":"≥","rhs":"MIND"},{"lhs":"MIND","op":"≥","rhs":"POW"}],"stat_min":{},"evolves_from":null},{"raw":"RA POW = MIND > DEX","class":"RA","section_ids":null,"stat_rules":[{"lhs":"POW","op":"=","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"DEX"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU POW ≥ DEX ≥ MIND HU DEX = MIND > POW RA POW > DEX ≥ MIND RA DEX ≥ MIND ≥ POW RA POW = MIND > DEX"},"Kumara":{"stage":3,"pb":"Golla","feed_table":"4","conditions":[{"raw":"FO MIND ≥ POW ≥ DEX","class":"FO","section_ids":null,"stat_rules":[{"lhs":"MIND","op":"≥","rhs":"POW"},{"lhs":"POW","op":"≥","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"FO POW = DEX > MIND","class":"FO","section_ids":null,"stat_rules":[{"lhs":"POW","op":"=","rhs":"DEX"},{"lhs":"DEX","op":">","rhs":"MIND"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"FO MIND ≥ POW ≥ DEX FO POW = DEX > MIND"},"Madhu":{"stage":3,"pb":"Mylla & Youlla","feed_table":"6","conditions":[{"raw":"RA POW > DEX ≥ MIND","class":"RA","section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"DEX"},{"lhs":"DEX","op":"≥","rhs":"MIND"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"RA POW > DEX ≥ MIND"},"Marica":{"stage":3,"pb":"Pilla","feed_table":"6","conditions":[{"raw":"FO POW > DEX ≥ MIND","class":"FO","section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"DEX"},{"lhs":"DEX","op":"≥","rhs":"MIND"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"FO POW > DEX ≥ MIND"},"Naga":{"stage":3,"pb":"Mylla & Youlla","feed_table":"6","conditions":[{"raw":"FO POW > MIND > DEX","class":"FO","section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"FO MIND ≥ POW ≥ DEX","class":"FO","section_ids":null,"stat_rules":[{"lhs":"MIND","op":"≥","rhs":"POW"},{"lhs":"POW","op":"≥","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"FO POW = DEX > MIND","class":"FO","section_ids":null,"stat_rules":[{"lhs":"POW","op":"=","rhs":"DEX"},{"lhs":"DEX","op":">","rhs":"MIND"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"FO POW > MIND > DEX FO MIND ≥ POW ≥ DEX FO POW = DEX > MIND"},"Nandin":{"stage":3,"pb":"Estlla","feed_table":"5","conditions":[{"raw":"HU DEX > MIND ≥ POW","class":"HU","section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"MIND"},{"lhs":"MIND","op":"≥","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU DEX > MIND ≥ POW"},"Naraka":{"stage":3,"pb":"Golla","feed_table":"6","conditions":[{"raw":"FO POW > DEX ≥ MIND","class":"FO","section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"DEX"},{"lhs":"DEX","op":"≥","rhs":"MIND"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"FO POW > DEX ≥ MIND"},"Ravana":{"stage":3,"pb":"Farlla","feed_table":"6","conditions":[{"raw":"FO POW > MIND > DEX","class":"FO","section_ids":null,"stat_rules":[{"lhs":"POW","op":">","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"DEX"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"FO POW > MIND > DEX"},"Ribhava":{"stage":3,"pb":"Farlla","feed_table":"5","conditions":[{"raw":"FO DEX > POW > MIND","class":"FO","section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"POW"},{"lhs":"POW","op":">","rhs":"MIND"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"FO DEX > POW > MIND"},"Sita":{"stage":3,"pb":"Pilla","feed_table":"5","conditions":[{"raw":"FO DEX > MIND ≥ POW","class":"FO","section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"MIND"},{"lhs":"MIND","op":"≥","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"FO DEX > MIND ≥ POW"},"Soma":{"stage":3,"pb":"Estlla","feed_table":"5","conditions":[{"raw":"HU MIND > DEX > POW","class":"HU","section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"DEX"},{"lhs":"DEX","op":">","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU MIND > DEX > POW"},"Ushasu":{"stage":3,"pb":"Golla","feed_table":"4","conditions":[{"raw":"HU MIND > DEX > POW","class":"HU","section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"DEX"},{"lhs":"DEX","op":">","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU MIND > DEX > POW"},"Varaha":{"stage":3,"pb":"Golla","feed_table":"4","conditions":[{"raw":"HU POW ≥ DEX ≥ MIND","class":"HU","section_ids":null,"stat_rules":[{"lhs":"POW","op":"≥","rhs":"DEX"},{"lhs":"DEX","op":"≥","rhs":"MIND"}],"stat_min":{},"evolves_from":null},{"raw":"HU DEX = MIND > POW","class":"HU","section_ids":null,"stat_rules":[{"lhs":"DEX","op":"=","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"POW"}],"stat_min":{},"evolves_from":null},{"raw":"RA MIND > POW ≥ DEX","class":"RA","section_ids":null,"stat_rules":[{"lhs":"MIND","op":">","rhs":"POW"},{"lhs":"POW","op":"≥","rhs":"DEX"}],"stat_min":{},"evolves_from":null},{"raw":"RA DEX ≥ MIND ≥ POW","class":"RA","section_ids":null,"stat_rules":[{"lhs":"DEX","op":"≥","rhs":"MIND"},{"lhs":"MIND","op":"≥","rhs":"POW"}],"stat_min":{},"evolves_from":null},{"raw":"RA POW = MIND > DEX","class":"RA","section_ids":null,"stat_rules":[{"lhs":"POW","op":"=","rhs":"MIND"},{"lhs":"MIND","op":">","rhs":"DEX"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU POW ≥ DEX ≥ MIND HU DEX = MIND > POW RA MIND > POW ≥ DEX RA DEX ≥ MIND ≥ POW RA POW = MIND > DEX"},"Yaksa":{"stage":3,"pb":"Golla","feed_table":"5","conditions":[{"raw":"HU DEX > MIND ≥ POW","class":"HU","section_ids":null,"stat_rules":[{"lhs":"DEX","op":">","rhs":"MIND"},{"lhs":"MIND","op":"≥","rhs":"POW"}],"stat_min":{},"evolves_from":null}],"raw_conditions":"HU DEX > MIND ≥ POW"},"Bhima":{"stage":4,"pb":null,"feed_table":"6","conditions":[{"raw":"Female FO DEF + MIND = POW + DEX","gender":"F","class":"FO","equality":"DEF+MIND=POW+DEX","section_ids":null},{"raw":"Female FO DEF + POW = DEX + MIND","gender":"F","class":"FO","equality":"DEF+POW=DEX+MIND","section_ids":null}],"raw_conditions":"Female FO DEF + MIND = POW + DEX Female FO DEF + POW = DEX + MIND"},"Deva":{"stage":4,"pb":null,"feed_table":"5","conditions":[{"raw":"Male HU DEF + DEX = POW + MIND","gender":"M","class":"HU","equality":"DEF+DEX=POW+MIND","section_ids":null}],"raw_conditions":"Male HU DEF + DEX = POW + MIND"},"Diwari":{"stage":4,"pb":null,"feed_table":"7","conditions":[{"raw":"Female RA DEF + POW = DEX + MIND","gender":"F","class":"RA","equality":"DEF+POW=DEX+MIND","section_ids":null}],"raw_conditions":"Female RA DEF + POW = DEX + MIND"},"Nidra":{"stage":4,"pb":null,"feed_table":"7","conditions":[{"raw":"Male FO DEF + DEX = POW + MIND","gender":"M","class":"FO","equality":"DEF+DEX=POW+MIND","section_ids":null},{"raw":"Male FO DEF + MIND = POW + DEX","gender":"M","class":"FO","equality":"DEF+MIND=POW+DEX","section_ids":null},{"raw":"Male FO DEF + POW = DEX + MIND","gender":"M","class":"FO","equality":"DEF+POW=DEX+MIND","section_ids":null}],"raw_conditions":"Male FO DEF + DEX = POW + MIND Male FO DEF + MIND = POW + DEX Male FO DEF + POW = DEX + MIND"},"Pushan":{"stage":4,"pb":null,"feed_table":"6","conditions":[{"raw":"Male RA DEF + DEX = POW + MIND","gender":"M","class":"RA","equality":"DEF+DEX=POW+MIND","section_ids":null},{"raw":"Male RA DEF + MIND = POW + DEX","gender":"M","class":"RA","equality":"DEF+MIND=POW+DEX","section_ids":null},{"raw":"Male RA DEF + POW = DEX + MIND","gender":"M","class":"RA","equality":"DEF+POW=DEX+MIND","section_ids":null}],"raw_conditions":"Male RA DEF + DEX = POW + MIND Male RA DEF + MIND = POW + DEX Male RA DEF + POW = DEX + MIND"},"Rati":{"stage":4,"pb":null,"feed_table":"6","conditions":[{"raw":"Male HU DEF + MIND = POW + DEX","gender":"M","class":"HU","equality":"DEF+MIND=POW+DEX","section_ids":null},{"raw":"Male HU DEF + POW = DEX + MIND","gender":"M","class":"HU","equality":"DEF+POW=DEX+MIND","section_ids":null}],"raw_conditions":"Male HU DEF + MIND = POW + DEX Male HU DEF + POW = DEX + MIND"},"Rukmin":{"stage":4,"pb":null,"feed_table":"5","conditions":[{"raw":"Female RA DEF + DEX = POW + MIND","gender":"F","class":"RA","equality":"DEF+DEX=POW+MIND","section_ids":null},{"raw":"Female RA DEF + MIND = POW + DEX","gender":"F","class":"RA","equality":"DEF+MIND=POW+DEX","section_ids":null}],"raw_conditions":"Female RA DEF + DEX = POW + MIND Female RA DEF + MIND = POW + DEX"},"Sato":{"stage":4,"pb":null,"feed_table":"5","conditions":[{"raw":"Female FO DEF + DEX = POW + MIND","gender":"F","class":"FO","equality":"DEF+DEX=POW+MIND","section_ids":null}],"raw_conditions":"Female FO DEF + DEX = POW + MIND"},"Savitri":{"stage":4,"pb":null,"feed_table":"7","conditions":[{"raw":"Female HU DEF + DEX = POW + MIND","gender":"F","class":"HU","equality":"DEF+DEX=POW+MIND","section_ids":null},{"raw":"Female HU DEF + MIND = POW + DEX","gender":"F","class":"HU","equality":"DEF+MIND=POW+DEX","section_ids":null},{"raw":"Female HU DEF + POW = DEX + MIND","gender":"F","class":"HU","equality":"DEF+POW=DEX+MIND","section_ids":null}],"raw_conditions":"Female HU DEF + DEX = POW + MIND Female HU DEF + MIND = POW + DEX Female HU DEF + POW = DEX + MIND"}},"cells":{"Amitie's Memo":["Puyo"],"Cell of Mag 213":["Churel","Preta"],"Cell of Mag 502":["Pitri","Soniti"],"D-Photon Core":["Gael Giel"],"Dragon Scale":["Tellusis"],"Heart of Angel":["Angel's Wing"],"Heart of Chao":["Chao"],"Heart of Chu Chu":["Chu Chu"],"Heart of Devil":["Devil's Tail","Devil's Wing"],"Heart of Kapu Kapu":["Kapu Kapu"],"Heart of Morolian":["Moro"],"Heart of Opa Opa":["Opa-Opa"],"Heart of Pian":["Pian"],"Heart of YN-0117":["Elenor"],"Heaven Striker Coat":["Striker Unit"],"Kalki Kit":["Kalki*"],"Kit of Dreamcast":["Dreamcast"],"Kit of Genesis":["Genesis"],"Kit of Hamburger":["Hamburger"],"Kit of Mark III":["Mark III"],"Kit of Master System":["Master System"],"Kit of Sega Saturn":["Sega Saturn"],"Liberta Kit":["Agastya"],"Mag Kit":["Mag*"],"Panther's Spirit":["Panzer's Tail"],"Parts of RoboChao":["Robochao"],"Pioneer Parts":["Pioneer"],"Rappy's Beak":["Rappy"],"Sonic Doll":["Sonic"],"Stealth Kit":["Stealth"],"Tablet":["Geung-si"],"Varuna Kit":["Varuna*"],"Vritra Kit":["Vritra*"],"Yahoo!'s engine":["Yahoo!"]},"cell_mags":{"Agastya":{"stage":4,"pb":null,"feed_table":"7","cell":"Liberta Kit","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":"Visible Mag color"},"Angel's Wing":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of Angel","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ third evolution Mag","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag","note":""},"Chao":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of Chao","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 140+ third evolution Mag 35+ in all Mag stats","from_stage":3,"min_level":140,"all_stats_min":35}],"raw_conditions":"Level 140+ third evolution Mag 35+ in all Mag stats","note":""},"Chu Chu":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of Chu Chu","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":""},"Churel":{"stage":4,"pb":null,"feed_table":"7","cell":"Cell of Mag 213","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ third evolution Mag and character","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag and character","note":"Visible Mag color"},"Devil's Tail":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of Devil","no_pb":false,"resets_form":false,"conditions":[{"raw":"Any Devil's Wing","from_mag":"Devil's Wing"}],"raw_conditions":"Any Devil's Wing","note":""},"Devil's Wing":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of Devil","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ third evolution Mag","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag","note":""},"Dreamcast":{"stage":4,"pb":null,"feed_table":"7","cell":"Kit of Dreamcast","no_pb":true,"resets_form":false,"conditions":[{"raw":"Level 100+ character and Level 100+ Sega Saturn","char_level":100,"min_level":100,"from_mag":"Sega Saturn"}],"raw_conditions":"Level 100+ character and Level 100+ Sega Saturn","note":"Cannot have Photon Blasts; Cannot gain PB meter and therefore cannot trigger 100 PB."},"Elenor":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of YN-0117","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":""},"Gael Giel":{"stage":4,"pb":null,"feed_table":"7","cell":"D-Photon Core","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ Kama","min_level":100,"from_mag":"Kama"}],"raw_conditions":"Level 100+ Kama","note":"Slowly drains HP over time when equipped"},"Genesis":{"stage":4,"pb":null,"feed_table":"7","cell":"Kit of Genesis","no_pb":true,"resets_form":false,"conditions":[{"raw":"Level 80+ character and Level 70+ Master System","char_level":80,"min_level":70,"from_mag":"Master System"}],"raw_conditions":"Level 80+ character and Level 70+ Master System","note":"Cannot have Photon Blasts; Cannot gain PB meter and therefore cannot trigger 100 PB."},"Geung-si":{"stage":4,"pb":null,"feed_table":"7","cell":"Tablet","no_pb":false,"resets_form":false,"conditions":[{"raw":"Any Rukmin","from_mag":"Rukmin"}],"raw_conditions":"Any Rukmin","note":""},"Hamburger":{"stage":4,"pb":null,"feed_table":"7","cell":"Kit of Hamburger","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ Kaitabha","min_level":50,"from_mag":"Kaitabha"}],"raw_conditions":"Level 50+ Kaitabha","note":""},"Kalki*":{"stage":4,"pb":null,"feed_table":"7","cell":"Kalki Kit","no_pb":false,"resets_form":true,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":"Visible Mag color"},"Kapu Kapu":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of Kapu Kapu","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":""},"Mag*":{"stage":4,"pb":null,"feed_table":"7","cell":"Mag Kit","no_pb":false,"resets_form":true,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":"Visible Mag color"},"Mark III":{"stage":4,"pb":null,"feed_table":"7","cell":"Kit of Mark III","no_pb":true,"resets_form":false,"conditions":[{"raw":"Level 60+ character and any basic Mag","char_level":60,"from_stage":0}],"raw_conditions":"Level 60+ character and any basic Mag","note":"Cannot have Photon Blasts"},"Master System":{"stage":4,"pb":null,"feed_table":"7","cell":"Kit of Master System","no_pb":true,"resets_form":false,"conditions":[{"raw":"Level 70+ character and Level 60+ Mark III","char_level":70,"min_level":60,"from_mag":"Mark III"}],"raw_conditions":"Level 70+ character and Level 60+ Mark III","note":"Cannot have Photon Blasts; Cannot gain PB meter and therefore cannot trigger 100 PB."},"Moro":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of Morolian","no_pb":false,"resets_form":false,"conditions":[{"raw":"Any Kumara","from_mag":"Kumara"}],"raw_conditions":"Any Kumara","note":"Visible Mag color Set effect with Tension Blaster"},"Opa-Opa":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of Opa Opa","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ third evolution Mag","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag","note":""},"Panzer's Tail":{"stage":4,"pb":null,"feed_table":"7","cell":"Panther's Spirit","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ Naga","min_level":50,"from_mag":"Naga"}],"raw_conditions":"Level 50+ Naga","note":""},"Pian":{"stage":4,"pb":null,"feed_table":"7","cell":"Heart of Pian","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 120+ third evolution Mag with 120% Synchro and 180+ IQ","from_stage":3,"min_level":120,"min_sync":120,"min_iq":180}],"raw_conditions":"Level 120+ third evolution Mag with 120% Synchro and 180+ IQ","note":""},"Pioneer":{"stage":4,"pb":null,"feed_table":"7","cell":"Pioneer Parts","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":""},"Pitri":{"stage":4,"pb":null,"feed_table":"7","cell":"Cell of Mag 502","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ third evolution Mag and character","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag and character","note":"Visible Mag color"},"Present*":{"stage":4,"pb":null,"feed_table":"7","cell":"Mag Gift Wrap","no_pb":false,"resets_form":true,"conditions":[{"raw":"Level 100+ third evolution Mag","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag","note":"Visible Mag color"},"Preta":{"stage":4,"pb":null,"feed_table":"7","cell":"Cell of Mag 213","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ third evolution Mag and character","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag and character","note":"Visible Mag color"},"Puyo":{"stage":4,"pb":null,"feed_table":"7","cell":"Amitie's Memo","no_pb":false,"resets_form":false,"conditions":[{"raw":"Any Chu Chu","from_mag":"Chu Chu"}],"raw_conditions":"Any Chu Chu","note":"Visible Mag color"},"Robochao":{"stage":4,"pb":null,"feed_table":"7","cell":"Parts of RoboChao","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 145+ third evolution Mag 70+ in two Mag stats","from_stage":3,"min_level":145,"two_stats_min":70}],"raw_conditions":"Level 145+ third evolution Mag 70+ in two Mag stats","note":""},"Rappy":{"stage":4,"pb":null,"feed_table":"7","cell":"Rappy's Beak","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":""},"Saraswati":{"stage":4,"pb":null,"feed_table":"7","cell":"Seed Exchange Kit","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ third evolution Mag","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag","note":"Currently unavailable"},"Sega Saturn":{"stage":4,"pb":null,"feed_table":"7","cell":"Kit of Sega Saturn","no_pb":true,"resets_form":false,"conditions":[{"raw":"Level 90+ character and Level 90+ Genesis","char_level":90,"min_level":90,"from_mag":"Genesis"}],"raw_conditions":"Level 90+ character and Level 90+ Genesis","note":"Cannot have Photon Blasts; Cannot gain PB meter and therefore cannot trigger 100 PB."},"Sonic":{"stage":4,"pb":null,"feed_table":"7","cell":"Sonic Doll","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ third evolution Mag","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag","note":""},"Soniti":{"stage":4,"pb":null,"feed_table":"7","cell":"Cell of Mag 502","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 100+ third evolution Mag and character","from_stage":3,"min_level":100}],"raw_conditions":"Level 100+ third evolution Mag and character","note":"Visible Mag color"},"Stealth":{"stage":4,"pb":null,"feed_table":"7","cell":"Stealth Kit","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":"Invisible"},"Striker Unit":{"stage":4,"pb":null,"feed_table":"7","cell":"Heaven Striker Coat","no_pb":false,"resets_form":false,"conditions":[{"raw":"Any Garuda","from_mag":"Garuda"}],"raw_conditions":"Any Garuda","note":"Set effect with Heaven Striker"},"Tellusis":{"stage":4,"pb":null,"feed_table":"7","cell":"Dragon Scale","no_pb":false,"resets_form":false,"conditions":[{"raw":"Any Kama","from_mag":"Kama"}],"raw_conditions":"Any Kama","note":"Set effect with Excalibur"},"Varuna*":{"stage":4,"pb":null,"feed_table":"7","cell":"Varuna Kit","no_pb":false,"resets_form":true,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":"Visible Mag color"},"Vritra*":{"stage":4,"pb":null,"feed_table":"7","cell":"Vritra Kit","no_pb":false,"resets_form":true,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":"Visible Mag color"},"Yahoo!":{"stage":4,"pb":null,"feed_table":"7","cell":"Yahoo!'s engine","no_pb":false,"resets_form":false,"conditions":[{"raw":"Level 50+ third evolution Mag","from_stage":3,"min_level":50}],"raw_conditions":"Level 50+ third evolution Mag","note":"Visible Mag color"}},"fourth_evolution_reference":[{"class":"HU","gender":"M","section_ids":["Viridia","Bluefull","Redria","Whitill"],"equality":"DEF+DEX=POW+MIND","mag":"Deva"},{"class":"HU","gender":"M","section_ids":["Greenill","Purplenum","Oran"],"equality":"DEF+MIND=POW+DEX","mag":"Rati"},{"class":"HU","gender":"M","section_ids":["Skyly","Pinkal","Yellowboze"],"equality":"DEF+POW=DEX+MIND","mag":"Rati"},{"class":"HU","gender":"F","section_ids":["Viridia","Bluefull","Redria","Whitill"],"equality":"DEF+DEX=POW+MIND","mag":"Savitri"},{"class":"HU","gender":"F","section_ids":["Greenill","Purplenum","Oran"],"equality":"DEF+MIND=POW+DEX","mag":"Savitri"},{"class":"HU","gender":"F","section_ids":["Skyly","Pinkal","Yellowboze"],"equality":"DEF+POW=DEX+MIND","mag":"Savitri"},{"class":"RA","gender":"M","section_ids":["Viridia","Bluefull","Redria","Whitill"],"equality":"DEF+DEX=POW+MIND","mag":"Pushan"},{"class":"RA","gender":"M","section_ids":["Greenill","Purplenum","Oran"],"equality":"DEF+MIND=POW+DEX","mag":"Pushan"},{"class":"RA","gender":"M","section_ids":["Skyly","Pinkal","Yellowboze"],"equality":"DEF+POW=DEX+MIND","mag":"Pushan"},{"class":"RA","gender":"F","section_ids":["Viridia","Bluefull","Redria","Whitill"],"equality":"DEF+DEX=POW+MIND","mag":"Rukmin"},{"class":"RA","gender":"F","section_ids":["Greenill","Purplenum","Oran"],"equality":"DEF+MIND=POW+DEX","mag":"Rukmin"},{"class":"RA","gender":"F","section_ids":["Skyly","Pinkal","Yellowboze"],"equality":"DEF+POW=DEX+MIND","mag":"Diwari"},{"class":"FO","gender":"M","section_ids":["Viridia","Bluefull","Redria","Whitill"],"equality":"DEF+DEX=POW+MIND","mag":"Nidra"},{"class":"FO","gender":"M","section_ids":["Greenill","Purplenum","Oran"],"equality":"DEF+MIND=POW+DEX","mag":"Nidra"},{"class":"FO","gender":"M","section_ids":["Skyly","Pinkal","Yellowboze"],"equality":"DEF+POW=DEX+MIND","mag":"Nidra"},{"class":"FO","gender":"F","section_ids":["Viridia","Bluefull","Redria","Whitill"],"equality":"DEF+DEX=POW+MIND","mag":"Sato"},{"class":"FO","gender":"F","section_ids":["Greenill","Purplenum","Oran"],"equality":"DEF+MIND=POW+DEX","mag":"Bhima"},{"class":"FO","gender":"F","section_ids":["Skyly","Pinkal","Yellowboze"],"equality":"DEF+POW=DEX+MIND","mag":"Bhima"}],"section_ids":["Viridia","Greenill","Skyly","Bluefull","Purplenum","Pinkal","Redria","Oran","Yellowboze","Whitill"]};
+const THIRD_IDS = {"_meta":{"note":"第3進化(Lv50)は「職業 × POW/DEX/MINDの大小関係 × Section IDの偶奇」で決まる。Ephinea wikiの第3進化表はSection ID列を持たず、同条件の形態を2つ並べているだけなので、この表で補完する。wiki本文とMags/Guideは「Section IDが条件に含まれる」と明記している。","sources":["https://psobb.gozaru.jp/mag.html (職業別Mag進化表)","https://fiber.homeip.net/pso/mag.html (POW/MINDシャト育成法で偶数HU→イラー、奇数RA→カイタバ)","https://heroherokan.web.fc2.com/gcpso_mag.htm (奇数RA→カイタバでマイラ習得)","https://wiki.pioneer2.net/w/Mags (職業とStats条件。ID列は無い)"],"even_ids":["Viridia","Skyly","Purplenum","Redria","Yellowboze"],"odd_ids":["Greenill","Bluefull","Pinkal","Oran","Whitill"],"verified":"2026-08-01 外部レシピ2件の主張(偶数HU+DEX>POW>MIND→イラー / 奇数RA→カイタバ)と一致することを確認"},"even":{"HU":{"POW > DEX > MIND":"Varaha","POW > MIND > DEX":"Bhirava","DEX > POW > MIND":"Ila","DEX > MIND > POW":"Nandin","MIND > POW > DEX":"Kabanda","MIND > DEX > POW":"Ushasu"},"RA":{"POW > DEX > MIND":"Kama","POW > MIND > DEX":"Bhirava","DEX > POW > MIND":"Bhirava","DEX > MIND > POW":"Kama","MIND > POW > DEX":"Varaha","MIND > DEX > POW":"Apsaras"},"FO":{"POW > DEX > MIND":"Naraka","POW > MIND > DEX":"Ravana","DEX > POW > MIND":"Ribhava","DEX > MIND > POW":"Sita","MIND > POW > DEX":"Naga","MIND > DEX > POW":"Kabanda"}},"odd":{"HU":{"POW > DEX > MIND":"Kama","POW > MIND > DEX":"Apsaras","DEX > POW > MIND":"Garuda","DEX > MIND > POW":"Yaksa","MIND > POW > DEX":"Bana","MIND > DEX > POW":"Soma"},"RA":{"POW > DEX > MIND":"Madhu","POW > MIND > DEX":"Kaitabha","DEX > POW > MIND":"Kaitabha","DEX > MIND > POW":"Varaha","MIND > POW > DEX":"Kabanda","MIND > DEX > POW":"Durga"},"FO":{"POW > DEX > MIND":"Marica","POW > MIND > DEX":"Naga","DEX > POW > MIND":"Garuda","DEX > MIND > POW":"Bhirava","MIND > POW > DEX":"Kumara","MIND > DEX > POW":"Ila"}}};
+const CELL_IDS = {"Cell of Mag 213":{"even":"Churel","odd":"Preta"},"Cell of Mag 502":{"even":"Soniti","odd":"Pitri"}};
+const PB_JP = {"Farlla":"ファーラ","Estlla":"エストラ","Golla":"ゴウラ","Pilla":"パイラ","Leilla":"レイラ","Mylla & Youlla":"マイラ＆ユウラ"};
+const MAGPLANS = {"source_note":"wiki.pioneer2.net の各クラス Guide ページ 「Material and Mag plans」節より。Mag は DEF/POW/DEX/MIND。","classes":{"HUmar":{"guide_url":"https://wiki.pioneer2.net/w/HUmar/Guide","groups":[{"name":"With V101","plans":[{"name":"Important Stats Only","mag":[5,147,48,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":222,"Luck":28},"unused":0},{"name":"Min-Max (-3 EVP)","mag":[5,147,48,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":73,"Mind":52,"Def":69,"Evade":28,"Luck":28},"unused":0},{"name":"Max Stats","mag":[5,147,48,0],"units":["V101","V801"],"shield":"Red Ring","materials":{"Power":73,"Mind":49,"Def":69,"Evade":30,"Luck":28},"unused":1}]},{"name":"Without V101","plans":[{"name":"Important Stats Only","mag":[5,144,51,0],"units":[],"shield":"Red Ring","materials":{"Power":215,"Luck":35},"unused":0},{"name":"Min-Max","mag":[5,144,51,0],"units":[],"shield":"Red Ring","materials":{"Power":83,"Mind":56,"Def":76,"Luck":35},"unused":0},{"name":"Max Stats","mag":[5,150,45,0],"units":["Centurion/Ability"],"shield":"Red Ring","materials":{"Power":62,"Mind":44,"Def":61,"Evade":22,"Luck":20},"unused":41}]}]},"HUnewearl":{"guide_url":"https://wiki.pioneer2.net/w/HUnewearl/Guide","groups":[{"name":"With V101","plans":[{"name":"Important Stats Only","mag":[5,95,100,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":122,"Luck":28},"unused":0},{"name":"Min-Max","mag":[5,95,100,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":99,"Mind":23,"Luck":28},"unused":0},{"name":"Min-Max (Allows Barrier Swap)","mag":[5,95,100,0],"units":["V101"],"shield":"","materials":{"Power":99,"Def":13,"Luck":38},"unused":0},{"name":"Max Stats","mag":[5,176,19,0],"units":["V101","Adept","Adept","Centurion/Ability"],"shield":"Red Ring","materials":{"Mind":104,"Evade":40,"Luck":3},"unused":3}]},{"name":"Without V101","plans":[{"name":"Important Stats Only","mag":[5,92,103,0],"units":[],"shield":"Red Ring","materials":{"Power":115,"Luck":35},"unused":0},{"name":"Min-Max","mag":[5,92,103,0],"units":[],"shield":"Red Ring","materials":{"Power":109,"Mind":6,"Luck":35},"unused":0}]}]},"HUcast":{"guide_url":"https://wiki.pioneer2.net/w/HUcast/Guide","groups":[{"name":"With V101","plans":[{"name":"Budget Important Stats Only","mag":[5,133,62,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":150},"unused":0},{"name":"Important Stats Only","mag":[5,133,62,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":122,"Luck":28},"unused":0},{"name":"Min-Max","mag":[5,133,62,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":106,"Def":16,"Luck":28},"unused":0},{"name":"Important Stats Only*","mag":[5,133,62,0],"units":["V101"],"shield":"","materials":{"Power":112,"Luck":38},"unused":0},{"name":"Min-Max*","mag":[5,133,62,0],"units":["V101"],"shield":"","materials":{"Power":106,"Def":6,"Luck":38},"unused":0},{"name":"Max Stats","mag":[5,139,56,0],"units":["V101","Centurion/Ability"],"shield":"Red Ring","materials":{"Power":85,"Def":25,"Evade":15,"Luck":13},"unused":12}]},{"name":"Without V101","plans":[{"name":"Important Stats Only (-3 ATP)","mag":[5,130,65,0],"units":[],"shield":"Red Ring","materials":{"Power":115,"Luck":35},"unused":0}]}]},"HUcaseal":{"guide_url":"https://wiki.pioneer2.net/w/HUcaseal/Guide","groups":[{"name":"With V101","plans":[{"name":"Important Stats Only","mag":[5,131,64,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":122,"Luck":28},"unused":0},{"name":"Min-Max","mag":[5,131,64,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":62,"Def":53,"Evade":7,"Luck":28},"unused":0},{"name":"Max Stats","mag":[5,137,58,0],"units":["V101","Centurion/Ability"],"shield":"Red Ring","materials":{"Power":41,"Def":38,"Evade":28,"Luck":13},"unused":30},{"name":"Important Stats Only*","mag":[5,131,64,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":112,"Luck":38},"unused":0},{"name":"Min-Max*","mag":[5,131,64,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":62,"Def":50,"Luck":38},"unused":0},{"name":"Min-Max**","mag":[5,131,64,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":62,"Def":10,"Evade":50,"Luck":28},"unused":0}]},{"name":"Without V101","plans":[{"name":"Important Stats Only","mag":[5,128,67,0],"units":[],"shield":"Red Ring","materials":{"Power":115,"Luck":35},"unused":0},{"name":"Min-Max","mag":[5,128,67,0],"units":[],"shield":"Red Ring","materials":{"Power":72,"Def":43,"Luck":35},"unused":0}]}]},"RAmar":{"guide_url":"https://wiki.pioneer2.net/w/RAmar/Guide","groups":[{"name":"","plans":[{"name":"Important Stats Only","mag":[5,160,35,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":222,"Luck":28},"unused":0},{"name":"Min-Max","mag":[5,160,35,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":60,"Mind":63,"Def":68,"Evade":31,"Luck":28},"unused":0},{"name":"Min-Max (2)","mag":[5,145,35,15],"units":["V101"],"shield":"Red Ring","materials":{"Power":75,"Mind":48,"Def":68,"Evade":31,"Luck":28},"unused":0}]}]},"RAmarl":{"guide_url":"https://wiki.pioneer2.net/w/RAmarl/Guide","groups":[{"name":"","plans":[{"name":"Budget Important Stats Only","mag":[5,149,46,0],"units":["Heavenly/Battle","Heavenly/Ability"],"shield":"Ranger Wall","materials":{"Power":222,"Luck":28},"unused":0},{"name":"Important Stats Only","mag":[5,149,46,0],"units":["V101"],"shield":"Ranger Wall","materials":{"Power":212,"Luck":38},"unused":0},{"name":"Clio at 180","mag":[5,149,46,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":129,"Mind":93,"Luck":28},"unused":0},{"name":"Min-Max","mag":[5,149,46,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":45,"Mind":132,"Def":45,"Luck":28},"unused":0},{"name":"Max Stats","mag":[5,155,40,0],"units":["V101","Centurion/Ability"],"shield":"Red Ring","materials":{"Power":24,"Mind":117,"Def":51,"Evade":29,"Luck":13},"unused":16}]}]},"RAcast":{"guide_url":"https://wiki.pioneer2.net/w/RAcast/Guide","groups":[{"name":"","plans":[{"name":"Important Stats Only","mag":[5,148,47,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":122,"Luck":28},"unused":0},{"name":"Min-Max","mag":[5,148,47,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":90,"Def":32,"Luck":28},"unused":0},{"name":"Max Stats","mag":[5,154,41,0],"units":["V101","Centurion/Ability"],"shield":"Red Ring","materials":{"Power":69,"Def":26,"Evade":14,"Luck":13},"unused":28}]}]},"RAcaseal":{"guide_url":"https://wiki.pioneer2.net/w/RAcaseal/Guide","groups":[{"name":"","plans":[{"name":"Important Stats Only","mag":[5,152,43,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":122,"Luck":28},"unused":0},{"name":"Min-Max","mag":[5,152,43,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":41,"Def":53,"Evade":28,"Luck":28},"unused":0},{"name":"Min-Max (2)","mag":[7,150,43,0],"units":["V101"],"shield":"Red Ring","materials":{"Power":43,"Def":52,"Evade":27,"Luck":28},"unused":0},{"name":"Max Stats","mag":[5,158,37,0],"units":["V101","Centurion/Ability"],"shield":"Red Ring","materials":{"Power":20,"Def":38,"Evade":15,"Luck":13},"unused":64}]}]},"FOmar":{"guide_url":"https://wiki.pioneer2.net/w/FOmar/Guide","groups":[{"name":"","plans":[{"name":"Budget Important Stats Only","mag":[5,117,46,0],"units":["V101","V801"],"shield":"","materials":{"Mind":250},"unused":0},{"name":"Important Stats Only","mag":[5,117,46,0],"units":["V101","V801"],"shield":"","materials":{"Mind":212,"Luck":38},"unused":0},{"name":"Min-Max","mag":[5,117,46,32],"units":["V101","V801"],"shield":"","materials":{"Mind":133,"Def":65,"Evade":14,"Luck":38},"unused":0},{"name":"Max Stats","mag":[5,112,20,63],"units":["V101","V801","Adept"],"shield":"","materials":{"Mind":97,"Def":60,"Evade":38,"Luck":33},"unused":22}]}]},"FOmarl":{"guide_url":"https://wiki.pioneer2.net/w/FOmarl/Guide","groups":[{"name":"","plans":[{"name":"Budget Important Stats Only","mag":[5,68,48,0],"units":["V101","V801"],"shield":"","materials":{"Mind":250},"unused":0,"mag_note":"wiki shows 5/68+/48+/0 (mid-leveling values; keep raising the mag)"},{"name":"Important Stats Only","mag":[5,68,48,0],"units":["V101","V801"],"shield":"","materials":{"Mind":212,"Luck":38},"unused":0,"mag_note":"wiki shows 5/68+/48+/0 (mid-leveling values; keep raising the mag)"},{"name":"Min-Max","mag":[5,68,48,79],"units":["V101","V801"],"shield":"","materials":{"Mind":94,"Def":71,"Evade":38,"Luck":38},"unused":9},{"name":"Max Stats (at Level 194)","mag":[5,78,51,66],"units":["V101","V801"],"shield":"","materials":{"Mind":112,"Def":70,"Evade":30,"Luck":38},"unused":0}]}]},"FOnewm":{"guide_url":"https://wiki.pioneer2.net/w/FOnewm/Guide","groups":[{"name":"Level 200","plans":[{"name":"General use","mag":[5,88,61,46],"units":["V101","V801 (or V502)","Adept","Smartlink"],"shield":"Any","materials":{"Mind":140},"unused":10},{"name":"Optional: Episode 2","mag":[5,93,101,1],"units":["V101","V801","V502","Smartlink"],"shield":"Any","materials":{"Mind":140},"unused":10},{"name":"Optional: Nuking only (max ATA)","mag":[40,0,104,56],"units":["V101","V801","Smartlink"],"shield":"Any","materials":{"Mind":150},"unused":0}]},{"name":"Other","plans":[{"name":"Level 146-170","mag":[5,0,45,150],"units":["V101","V801","Adept","Heavenly/Mind"],"shield":"Technique Merges (especially Gi and Ra)","materials":{"Mind":150},"unused":0},{"name":"Level 171-181","mag":[5,11,73,111],"units":["V101","V801","Adept","Smartlink"],"shield":"Technique Merges (especially Gi and Ra)","materials":{"Mind":150},"unused":0},{"name":"Level 182+","mag":[5,0,109,86],"units":["V101","V801","Smartlink"],"shield":"Technique Merges (especially Gi and Ra)","materials":{"Mind":150},"unused":0},{"name":"Max Stats","mag":[5,6,20,169],"units":["V101","Adept","Adept","Centurion/Ability"],"shield":"Red Ring","materials":{"Power":62,"Evade":42,"Luck":13},"unused":33}]}]},"FOnewearl":{"guide_url":"https://wiki.pioneer2.net/w/FOnewearl/Guide","groups":[{"name":"Level 200","plans":[{"name":"General use","mag":[5,36,62,97],"units":["V101","V801 (or V502)","Adept","Smartlink"],"shield":"Technique Merges (especially Gi and Ra), Red Ring","materials":{"Mind":150},"unused":0},{"name":"Optional: General use Episode 2","mag":[5,43,102,50],"units":["V101","V801","V502","Smartlink"],"shield":"Technique Merges (especially Gi and Ra), Red Ring","materials":{"Mind":150},"unused":0},{"name":"Min-Max","mag":[5,36,62,97],"units":["V101","V801 (or V502)","Adept","Smartlink"],"shield":"Technique Merges (especially Gi and Ra), Red Ring","materials":{"Mind":148,"Def":2},"unused":0},{"name":"Optional: Min-Max Episode 2","mag":[5,43,102,50],"units":["V101","V801","V502","Smartlink"],"shield":"Technique Merges (especially Gi and Ra), Red Ring","materials":{"Mind":148,"Def":2},"unused":0},{"name":"Optional: Nuking only","mag":[64,0,0,136],"units":["V801"],"shield":"Technique Merges (especially Gi and Ra)","materials":{"Mind":148},"unused":2}]},{"name":"Max Stats","plans":[{"name":"Max Stats","mag":[5,18,16,161],"units":["V101","Adept","Adept","Centurion/Ability"],"shield":"Red Ring","materials":{"Mind":82,"Evade":42,"Luck":13},"unused":13}]}]}}};
+// ============ Magエンジン (mag_planner/tools/mag_engine.py の移植) ============
+// Python版は回帰テスト130項目で検証済み。ロジックは1対1で写し、独自の変更を入れない。
+const MG = MAGDATA.mags, MG_CELLS = MAGDATA.cells || {}, MG_CELLMAGS = MAGDATA.cell_mags || {};
+const FEED = MAGDATA.feed_tables, FOURTH_REF = MAGDATA.fourth_evolution_reference;
+const MSTATS = ['DEF', 'POW', 'DEX', 'MIND'];
+const MKEY = { DEF: 'def', POW: 'pow', DEX: 'dex', MIND: 'mind' };
+const ALLMAGS = Object.assign({}, MG, MG_CELLMAGS);
+
+function cmpOk(a, op, b) {
+  if (op === '>') return a > b;
+  if (op === '≥' || op === '>=') return a >= b;
+  if (op === '=') return a === b;
+  return false;
+}
+function statsMatch(st, rules) {
+  for (const r of (rules || [])) {
+    const lhs = st[r.lhs];
+    if (r.rhs === 'Others') {
+      if (!MSTATS.filter(k => k !== r.lhs).every(k => cmpOk(lhs, r.op, st[k]))) return false;
+    } else if (!cmpOk(lhs, r.op, st[r.rhs])) return false;
+  }
+  return true;
+}
+function evalEq(st, eq) {
+  const [l, r] = eq.split('=');
+  const sum = s => s.split('+').reduce((a, t) => a + st[t], 0);
+  return sum(l) === sum(r);
+}
+
+class Mag {
+  constructor(cls = 'HU', gender = 'M', sectionId = 'Viridia', form = 'Mag', stats = null) {
+    this.cls = cls; this.gender = gender; this.sectionId = sectionId; this.form = form;
+    this.stats = stats ? Object.assign({}, stats) : { DEF: 5, POW: 0, DEX: 0, MIND: 0 };
+    this.exp = { DEF: 0, POW: 0, DEX: 0, MIND: 0 };
+    this.sync = 0; this.iq = 0; this.pbs = []; this.log = [];
+    const pb = (ALLMAGS[form] || {}).pb;
+    if (pb) this.pbs.push(pb);
+  }
+  get level() { return MSTATS.reduce((a, s) => a + this.stats[s], 0); }
+  get feedTable() { return (ALLMAGS[this.form] || {}).feed_table || '0'; }
+  clone() {
+    const c = new Mag(this.cls, this.gender, this.sectionId, this.form, this.stats);
+    c.exp = Object.assign({}, this.exp); c.pbs = this.pbs.slice(); c.log = this.log.slice();
+    c.sync = this.sync; c.iq = this.iq;
+    return c;
+  }
+  snapshot() {
+    return { form: this.form, level: this.level, stats: Object.assign({}, this.stats),
+             pbs: this.pbs.slice() };
+  }
+  // bankに預けると奇数の進捗が1点切り捨てられる(DEF抑制の定石)
+  bankRound() { for (const s of MSTATS) if (this.exp[s] % 2 === 1) this.exp[s] -= 1; return this; }
+  feed(item, bank) {
+    const g = FEED[this.feedTable][item];
+    if (!g) throw new Error('未知の餌: ' + item);
+    for (const s of MSTATS) {
+      if (this.level >= 200) break;
+      this.exp[s] += g[MKEY[s]];
+      if (this.exp[s] < 0) this.exp[s] = 0;       // マイナスでレベルは下がらない
+      while (this.exp[s] >= 100 && this.stats[s] < 200 && this.level < 200) {
+        this.exp[s] -= 100; this.stats[s] += 1;
+      }
+    }
+    if (bank) this.bankRound();
+    this.sync = Math.max(0, Math.min(120, this.sync + g.sync));
+    this.iq = Math.max(0, Math.min(200, this.iq + g.iq));
+    this._checkEvolution();
+    return this;
+  }
+  feedMany(item, n, bank) { for (let i = 0; i < n; i++) this.feed(item, bank); return this; }
+
+  _checkEvolution() {
+    const lv = this.level, stage = (ALLMAGS[this.form] || {}).stage || 0;
+    if (stage >= 4) return;                       // Rare mag/セルMagは以降変わらない
+    if (lv >= 10 && stage === 0) this._evolve(this._first());
+    else if (lv >= 35 && stage === 1) this._evolve(this._second());
+    else if (lv === 50 && stage === 2) this._evolve(this._third());
+    else if (lv > 50 && lv % 5 === 0 && stage === 2) this._evolve(this._third());
+    else if (stage === 3) {
+      // 第4進化はLv100から。それ以外は5レベルごとに第3形態同士でも変わる
+      if (lv >= 100 && this._fourth()) this._evolve(this._fourth());
+      else if (lv >= 50 && lv % 5 === 0) {
+        const nx = this._third();
+        if (nx && nx !== this.form) this._evolve(nx);
+      }
+    }
+  }
+  _evolve(name) {
+    if (!name || name === this.form) return;
+    this.form = name;
+    const pb = (ALLMAGS[name] || {}).pb;
+    if (pb && !this.pbs.includes(pb) && this.pbs.length < 3) this.pbs.push(pb);
+    this.log.push({ level: this.level, to: name, pb: pb || null });
+  }
+  _first() {
+    for (const [n, m] of Object.entries(MG))
+      if (m.stage === 1 && (m.conditions || []).some(c => c.class === this.cls)) return n;
+    return null;
+  }
+  _second() {
+    for (const [n, m] of Object.entries(MG)) {
+      if (m.stage !== 2) continue;
+      for (const c of m.conditions)
+        if (c.evolves_from === this.form && statsMatch(this.stats, c.stat_rules)) return n;
+    }
+    return null;
+  }
+  // 第3進化は 職業 × 大小関係 × Section IDの偶奇
+  _third() {
+    const cands = [];
+    for (const [n, m] of Object.entries(MG)) {
+      if (m.stage !== 3) continue;
+      for (const c of m.conditions) {
+        if (c.class && c.class !== this.cls) continue;
+        if (Object.entries(c.stat_min || {}).some(([k, v]) => this.stats[k] < v)) continue;
+        if (statsMatch(this.stats, c.stat_rules)) { cands.push(n); break; }
+      }
+    }
+    if (cands.length <= 1) return cands[0] || null;
+    const i = SIDS.indexOf(this.sectionId);
+    if (i >= 0) {
+      const grp = i % 2 === 0 ? 'even' : 'odd';
+      const allowed = new Set(Object.values((THIRD_IDS[grp] || {})[this.cls] || {}));
+      const hit = cands.filter(n => allowed.has(n));
+      if (hit.length) return hit[0];
+    }
+    return cands[0];
+  }
+  _fourth() {
+    for (const ref of FOURTH_REF) {
+      if (ref.class !== this.cls || ref.gender !== this.gender) continue;
+      if (!ref.section_ids.includes(this.sectionId)) continue;
+      if (evalEq(this.stats, ref.equality)) return ref.mag;
+    }
+    return null;
+  }
+  // ---- Magセル ----
+  _cellOk(name, m, charLevel) {
+    const c = m.conditions[0], stage = (ALLMAGS[this.form] || {}).stage || 0;
+    if ('from_stage' in c && stage !== c.from_stage) return false;
+    if ('from_mag' in c && this.form !== c.from_mag) return false;
+    if ('min_level' in c && this.level < c.min_level) return false;
+    if ('all_stats_min' in c && MSTATS.some(s => this.stats[s] < c.all_stats_min)) return false;
+    if ('two_stats_min' in c &&
+        MSTATS.filter(s => this.stats[s] >= c.two_stats_min).length < 2) return false;
+    if ('min_sync' in c && this.sync < c.min_sync) return false;
+    if ('min_iq' in c && this.iq < c.min_iq) return false;
+    if (charLevel != null && 'char_level' in c && charLevel < c.char_level) return false;
+    const split = CELL_IDS[m.cell];               // 同じセルで2形態に分かれるものはIDの偶奇
+    if (split) {
+      const i = SIDS.indexOf(this.sectionId);
+      if (i >= 0 && split[i % 2 === 0 ? 'even' : 'odd'] !== name) return false;
+    }
+    return true;
+  }
+  useCell(cell, charLevel) {
+    for (const [name, m] of Object.entries(MG_CELLMAGS)) {
+      if (m.cell !== cell) continue;
+      if (!this._cellOk(name, m, charLevel)) continue;
+      this.form = name;
+      if (m.no_pb) this.pbs = [];
+      this.log.push({ level: this.level, to: name, pb: null, cell: cell });
+      return this;
+    }
+    return null;
+  }
+}
+
+// ============ 給餌手順 (mag_planner/tools/mag_planner.py の移植) ============
+// 「1種類の餌をN個」のブロック列にする。人間が実行できる形にするのが目的。
+function planBlocks(mag, target, bank, preferCycle, maxBlocks, maxFeed) {
+  maxBlocks = maxBlocks || 40; maxFeed = maxFeed || 6000;
+  const tgt = Array.isArray(target)
+    ? { DEF: target[0], POW: target[1], DEX: target[2], MIND: target[3] } : target;
+  const blocks = []; let fed = 0;
+  while (blocks.length < maxBlocks && fed < maxFeed) {
+    if (MSTATS.every(s => tgt[s] - mag.stats[s] <= 0)) break;
+    const table = FEED[mag.feedTable];
+    // 単一ブロックをFirst import your使うと伸ばしやすいステを上限まで使い切って詰むことがある。
+    // 一度失敗したら preferCycle でサイクル優First import your切り替える
+    const blk = preferCycle
+      ? (cycleBlock(mag, tgt, table, bank, maxFeed - fed, true)
+         || singleBlock(mag, tgt, table, bank, maxFeed - fed))
+      : (singleBlock(mag, tgt, table, bank, maxFeed - fed)
+         || cycleBlock(mag, tgt, table, bank, maxFeed - fed, false));
+    if (!blk) break;
+    blocks.push(blk); fed += blk.n;
+  }
+  return [mag, foldCycles(mergeBlocks(blocks))];
+}
+
+function mkBlock(items, repeat, n, mag, form) {
+  return { items: items, repeat: repeat, n: n, form: form, after: mag.snapshot() };
+}
+
+// 1種類の餌を、超過の直前まで与える
+function singleBlock(mag, tgt, table, bank, budget) {
+  const short = {}; MSTATS.forEach(s => short[s] = tgt[s] - mag.stats[s]);
+  const cands = [];
+  for (const [item, v] of Object.entries(table)) {
+    let gain = 0;
+    MSTATS.forEach(s => { if (short[s] > 0 && v[MKEY[s]] > 0) gain += v[MKEY[s]]; });
+    if (gain <= 0) continue;
+    // もう足りているステを伸ばす量がリスク(超過は取り返せない)
+    let risk = 0;
+    MSTATS.forEach(s => { if (short[s] <= 0) risk += Math.max(0, v[MKEY[s]]); });
+    cands.push([risk, -gain, item]);
+  }
+  cands.sort((a, b) => a[0] - b[0] || a[1] - b[1] || (a[2] < b[2] ? -1 : 1));
+  for (const [, , item] of cands) {
+    let n = 0; const formBefore = mag.form;
+    while (n < budget) {
+      const probe = mag.clone(); probe.feed(item, bank);
+      if (MSTATS.some(s => probe.stats[s] > tgt[s])) break;
+      mag.feed(item, bank); n++;
+      if (MSTATS.every(s => mag.stats[s] >= tgt[s])) break;
+      if (mag.form !== formBefore) break;          // 進化でテーブルが変わったら切る
+    }
+    if (n) return mkBlock([[item, n]], 1, n, mag, formBefore);
+  }
+  return null;
+}
+
+// 2種類の餌を比率で組み、上げたくないステの収支をゼロにする
+function cycleBlock(mag, tgt, table, bank, budget, onlyOffset) {
+  const short = {}; MSTATS.forEach(s => short[s] = tgt[s] - mag.stats[s]);
+  const need = MSTATS.filter(s => short[s] > 0), full = MSTATS.filter(s => short[s] <= 0);
+  let best = null;
+  for (const [bItem, bv] of Object.entries(table)) {
+    let g = 0; need.forEach(s => { if (bv[MKEY[s]] > 0) g += bv[MKEY[s]]; });
+    if (g <= 0) continue;
+    if (onlyOffset && !full.some(s => bv[MKEY[s]] > 0)) continue;
+    for (const [aItem, av] of Object.entries(table)) {
+      if (aItem === bItem) continue;
+      let k = 1, bad = false;
+      for (const s of full) {
+        if (bv[MKEY[s]] <= 0) continue;
+        if (av[MKEY[s]] >= 0) { bad = true; break; }
+        k = Math.max(k, Math.ceil(bv[MKEY[s]] / -av[MKEY[s]]));
+      }
+      if (bad || k > 12) continue;
+      if (full.some(s => bv[MKEY[s]] + k * av[MKEY[s]] > 0)) continue;
+      let gain = 0;
+      need.forEach(s => gain += Math.max(0, bv[MKEY[s]] + k * av[MKEY[s]]));
+      if (gain <= 0) continue;
+      const score = gain / (k + 1);
+      if (!best || score > best[0]) best = [score, aItem, k, bItem];
+    }
+  }
+  if (!best) return null;
+  const [, aItem, k, bItem] = best;
+  const formBefore = mag.form; let n = 0, reps = 0;
+  while (n + k + 1 <= budget) {
+    const probe = mag.clone(); probe.feedMany(aItem, k, bank); probe.feed(bItem, bank);
+    if (MSTATS.some(s => probe.stats[s] > tgt[s])) break;
+    mag.feedMany(aItem, k, bank); mag.feed(bItem, bank);
+    n += k + 1; reps++;
+    if (MSTATS.every(s => mag.stats[s] >= tgt[s]) || mag.form !== formBefore) break;
+  }
+  if (!reps) return null;
+  return mkBlock([[aItem, k], [bItem, 1]], reps, n, mag, formBefore);
+}
+
+// 隣り合う同じ内容のブロックをまとめる(形態が変わっても与える餌が同じなら操作は同じ)
+function mergeBlocks(blocks) {
+  const out = [];
+  const kinds = x => x.items.map(i => i[0]).join('|');
+  for (const b of blocks) {
+    const prev = out.length ? out[out.length - 1] : null;
+    if (!prev || kinds(prev) !== kinds(b)) {
+      out.push(Object.assign({}, b, { items: b.items.map(i => i.slice()) }));
+      continue;
+    }
+    if (b.items.length === 1) {
+      prev.items = [[b.items[0][0], prev.items[0][1] * prev.repeat + b.items[0][1] * b.repeat]];
+      prev.repeat = 1;
+    } else if (JSON.stringify(prev.items) === JSON.stringify(b.items)) {
+      prev.repeat += b.repeat;
+    } else {
+      out.push(Object.assign({}, b, { items: b.items.map(i => i.slice()) }));
+      continue;
+    }
+    prev.n += b.n; prev.after = b.after;
+  }
+  return out;
+}
+
+// A×n → B×m の繰り返しを「[A×n + B×m] ×kセット」に畳む
+function foldCycles(blocks) {
+  const out = []; let i = 0;
+  const same = (x, y) => JSON.stringify(x.items) === JSON.stringify(y.items);
+  while (i < blocks.length) {
+    const a = blocks[i];
+    if (i + 3 < blocks.length) {
+      const b = blocks[i + 1], c = blocks[i + 2], d = blocks[i + 3];
+      if (same(a, c) && same(b, d) &&
+          a.repeat === 1 && b.repeat === 1 && c.repeat === 1 && d.repeat === 1) {
+        let reps = 2, j = i + 4;
+        while (j + 1 < blocks.length && same(blocks[j], a) && same(blocks[j + 1], b)
+               && blocks[j].repeat === 1 && blocks[j + 1].repeat === 1) { reps++; j += 2; }
+        let n = 0; for (let t = i; t < j; t++) n += blocks[t].n;
+        out.push({ items: a.items.concat(b.items), repeat: reps, n: n,
+                   form: a.form, after: blocks[j - 1].after });
+        i = j; continue;
+      }
+    }
+    out.push(a); i++;
+  }
+  return out;
+}
+
+// ============ 逆算ソルバ (mag_planner/tools/mag_solve.py の移植) ============
+// 「進化の瞬間のStats(中間目標)をFirst import your確定してから餌を選ぶ」方式。
+// Statsは減らないので中間目標は最終目標以下でなければならず、候補は有限個に絞れる。
+const MSTART = { DEF: 5, POW: 0, DEX: 0, MIND: 0 };
+const CLASS_JP = { HU: 'Hunter', RA: 'Ranger', FO: 'Force' };
+const GENDER_JP = { M: 'male', F: 'female' };
+const ALL_CLASSES = ['HU', 'RA', 'FO'];
+
+function* compositions(level, lower, upper) {
+  for (let a = lower.DEF; a <= upper.DEF; a++) {
+    if (a > level) break;
+    for (let b = lower.POW; b <= upper.POW; b++) {
+      if (a + b > level) break;
+      for (let c = lower.DEX; c <= upper.DEX; c++) {
+        if (a + b + c > level) break;
+        const d = level - a - b - c;
+        if (d >= lower.MIND && d <= upper.MIND) yield { DEF: a, POW: b, DEX: c, MIND: d };
+      }
+    }
+  }
+}
+// 到達できる中間目標は「1つのステに偏った」ものに集中するので、偏りが大きい順に試す
+function ordered(level, lower, upper, limit, cond) {
+  const out = [];
+  for (const w of compositions(level, lower, upper)) {
+    if (cond && !cond(w)) continue;
+    let bias = -Infinity;
+    MSTATS.forEach(s => bias = Math.max(bias, w[s] - lower[s]));
+    out.push([w.DEF, -bias, MSTATS.map(s => w[s]), w]);
+  }
+  const cmpArr = (a, b) => {
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
+    return 0;
+  };
+  out.sort((x, y) => x[0] - y[0] || x[1] - y[1] || cmpArr(x[2], y[2]));
+  return [out.slice(0, limit).map(x => x[3]), out.length];
+}
+function handOver(mag, cls, gender, sid) {
+  if (cls) mag.cls = cls;
+  if (gender) mag.gender = gender;
+  if (sid) mag.sectionId = sid;
+  return mag;
+}
+// 単一ブロック優先で詰んだらサイクル優先で組み直す
+function runTo(mag, goal, bank) {
+  let blocks = [];
+  for (const prefer of [false, true]) {
+    const m = mag.clone();
+    const r = planBlocks(m, goal, bank, prefer);
+    blocks = r[1];
+    if (MSTATS.every(s => r[0].stats[s] === goal[s])) return [r[0], blocks];
+  }
+  return [null, blocks];
+}
+function pbOk(pbs, want, avoid, done) {
+  if (avoid && avoid.length && pbs.some(p => avoid.includes(p))) return false;
+  if (want && want.length) {
+    const seq = pbs.filter(p => want.includes(p));
+    if (seq.join() !== want.slice(0, seq.length).join()) return false;
+    if (pbs.length >= 3 && seq.length < want.length) return false;
+    if (done && seq.length < want.length) return false;
+  }
+  return true;
+}
+function fourthOptions(chars) {
+  const out = [];
+  for (const ref of FOURTH_REF) {
+    if (chars && chars.length) {
+      chars.forEach(ch => {
+        if (ch.class === ref.class && ch.gender === ref.gender
+            && ref.section_ids.includes(ch.section_id))
+          out.push([ref.class, ref.gender, ch.section_id, ref.mag, ref.equality]);
+      });
+    } else out.push([ref.class, ref.gender, ref.section_ids[0], ref.mag, ref.equality]);
+  }
+  return out;
+}
+const classesOf = chars => (chars && chars.length)
+  ? [...new Set(chars.map(c => c.class))].sort() : ALL_CLASSES;
+const charOf = (chars, cls, gender) => (chars || []).find(
+  c => c.class === cls && (!gender || c.gender === gender)) || null;
+
+function prune(states, keep) {
+  const byForm = new Map();
+  states.forEach(st => {
+    const n = st.phases.reduce((a, p) => a + p.blocks.reduce((x, b) => x + b.n, 0), 0);
+    if (!byForm.has(st.mag.form)) byForm.set(st.mag.form, []);
+    byForm.get(st.mag.form).push([n, st]);
+  });
+  const out = [];
+  byForm.forEach(lst => { lst.sort((a, b) => a[0] - b[0]);
+    lst.slice(0, keep).forEach(x => out.push(x[1])); });
+  return out;
+}
+function pack(st, tail, mag) {
+  const phases = st.phases.concat(tail);
+  return { mag: mag, phases: phases,
+           items: phases.reduce((a, p) => a + p.blocks.reduce((x, b) => x + b.n, 0), 0) };
+}
+
+// Lv50以降。Rare mag(第4進化)はLv100で確定し以降変わらないので、早く確定させる方が制御しやすい
+function finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm) {
+  const out = [];
+  const final = MSTATS.reduce((a, s) => a + tgt[s], 0);
+  for (const [c4, g4, sid, form4, eq] of fourthOptions(chars)) {
+    if (wantForm && form4 !== wantForm) continue;
+    for (let lv = 100; lv <= final; lv += 10) {
+      const [hit] = ordered(lv, st.mag.stats, tgt, 3, w => evalEq(w, eq));
+      let done = false;
+      for (const w3 of hit) {
+        let m = st.mag.clone();
+        handOver(m, c4, g4, sid);
+        const r1 = runTo(m, w3, bank);
+        m = r1[0];
+        if (!m || m.form !== form4 || !pbOk(m.pbs, wantPbs, avoidPbs)) continue;
+        const tail = [{ label: `Lv50→${lv} 【hand to a ${GENDER_JP[g4]} ${CLASS_JP[c4]} / ID ${sid}】`,
+                        cls: c4, gender: g4, sid: sid, rare: form4,
+                        blocks: r1[1], after: m.snapshot() }];
+        if (lv < final) {
+          const r2 = runTo(m, tgt, bank);
+          if (!r2[0]) continue;
+          m = r2[0];
+          tail.push({ label: `Lv${lv}→target`, blocks: r2[1], after: m.snapshot() });
+        }
+        if (!pbOk(m.pbs, wantPbs, avoidPbs, true)) continue;
+        if (wantForm && m.form !== wantForm) continue;
+        const p = pack(st, tail, m); p.rare = form4;
+        out.push(p); done = true; break;
+      }
+      if (done) break;
+    }
+  }
+  const r = runTo(st.mag.clone(), tgt, bank);
+  if (r[0] && pbOk(r[0].pbs, wantPbs, avoidPbs, true)
+      && (!wantForm || r[0].form === wantForm)) {
+    const p = pack(st, [{ label: 'Lv50→target', blocks: r[1], after: r[0].snapshot() }], r[0]);
+    p.rare = null;
+    out.push(p);
+  }
+  return out;
+}
+
+function magSolve(target, opt) {
+  opt = opt || {};
+  const wantPbs = opt.wantPbs || null, avoidPbs = opt.avoidPbs || null;
+  const wantForm = opt.wantForm || null, chars = opt.characters || null;
+  const bank = !!opt.bank, useCells = opt.useCells !== false;
+  const width = opt.width || 8000, keep = opt.keep || 3, stopAfter = opt.stopAfter || 5;
+  const tgt = { DEF: target[0], POW: target[1], DEX: target[2], MIND: target[3] };
+  const notes = [];
+  const total = MSTATS.reduce((a, s) => a + tgt[s], 0);
+  if (MSTATS.some(s => tgt[s] < MSTART[s])) return [[], ['A target below the starting 5 DEF is impossible']];
+  if (MSTATS.some(s => tgt[s] > 200)) return [[], ['Each stat caps at 200']];
+  if (total > 200) return [[], [`The four stats add up to ${total}. A mag caps at level 200, so this target is unreachable`]];
+  if (total < 50) return [[], ['With a total under 50 the mag never reaches the level 50 evolution']];
+
+  // Magセル経由: 基本Magにセルを使うといきなりテーブル7に入れる
+  const cellResults = [];
+  if (useCells && !wantPbs) {
+    const cellNames = [...new Set(Object.values(MG_CELLMAGS).map(m => m.cell))].sort();
+    for (const cellName of cellNames) {
+      const c0 = classesOf(chars)[0], ch = charOf(chars, c0);
+      const base = new Mag(c0, ch ? ch.gender : 'M', ch ? ch.section_id : 'Viridia');
+      if (!base.useCell(cellName)) continue;
+      if (wantForm && base.form !== wantForm) continue;
+      const r = runTo(base, tgt, bank);
+      if (!r[0]) continue;
+      cellResults.push({ mag: r[0], items: r[1].reduce((a, b) => a + b.n, 0), rare: null,
+        cell: cellName, cellForm: r[0].form,
+        phases: [{ label: `Lv5 【use ${cellName} to become ${magJp(r[0].form)}】`, blocks: [] },
+                 { label: 'To the target (cell mags never evolve, so raise stats freely)',
+                   blocks: r[1], after: r[0].snapshot() }] });
+    }
+  }
+
+  // Lv35時点で到達できる状態
+  let stage1 = []; const blocked1 = [];
+  for (const c1 of classesOf(chars)) {
+    const ch1 = charOf(chars, c1);
+    const base = new Mag(c1, ch1 ? ch1.gender : 'M', ch1 ? ch1.section_id : 'Viridia');
+    const [cands] = ordered(35, MSTART, tgt, width);
+    const hits = {};
+    for (const w1 of cands) {
+      const r = runTo(base.clone(), w1, bank);
+      if (!r[0]) continue;
+      if (!pbOk(r[0].pbs, wantPbs, avoidPbs)) { blocked1.push([r[0].form, r[0].pbs.slice()]); continue; }
+      hits[r[0].form] = (hits[r[0].form] || 0) + 1;
+      if (hits[r[0].form] > keep) continue;
+      stage1.push({ mag: r[0], c1: c1,
+        phases: [{ label: `Lv5→35 【raise on a ${CLASS_JP[c1]}】`, cls: c1,
+                   // 第1進化は職業のみ、第2進化はChar 非依存。IDは問わない
+                   idFree: true, blocks: r[1], after: r[0].snapshot() }] });
+    }
+  }
+  stage1 = prune(stage1, keep);
+  if (!stage1.length) {
+    if (cellResults.length) {
+      notes.push('This cannot be made by normal raising, so mag cell routes are shown instead');
+      return [cellResults.slice(0, stopAfter), notes];
+    }
+    return [[], notes.concat([whyBlocked(35, blocked1, wantPbs, avoidPbs)])];
+  }
+
+  // Lv50時点で到達できる状態(必要ならChar を渡す)
+  let stage2 = []; const blocked2 = [];
+  for (const st of stage1) {
+    for (const c3 of classesOf(chars)) {
+      const ch3 = charOf(chars, c3);
+      const [cands] = ordered(50, st.mag.stats, tgt, width);
+      const hits = {};
+      for (const w2 of cands) {
+        let m = st.mag.clone();
+        handOver(m, c3, ch3 ? ch3.gender : null, ch3 ? ch3.section_id : null);
+        const r = runTo(m, w2, bank);
+        if (!r[0]) continue;
+        if (!pbOk(r[0].pbs, wantPbs, avoidPbs)) { blocked2.push([r[0].form, r[0].pbs.slice()]); continue; }
+        hits[r[0].form] = (hits[r[0].form] || 0) + 1;
+        if (hits[r[0].form] > keep) continue;
+        stage2.push({ mag: r[0], c1: st.c1,
+          phases: st.phases.concat([{
+            label: `Lv35→50 【${c3 !== st.c1 ? 'hand to a ' : 'stay on the '}${CLASS_JP[c3]}】`,
+            // 第3進化は Section ID の偶奇でも分かれるので、計算に使ったIDを残す
+            cls: c3, sid: m.sectionId, parity: true,
+            blocks: r[1], after: r[0].snapshot() }]) });
+      }
+    }
+  }
+  stage2 = prune(stage2, keep);
+  if (!stage2.length) {
+    if (cellResults.length) {
+      notes.push('This cannot be made by normal raising, so mag cell routes are shown instead');
+      return [cellResults.slice(0, stopAfter), notes];
+    }
+    return [[], notes.concat([whyBlocked(50, blocked2, wantPbs, avoidPbs)])];
+  }
+
+  let results = [];
+  for (const st of stage2) {
+    finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm).forEach(p => results.push(p));
+    if (results.length >= stopAfter * 4) break;
+  }
+  results.sort((a, b) => (a.rare == null) - (b.rare == null) || a.items - b.items);
+  results = results.concat(cellResults);
+  if (opt.onlyCell) results = results.filter(p => p.cell === opt.onlyCell);
+  if (!results.length && wantForm) notes.push(explainForm(wantForm, tgt));
+  return [results.slice(0, stopAfter), notes];
+}
+
+// ============ 和名と説明文 (mag_solve.py の同名関数の移植) ============
+const magJp = n => jpName(n);
+// 英語ページでは JPN.names が空。そのときはPBも英語名で出す
+const pbJp = p => (JPN.names ? (PB_JP[p] || p) : p);
+
+// そのPBを避ける方法を、進化のどこで決まるかから説明する
+function pbAdvice(pb) {
+  const src = [];
+  for (const [n, m] of Object.entries(MG)) if (m.pb === pb) src.push([m.stage, n]);
+  const first = src.filter(x => x[0] === 1).map(x => x[1]);
+  if (first.length) {
+    const conds = MG[first[0]].conditions || [];
+    const cls = (conds.find(c => c.class) || {}).class;
+    return `It comes from the first evolution (${magJp(first[0])}). `
+         + `Reach Lv10 on anything other than a ${CLASS_JP[cls] || ''} to avoid it`;
+  }
+  const stages = [...new Set(src.map(x => x[0]))].sort();
+  return `It comes from evolution ${stages.join('/')}. `
+       + 'The evolution depends on how your stats compare, so depending on the target it cannot be avoided';
+}
+
+function whyBlocked(level, blocked, want, avoid) {
+  if (!blocked.length) {
+    return `There is no way to reach Lv${level} without overshooting one of your target stats. `
+         + 'You need to raise one of the targets';
+  }
+  const forms = [...new Set(blocked.map(b => b[0]))].sort();
+  const pbs = [...new Set(blocked.flatMap(b => b[1]))].sort();
+  const head = `At Lv${level} the only reachable forms are ${forms.map(magJp).join(', ')}, `
+             + `whose PBs are ${pbs.map(pbJp).join(', ')}. `;
+  if (avoid && avoid.length && pbs.some(p => avoid.includes(p))) {
+    const ng = avoid.filter(p => pbs.includes(p));
+    return head + `Your target forces the mag through those forms, so `
+         + `${ng.map(pbJp).join(', ')} cannot be avoided (${pbAdvice(ng[0])})`;
+  }
+  if (want && want.length) return head + `that conflicts with the order of the PBs you asked for (${want.map(pbJp).join(', ')})`;
+  return head + 'that conflicts with your PB preferences';
+}
+
+// 指定した形態で終われない理由を、最終Statsとの関係で説明する
+function explainForm(form, tgt) {
+  const m = ALLMAGS[form];
+  if (!m) return `There is no form called "${form}"`;
+  const total = MSTATS.reduce((a, s) => a + tgt[s], 0);
+  const conds = (m.conditions || []).map(c => c.raw).join(' / ');
+  if (m.stage >= 4) {
+    if (total < 100) {
+      return `"${magJp(form)}" is a rare (fourth) evolution and only happens from Lv100. `
+           + `This target adds up to ${total}, which never reaches Lv100. `
+           + 'You need a target totalling 100 or more';
+    }
+    return `"${magJp(form)}" is a rare (fourth) evolution: meet ${conds} at Lv100 or later and it locks in, `
+         + 'after which the form never changes. With this target, though, there is no way to satisfy '
+         + 'that equation past Lv100 without overshooting';
+  }
+  const last = total - total % 5;
+  const ok = (m.conditions || []).some(c => c.stat_rules && statsMatch(tgt, c.stat_rules));
+  const head = `Forms up to the third evolution are re-checked every 5 levels from Lv50. `
+             + `This target ends at Lv${total}, so the last check is at Lv${last}. `;
+  if (ok) {
+    return head + `The final stats do satisfy ${conds} for "${magJp(form)}", but `
+         + 'no way to get there without overshooting the target was found';
+  }
+  return head + `The final stats ${MSTATS.map(s => tgt[s]).join('/')} `
+       + `do not satisfy ${conds} for "${magJp(form)}", so the mag cannot end in that form`
+       + ' (you can still pass through it on the way)';
+}
+
+
+// ---- 入力UI ----
+const STAT_LABEL = { DEF: 'DEF', POW: 'POW', DEX: 'DEX', MIND: 'MIND' };
+const DEFAULT_TARGET = { DEF: 5, POW: 147, DEX: 48, MIND: 0 };
+function buildStatRows() {
+  document.getElementById('magStats').innerHTML = MSTATS.map(s => `
+    <div class="magrow">
+      <label for="mg${s}">${STAT_LABEL[s]}</label>
+      <input type="range" id="mg${s}r" min="0" max="200" value="${DEFAULT_TARGET[s]}"
+             aria-label="${STAT_LABEL[s]} スライダー">
+      <input type="number" id="mg${s}" min="0" max="200" value="${DEFAULT_TARGET[s]}"
+             aria-label="${STAT_LABEL[s]}">
+    </div>`).join('');
+  MSTATS.forEach(s => {
+    const r = document.getElementById('mg' + s + 'r'), n = document.getElementById('mg' + s);
+    r.addEventListener('input', () => { n.value = r.value; updateSum(); });
+    n.addEventListener('input', () => { r.value = n.value; updateSum(); });
+  });
+}
+const getTarget = () => MSTATS.map(s => +document.getElementById('mg' + s).value || 0);
+function setTarget(t) {
+  MSTATS.forEach((s, i) => {
+    document.getElementById('mg' + s).value = t[i];
+    document.getElementById('mg' + s + 'r').value = t[i];
+  });
+  updateSum();
+}
+function updateSum() {
+  const t = getTarget(), sum = t.reduce((a, b) => a + b, 0);
+  document.getElementById('magSum').textContent = sum;
+  const w = document.getElementById('magSumWarn');
+  if (sum > 200) w.innerHTML = '<span class="warn">The total is over 200. A mag caps at level 200</span>';
+  else if (sum < 50) w.innerHTML = '<span class="warn">A total under 50 never reaches the level 50 evolution</span>';
+  else w.textContent = '';
+}
+
+function buildOptions() {
+  // Looks(第3進化まで) / Rare mag(第4進化) / セルMag
+  const forms = Object.entries(MAGDATA.mags).filter(([, m]) => m.stage === 3)
+    .map(([n]) => n).sort((a, b) => jpName(a) < jpName(b) ? -1 : 1);
+  document.getElementById('magForm').innerHTML = '<option value="">No preference</option>'
+    + forms.map(n => `<option value="${n}">${esc(jpName(n))}</option>`).join('');
+  const rares = Object.entries(MAGDATA.mags).filter(([, m]) => m.stage === 4).map(([n]) => n)
+    .concat(Object.keys(MAGDATA.cell_mags || {}))
+    .sort((a, b) => jpName(a) < jpName(b) ? -1 : 1);
+  document.getElementById('magRare').innerHTML = '<option value="">No preference</option>'
+    + rares.map(n => `<option value="${n}">${esc(jpName(n))}</option>`).join('');
+  document.getElementById('magAvoid').innerHTML = Object.keys(PB_JP)
+    .map(p => `<button type="button" class="pbtog" data-pb="${esc(p)}">${esc(PB_JP[p])}</button>`).join('');
+  document.querySelectorAll('#magAvoid .pbtog').forEach(b =>
+    b.addEventListener('click', () => b.classList.toggle('on')));
+  // wiki推奨プラン
+  const opts = [];
+  Object.entries(MAGPLANS.classes || {}).forEach(([cls, c]) => {
+    (c.groups || []).forEach(g => (g.plans || []).forEach(p => {
+      opts.push(`<option value="${p.mag.join(',')}">${esc(cls)} — ${esc(p.name_jp || p.name)} (${p.mag.join('/')})</option>`);
+    }));
+  });
+  document.getElementById('magPreset').innerHTML =
+    '<option value="">Load a recommended wiki plan…</option>' + opts.join('');
+  document.getElementById('magPreset').addEventListener('change', e => {
+    if (e.target.value) setTarget(e.target.value.split(',').map(Number));
+  });
+}
+
+// ---- 結果の描画 ----
+const FEED_PER_SET = 3, MIN_PER_SET = 3.5;
+function timeText(items, bank) {
+  const mins = Math.ceil(items / FEED_PER_SET) * MIN_PER_SET * (bank ? 3 : 1);
+  if (mins < 60) return `約${Math.round(mins)}分`;
+  const h = mins / 60;
+  return h < 24 ? `about ${h.toFixed(1)} h` : `about ${(h / 24).toFixed(1)} days (${Math.round(h)} h)`;
+}
+// importedみChar から、その工程を任せられる人を探して名前を出す。
+// 工程ごとに必要な条件が違う: 第1/第2進化は職業だけ、第3進化は職業+IDの偶奇、
+// 第4進化は職業+性別+IDが完全一致でないと同じ結果にならない
+function whoText(ph) {
+  if (!ph.cls) return '';
+  const inv = loadInventory();
+  const chars = (inv && inv.chars) ? Object.values(inv.chars) : [];
+  const want = ph.sid ? sidIndex(ph.sid) : -1;
+  const hit = chars.filter(c => {
+    if (classKeyOf(c.cls) !== ph.cls) return false;
+    if (ph.gender && genderOf(c.cls) !== ph.gender) return false;
+    if (ph.idFree || want < 0) return true;
+    const i = sidIndex(c.sectionId);
+    if (i < 0) return false;
+    // parity=true は偶奇が合えばよい(第3進化)。それ以外はID完全一致(第4進化)
+    return ph.parity ? (i % 2 === want % 2) : i === want;
+  });
+  if (!hit.length) {
+    const who = CLASS_JP[ph.cls] + (ph.gender ? GENDER_JP[ph.gender] : '');
+    const idNote = ph.sid ? (ph.parity
+      ? `・${sidIndex(ph.sid) % 2 === 0 ? '偶数' : '奇数'}側のSection ID` : `・ID ${ph.sid}`) : '';
+    return `<span class="who nochar">No matching character (needs ${who}${idNote})</span>`;
+  }
+  const shown = hit.slice(0, 2).map(c =>
+    `<span class="idtag sid-${sidIndex(c.sectionId)}">${esc(c.sectionId)}</span> ${esc(c.name)}`);
+  const more = hit.length > 2 ? ` <span class="who">${hit.length - 2} more</span>` : '';
+  return ' ' + shown.join(' / ') + more;
+}
+// 職業名(HUnewearl 等) → HU/RA/FO と性別
+const classKeyOf = n => String(n).slice(0, 2).toUpperCase();
+const genderOf = n => /newearl|caseal|marl$|marl\b/i.test(String(n)) ? 'F'
+  : /mar$|cast$|newm$/i.test(String(n)) ? 'M' : null;
+
+function blockText(b) {
+  const body = b.items.map(([it, c]) => `${esc(jpName(it))}×${c}`).join(' + ');
+  if (b.repeat > 1 && b.items.length > 1)
+    return `<span class="cyc">[${body}] ×${b.repeat} sets</span> <span class="st">${b.n} total</span>`;
+  return body;
+}
+function resultHTML(r, bank, idx) {
+  const m = r.mag;
+  const path = ['Mag'].concat(m.log.map(e => e.to));
+  const route = r.cell ? `via mag cell ${esc(r.cell)}`
+    : r.rare ? `via rare mag ${esc(jpName(r.rare))}` : 'without a rare mag';
+  const phases = r.phases.filter(p => p.blocks.length || !p.after).map(p => {
+    const steps = p.blocks.map(b => {
+      const a = b.after;
+      return `<div><span>${blockText(b)}</span><span class="st">Lv${a.level} `
+           + `${MSTATS.map(s => a.stats[s]).join('/')}</span></div>`;
+    }).join('');
+    return `<div class="phase"><h4>${esc(p.label)}<span class="who">${whoText(p)}</span></h4>`
+         + `<div class="steps">${steps}</div></div>`;
+  }).join('');
+  return `<div class="magres">
+    <div class="reshead">
+      <span class="cost">${r.items.toLocaleString()} items</span>
+      <span class="time">${timeText(r.items, bank)}</span>
+      <span class="route">${route}</span>
+    </div>
+    <div class="formpath">${path.map((n, i) =>
+      i === path.length - 1 ? `<span class="cur">${esc(jpName(n))}</span>` : esc(jpName(n))).join(' → ')}</div>
+    <div class="pbline">Photon Blasts: ${m.pbs.length
+      ? m.pbs.map(p => esc(pbJp(p))).join(' → ') : 'None'}</div>
+    ${phases}
+    <div style="margin-top:12px"><button class="btn" data-sim="${idx}">See stats with this mag →</button></div>
+  </div>`;
+}
+
+let LAST = [];
+function calc() {
+  const btn = document.getElementById('magGo'), out = document.getElementById('magOut');
+  const target = getTarget();
+  const avoid = [...document.querySelectorAll('#magAvoid .pbtog.on')].map(b => b.dataset.pb);
+  const bank = document.getElementById('magBank').checked;
+  const wantForm = document.getElementById('magForm').value
+                || document.getElementById('magRare').value || null;
+  const inv = loadInventory();
+  const chars = document.getElementById('magOwn').checked && inv && inv.chars
+    ? Object.values(inv.chars).map(c => ({ class: classKeyOf(c.cls), gender: genderOf(c.cls),
+                                           section_id: c.sectionId })) : null;
+  btn.disabled = true; btn.textContent = 'Calculating…'; out.classList.add('busy');
+  setTimeout(() => {
+    let res = [], notes = [];
+    try {
+      [res, notes] = magSolve(target, { avoidPbs: avoid.length ? avoid : null, bank: bank,
+        wantForm: wantForm, characters: chars,
+        useCells: !document.getElementById('magNoCell').checked, stopAfter: 3 });
+    } catch (err) {
+      notes = ['Something went wrong while calculating: ' + err.message];
+    }
+    LAST = res;
+    out.classList.remove('busy');
+    btn.disabled = false; btn.textContent = 'Calculate';
+    const noteHtml = notes.map(n => `<div class="magnote">※ ${esc(n)}</div>`).join('');
+    if (!res.length) {
+      out.innerHTML = noteHtml
+        + '<div class="magempty">No way to raise a mag to this target was found. '
+        + 'Try relaxing the target or the preferences.</div>';
+      return;
+    }
+    out.innerHTML = noteHtml + res.map((r, i) => resultHTML(r, bank, i)).join('');
+    out.querySelectorAll('[data-sim]').forEach(b => b.addEventListener('click', () => {
+      const r = LAST[+b.dataset.sim];
+      const st = r.mag.stats;
+      let last = {};
+      try { last = JSON.parse(localStorage.getItem('pso_sim_last')) || {}; } catch (e) {}
+      last.mag = { def: st.DEF, pow: st.POW, dex: st.DEX, mind: st.MIND };
+      if (!last.cls) { last.cls = 'humar'; last.lv = 200; }
+      try { localStorage.setItem('pso_sim_last', JSON.stringify(last)); } catch (e) {}
+      location.href = '../simulator/';
+    }));
+  }, 20);
+}
+
+buildStatRows(); buildOptions(); updateSum();
+document.getElementById('magGo').addEventListener('click', calc);
+</script>
+</body>
+</html>
