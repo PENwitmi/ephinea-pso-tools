@@ -237,7 +237,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tlsub { font-size: 0.76rem; color: var(--sub); margin-top: 3px; }
 .tlstop.nochange { color: var(--gold); }
 .tlgauge { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
-.tlstop .more { color: var(--red); font-weight: 600; }
+.tlstop { font-size: 0.86rem; color: var(--text); }
+.tlguide { font-size: 0.76rem; color: var(--sub); margin-top: 1px; }
+.tlwhy { font-size: 0.74rem; color: var(--sub); margin-top: 3px; }
+.tlwhy2 { font-size: 0.74rem; color: var(--gold); margin-top: 1px; }
 .tlreq { margin-top: 4px; }
 .whentbl { border-collapse: collapse; font-size: 0.82rem; margin: 8px 0; width: 100%; }
 .whentbl th, .whentbl td { border: 1px solid var(--border); padding: 5px 8px;
@@ -688,9 +691,13 @@ function planBlocks(mag, target, bank, preferCycle, sticky, maxBlocks, maxFeed) 
   return [mag, foldCycles(mergeBlocks(blocks))];
 }
 
-function mkBlock(items, repeat, n, mag, form) {
-  return { items: items, repeat: repeat, n: n, form: form, after: mag.snapshot() };
+// visible=false は「最後まで画面の数字が1つも動かないブロック」。
+// 前とまとめると、まとめた側まで『数字が動いたのに続きがある』形になるので mergeBlocks で区別する
+function mkBlock(items, repeat, n, mag, form, visible) {
+  return { items: items, repeat: repeat, n: n, form: form,
+           visible: visible !== false, after: mag.snapshot() };
 }
+const sameStats = (a, b) => MSTATS.every(s => a[s] === b[s]);
 
 // 1種類の餌を、超過の直前まで与える。
 // preferItem = 直前のブロックで与えていた餌。リスクが同じなら同じ餌を続ける
@@ -710,15 +717,29 @@ function singleBlock(mag, tgt, table, bank, budget, preferItem) {
   cands.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]
                        || (a[3] < b[3] ? -1 : 1));
   for (const [, , , item] of cands) {
-    let n = 0; const formBefore = mag.form;
+    const formBefore = mag.form, start = mag.clone();
+    const probe = mag.clone();
+    let n = 0, lastVisible = 0, seen = Object.assign({}, probe.stats);
     while (n < budget) {
-      const probe = mag.clone(); probe.feed(item, bank);
-      if (MSTATS.some(s => probe.stats[s] > tgt[s])) break;
-      mag.feed(item, bank); n++;
-      if (MSTATS.every(s => mag.stats[s] >= tgt[s])) break;
-      if (mag.form !== formBefore) break;          // 進化でテーブルが変わったら切る
+      const nxt = probe.clone(); nxt.feed(item, bank);
+      if (MSTATS.some(s => nxt.stats[s] > tgt[s])) break;
+      probe.feed(item, bank); n++;
+      if (!sameStats(probe.stats, seen)) {   // 画面の数字が動いた = 人間が確認できる区切り
+        lastVisible = n; seen = Object.assign({}, probe.stats);
+      }
+      if (MSTATS.every(s => probe.stats[s] >= tgt[s])) break;
+      if (probe.form !== formBefore) break;        // 進化でテーブルが変わったら切る
     }
-    if (n) return mkBlock([[item, n]], 1, n, mag, formBefore);
+    // **画面の数字が最後に動いたところで切る**。そこから先はLooksが変わらず、
+    // 「◯◯が△△になったら止める」と言えなくなる。1つも動かせないときだけ従来どおり
+    const take = lastVisible || n;
+    if (take) {
+      Object.assign(mag, start); mag.stats = Object.assign({}, start.stats);
+      mag.exp = Object.assign({}, start.exp); mag.pbs = start.pbs.slice();
+      mag.log = start.log.slice();
+      mag.feedMany(item, take, bank);
+      return mkBlock([[item, take]], 1, take, mag, formBefore, !!lastVisible);
+    }
   }
   return null;
 }
@@ -751,16 +772,27 @@ function cycleBlock(mag, tgt, table, bank, budget, onlyOffset) {
   }
   if (!best) return null;
   const [, aItem, k, bItem] = best;
-  const formBefore = mag.form; let n = 0, reps = 0;
+  const formBefore = mag.form, start = mag.clone();
+  const probe = mag.clone();
+  let n = 0, reps = 0, lastVisible = 0, seen = Object.assign({}, probe.stats);
   while (n + k + 1 <= budget) {
-    const probe = mag.clone(); probe.feedMany(aItem, k, bank); probe.feed(bItem, bank);
-    if (MSTATS.some(s => probe.stats[s] > tgt[s])) break;
-    mag.feedMany(aItem, k, bank); mag.feed(bItem, bank);
+    const nxt = probe.clone(); nxt.feedMany(aItem, k, bank); nxt.feed(bItem, bank);
+    if (MSTATS.some(s => nxt.stats[s] > tgt[s])) break;
+    probe.feedMany(aItem, k, bank); probe.feed(bItem, bank);
     n += k + 1; reps++;
-    if (MSTATS.every(s => mag.stats[s] >= tgt[s]) || mag.form !== formBefore) break;
+    if (!sameStats(probe.stats, seen)) {   // 単一ブロックと同じく、見える変化で区切る
+      lastVisible = reps; seen = Object.assign({}, probe.stats);
+    }
+    if (MSTATS.every(s => probe.stats[s] >= tgt[s]) || probe.form !== formBefore) break;
   }
-  if (!reps) return null;
-  return mkBlock([[aItem, k], [bItem, 1]], reps, n, mag, formBefore);
+  const take = lastVisible || reps;
+  if (!take) return null;
+  Object.assign(mag, start); mag.stats = Object.assign({}, start.stats);
+  mag.exp = Object.assign({}, start.exp); mag.pbs = start.pbs.slice();
+  mag.log = start.log.slice();
+  for (let i = 0; i < take; i++) { mag.feedMany(aItem, k, bank); mag.feed(bItem, bank); }
+  return mkBlock([[aItem, k], [bItem, 1]], take, take * (k + 1), mag, formBefore,
+                 !!lastVisible);
 }
 
 // 隣り合う同じ内容のブロックをまとめる(形態が変わっても与える餌が同じなら操作は同じ)
@@ -769,7 +801,8 @@ function mergeBlocks(blocks) {
   const kinds = x => x.items.map(i => i[0]).join('|');
   for (const b of blocks) {
     const prev = out.length ? out[out.length - 1] : null;
-    if (!prev || kinds(prev) !== kinds(b)) {
+    // 数字が動かないブロックは独立させる。まとめると止める目印が消える
+    if (!prev || kinds(prev) !== kinds(b) || b.visible === false || prev.visible === false) {
       out.push(Object.assign({}, b, { items: b.items.map(i => i.slice()) }));
       continue;
     }
@@ -1581,7 +1614,12 @@ function timeline(plan) {
   const segs = segmentsOf(plan.phases);
   const alts = alternatives(plan);
   let handNo = 0, no = 0, from = 5;      // from = その手順を始めるときのMagLv
-  let prevStats = plan.continueFrom ? plan.continueFrom.stats : null;
+  let prevStats = plan.continueFrom
+    ? (Array.isArray(plan.continueFrom.stats)
+        ? { DEF: plan.continueFrom.stats[0], POW: plan.continueFrom.stats[1],
+            DEX: plan.continueFrom.stats[2], MIND: plan.continueFrom.stats[3] }
+        : plan.continueFrom.stats)
+    : { DEF: 5, POW: 0, DEX: 0, MIND: 0 };
   out.push({ kind: 'prep', no: ++no, from: plan.continueFrom || null });
   const cellPh = plan.phases.find(p => p.cellUse);
   if (cellPh) {
@@ -1599,7 +1637,12 @@ function timeline(plan) {
       // 表示のStatsが1つも動かない手順が実在する(端数だけが進む)。
       // そこに「止める目印" 出すと前の手順と同じ数字になり、止めようがなくなる
       const noChange = prevStats && MSTATS.every(s => b.after.stats[s] === prevStats[s]);
-      out.push({ kind: 'feed', no: ++no, b: b, evos: evs, noChange: noChange });
+      // 止める指標 = この手順で動いたStats。ブロックは「数字が動いたところ」で
+      // 切ってあるので、最後の1個で必ずどれかが目標値に届く
+      const moved = prevStats ? MSTATS.filter(s => b.after.stats[s] !== prevStats[s]) : [];
+      out.push({ kind: 'feed', no: ++no, b: b, evos: evs, noChange: noChange,
+                 moved: moved, form: b.form, cap: plan.mag.stats,
+                 from: Object.assign({}, prevStats) });
       from = b.after.level;
       prevStats = b.after.stats;
     }
@@ -1680,6 +1723,33 @@ function gaugeLine(ev) {
            .join(' / ')
        + '</b> (the moment it fills, the number goes up by 1 and the gauge resets to 0)</div>';
 }
+// **なぜその餌なのか**。同じ餌でも形態(給餌テーブル)が変わると増減が変わるので、
+// これを出さないと餌の選択と順番が恣意的に見える。
+// 例: イラーではアンティドートが DEF を上げてしまうので DEF5 を保てない。
+// First import yourディメイトで POW を上げてヴァラーハにすると、そこではアンティドートが DEF を下げる側になる
+const SEP = ', ';   // 英語版では対訳表で ', ' に差し替える
+function feedEffect(ev) {
+  const table = MAGDATA.feed_tables[(ALLMAGS[ev.form] || {}).feed_table || '0'];
+  if (!table) return '';
+  const KEY = { DEF: 'def', POW: 'pow', DEX: 'dex', MIND: 'mind' };
+  const fmt = v => (v > 0 ? '+' : '') + (v / 100).toFixed(2);
+  const rows = ev.b.items.map(([item]) => {
+    const v = table[item]; if (!v) return '';
+    const up = MSTATS.filter(s => v[KEY[s]] !== 0)
+      .map(s => `${s} ${fmt(v[KEY[s]])}`).join(' / ');
+    const flat = MSTATS.filter(s => v[KEY[s]] === 0);
+    return `one <b>${esc(jpName(item))}</b> gives ${up || 'nothing'}`
+         + (flat.length ? `; ${flat.join(", ")} do not move` : '');
+  }).filter(Boolean).join(' ／ ');
+  if (!rows) return '';
+  // **この手順を始める時点で既に目標に届いているステ** = 餌の選択を縛っている条件。
+  // いま伸ばしているステは除く(それは目標に向かって上げている最中なので制約ではない)
+  const capped = MSTATS.filter(s => ev.from[s] === ev.cap[s] && !ev.moved.includes(s));
+  const note = capped.length
+    ? `<div class="tlwhy2">${capped.map(s => `${s} at ${ev.cap[s]}`).join(SEP)}`
+      + ' must be held exactly there, so any food that raises them cannot be used in this form</div>' : '';
+  return `<div class="tlwhy">current form <b>${esc(jpName(ev.form))}</b>: ${rows}</div>${note}`;
+}
 function stepHTML(ev, done, next) {
   const on = done.includes(ev.no);
   const box = `<label class="tlchk"><input type="checkbox" data-step="${ev.no}"`
@@ -1724,29 +1794,23 @@ function stepHTML(ev, done, next) {
              : '');
   } else {
     const a = ev.b.after;
-    const reading = `<b>mag Lv${a.level}</b>  ${statLine(a.stats)}`
-                  + (ev.final ? ' <span class="tldone">✔ done</span>' : '');
+    const reading = `<span class="who">it will read mag Lv${a.level}  ${statLine(a.stats)}</span>`;
     let stop;
-    if (ev.noChange) {
-      // 表示が1つも動かない手順。ここに「◯◯になったら止める" 出すと前の手順と
-      // 同じ数字になり、止めようがなくなる
-      stop = '<div class="tlstop nochange">This step <b>does not move the displayed numbers</b>. '
-           + 'Only the hidden gauge advances, so count them out</div>';
-    } else if (ev.hitAt == null) {
-      // 出発点の端数が分からない案(Rare magから先)。表示の数値で止めてもらう
-      stop = `<div class="tlstop">Feed until the display reads ${reading} `
-           + '<span class="who">(the count is a guide)</span></div>';
-    } else if (ev.hitAt < ev.b.n) {
-      // **表示が変わってからも続きがある**。ここを書かないと手順が途中で切れる
-      stop = `<div class="tlstop">The display reaches ${reading} on item <b>#${ev.hitAt}</b>. `
-           + `<span class="more">Keep going for <b>${ev.b.n - ev.hitAt} more</b></span>`
-           + '<span class="who">(the display stays put, but the hidden gauge advances)</span></div>';
+    if (ev.noChange || !ev.moved.length) {
+      // 数字が1つも動かない手順。ここは個数を数えるしかない(ゲージだけが伸びる)
+      stop = '<div class="tlstop nochange">This step <b>does not move any number</b>. '
+           + `Count out ${ev.b.n} and feed them `
+           + '<span class="who">(only the gauge under the number grows)</span></div>';
     } else {
-      stop = `<div class="tlstop">The <b>last item</b> brings it to ${reading}, `
-           + 'and this step ends there</div>';
+      // **止める指標は「どのStatsがいくつになったか」**。個数は目安にすぎない。
+      // 端数は倉庫の出し入れで削れるので、個数を信じると1–2個ずれる
+      const marks = ev.moved.map(s => `<b>${s} reaches ${a.stats[s]}</b>`).join(' and ');
+      stop = `<div class="tlstop">▸ Stop when ${marks}`
+           + `${ev.final ? ' <span class="tldone">✔ done</span>' : ''}`
+           + `<div class="tlguide">roughly ${ev.b.n} items; ${reading}</div></div>`;
     }
-    body = `<div class="tlmain">${blockText(ev.b)}</div>` + stop
-         + gaugeLine(ev) + ev.evos.map(evoLine).join('');
+    body = `<div class="tlmain">Feed ${blockText(ev.b)}</div>` + stop
+         + feedEffect(ev) + gaugeLine(ev) + ev.evos.map(evoLine).join('');
   }
   return `<div class="tlrow${on ? ' is-done' : ''}${now ? ' is-next' : ''}">${box}`
        + `<div class="tlbody">${now}${body}</div></div>`;
@@ -1816,12 +1880,13 @@ function stepsHTML(r, done) {
   </div>`;
 }
 
+// 主文には餌の名前だけを出す。個数は「目安」に格下げしたので、ここに書くと
+// 数える作業に見えてしまう. However, 比率で混ぜるサイクルだけは比率が指示そのものなので残す
 function blockText(b) {
-  const body = b.items.map(([it, c]) => `${c} × <b>${esc(jpName(it))}</b>`).join(' + ');
-  if (b.repeat > 1 && b.items.length > 1)
-    return `<span class="cyc">[${body}] ×${b.repeat} sets</span> `
-         + `<span class="st">(${b.n} total)</span>`;
-  return body;
+  if (b.items.length === 1) return `<b>${esc(jpName(b.items[0][0]))}</b>`;
+  const body = b.items.map(([it, c]) => `<b>${esc(jpName(it))}</b>×${c}`).join(' + ');
+  return `<span class="cyc">[${body}] ×${b.repeat} sets</span> `
+       + `<span class="st">(${b.n} total)</span>`;
 }
 
 // ---- 入力の読み書き (Simulatorの readState / applyState と同じ役割) ----
