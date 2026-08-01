@@ -237,6 +237,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tlsub { font-size: 0.76rem; color: var(--sub); margin-top: 3px; }
 .tlstop.nochange { color: var(--gold); }
 .tlgauge { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
+.tlstop .more { color: var(--red); font-weight: 600; }
 .tlreq { margin-top: 4px; }
 .whentbl { border-collapse: collapse; font-size: 0.82rem; margin: 8px 0; width: 100%; }
 .whentbl th, .whentbl td { border: 1px solid var(--border); padding: 5px 8px;
@@ -1528,10 +1529,13 @@ function charReqHTML(alt) {
                : '<span class="nochar">該当なし</span>'}</span></div>` : '');
 }
 
-// 各ブロックを与え終えた時点の「見えない端数」(0〜99)。手順をそのまま再生して取る。
-// 端数は100たまって初めて表示の数字が1増える。これを出しておくと
-// 「16個で1上がった直後に次の1個でまた1上がる」理由がその場で分かる
-function gaugeTrace(plan) {
+// 手順を1個ずつ再生して、ブロックごとに
+//   exp   … 与え終えた時点の見えない端数(0〜99)
+//   hitAt … **表示がそのブロックの最終値に変わる何個目か**(変わらなければ null)
+// を取る。hitAt < n のブロックが実在する(例: アンティドート66個は58個目で表示が変わり、
+// 残り8個は見た目が動かないまま端数を溜める)。これを書かないと
+// 「表示が変わったら止める」と読まれて、手順が途中で切れてしまう
+function stepTrace(plan) {
   const out = [];
   let m = null;
   for (const seg of segmentsOf(plan.phases)) {
@@ -1541,9 +1545,14 @@ function gaugeTrace(plan) {
                      : handOver(m, r.cls, r.gender, r.sid);
     } else if (m === null) m = new Mag();
     for (const p of seg.phases) for (const b of p.blocks) {
-      for (let i = 0; i < b.repeat; i++)
-        for (const [item, cnt] of b.items) m.feedMany(item, cnt);
-      out.push(Object.assign({}, m.exp));
+      const end = b.after.stats;
+      let hitAt = null, k = 0;
+      for (let i = 0; i < b.repeat; i++) for (const [item, cnt] of b.items)
+        for (let j = 0; j < cnt; j++) {
+          m.feed(item); k++;
+          if (hitAt === null && MSTATS.every(s => m.stats[s] === end[s])) hitAt = k;
+        }
+      out.push({ exp: Object.assign({}, m.exp), hitAt: hitAt });
     }
   }
   return out;
@@ -1597,12 +1606,17 @@ function timeline(plan) {
   }
   const last = out[out.length - 1];
   if (last && last.kind === 'feed') last.final = true;
-  // 見えない端数(ゲージ)の位置。手順を再生すれば正確に出せる。
-  // ただし**出発点が分かるときだけ**。レアマグから再開する案は出発点の端数が不明なので出さない
+  // 端数と「表示が変わるのは何個目か」。手順を再生すれば正確に出せる。
+  // ただし**出発点が分かるときだけ**。レアマグから再開する案は出発点の端数が不明で、
+  // 同じ個数でも表示の変わり方がずれるため、そちらは表示の数値で止めてもらう
   if (!plan.continueFrom) {
-    const gauges = gaugeTrace(plan);
+    const tr = stepTrace(plan);
     let gi = 0;
-    out.forEach(ev => { if (ev.kind === 'feed') ev.gauge = gauges[gi++]; });
+    out.forEach(ev => {
+      if (ev.kind !== 'feed') return;
+      const t = tr[gi++] || {};
+      ev.gauge = t.exp; ev.hitAt = t.hitAt;
+    });
   }
   // レアマグが確定した手順までが「個数厳守」。それ以降は進化しないので個数がずれてよい。
   // セルマグとレアマグ再開は最初から進化しない。レアマグにしない案は最後まで再判定が続く
@@ -1658,9 +1672,13 @@ function gaugeLine(ev) {
   if (!ev.gauge) return '';
   const hot = MSTATS.filter(s => ev.gauge[s] >= 70);
   if (!hot.length) return '';
+  // 端数は必ず0〜99。満タンになった瞬間に数字が1増えて0に戻るので、
+  // 「10割溜まったまま」という状態は存在しない。切り上げて10割と書かないこと
   return '<div class="tlgauge">この時点で <b>'
-       + hot.map(s => `${s} のゲージが${Math.round(ev.gauge[s] / 10)}割`).join(' / ')
-       + '</b> 溜まっています (10割で表示の数字が1増えます)</div>';
+       + hot.map(s => `${s} のゲージが`
+           + (ev.gauge[s] >= 90 ? 'あと少しで満タン' : `${Math.floor(ev.gauge[s] / 10)}割ほど`))
+           .join(' / ')
+       + '</b> (満タンになった瞬間に数字が1増えて、ゲージは0に戻ります)</div>';
 }
 function stepHTML(ev, done, next) {
   const on = done.includes(ev.no);
@@ -1706,16 +1724,29 @@ function stepHTML(ev, done, next) {
              : '');
   } else {
     const a = ev.b.after;
-    // 表示が1つも動かない手順に「止める目印」を出すと、前の手順と同じ数字になって止めようがない
-    body = `<div class="tlmain">${blockText(ev.b)} あげる</div>`
-         + (ev.noChange
-             ? '<div class="tlstop nochange">この手順では<b>表示の数字は動きません</b>。'
-               + '見えないゲージだけが進むので、数えて与えてください</div>'
-             : `<div class="tlstop">${ev.final ? '仕上がり' : '止める目印'} → `
-               + `<b>マグLv${a.level}</b>  ${statLine(a.stats)}`
-               + `${ev.final ? ' <span class="tldone">✔ 完成</span>' : ''}</div>`)
-         + gaugeLine(ev)
-         + ev.evos.map(evoLine).join('');
+    const reading = `<b>マグLv${a.level}</b>  ${statLine(a.stats)}`
+                  + (ev.final ? ' <span class="tldone">✔ 完成</span>' : '');
+    let stop;
+    if (ev.noChange) {
+      // 表示が1つも動かない手順。ここに「◯◯になったら止める」を出すと前の手順と
+      // 同じ数字になり、止めようがなくなる
+      stop = '<div class="tlstop nochange">この手順では<b>表示の数字は動きません</b>。'
+           + '見えないゲージだけが進むので、数えて与えてください</div>';
+    } else if (ev.hitAt == null) {
+      // 出発点の端数が分からない案(レアマグから先)。表示の数値で止めてもらう
+      stop = `<div class="tlstop">表示が ${reading} になるまで与えてください `
+           + '<span class="who">(個数は目安)</span></div>';
+    } else if (ev.hitAt < ev.b.n) {
+      // **表示が変わってからも続きがある**。ここを書かないと手順が途中で切れる
+      stop = `<div class="tlstop"><b>${ev.hitAt}個目</b>で表示が ${reading} になります。`
+           + `<span class="more">そこから<b>あと${ev.b.n - ev.hitAt}個</b>続けてください</span>`
+           + '<span class="who">(表示は動きませんが、見えないゲージが進みます)</span></div>';
+    } else {
+      stop = `<div class="tlstop"><b>最後の1個</b>で ${reading} になって、`
+           + 'この手順は終わりです</div>';
+    }
+    body = `<div class="tlmain">${blockText(ev.b)} あげる</div>` + stop
+         + gaugeLine(ev) + ev.evos.map(evoLine).join('');
   }
   return `<div class="tlrow${on ? ' is-done' : ''}${now ? ' is-next' : ''}">${box}`
        + `<div class="tlbody">${now}${body}</div></div>`;
@@ -1726,12 +1757,14 @@ function zoneHead(zone, plan, tl) {
     const lock = tl.find(e => e.evos && e.evos.some(x => x.locks));
     const at = lock ? lock.evos.find(x => x.locks) : null;
     return `<div class="zhead zstrict"><b>${at ? `マグLv${at.level} で`
-        + `${esc(jpName(at.form))}になるまでは、` : ''}止める目印の数値を超えないでください</b>`
-      + '<div class="zsub">個数は目安です。ステータスには表示されない端数(ゲージ)があり、'
-      + '<b>倉庫に入れたり部屋を出たりすると端数の一部が切り捨てられる</b>ので、'
-      + '個数は1〜2個前後することがあります。表示が目印の数値になったら止めてください。'
-      + '超えるとマグのレベルが先に進んで別の形態になり、'
-      + 'それ以降は同じ餌でも上がるステータスが変わります。取り消せません。'
+        + `${esc(jpName(at.form))}になるまでは、` : ''}書いてある個数どおりに与えてください</b>`
+      + '<div class="zsub"><b>表示が変わっても、そこで止めないでください。</b>'
+      + 'ステータスには表示されない端数(ゲージ)があり、表示が変わったあとも'
+      + '端数を溜めるために続きがある手順があります(手順ごとに何個目で変わるか書いてあります)。'
+      + '逆に<b>書いてある数値を超えたら取り返せません</b>。'
+      + 'マグのレベルが先に進んで別の形態になり、それ以降は同じ餌でも上がるステータスが変わります。'
+      + 'なお<b>倉庫に入れたり部屋を出たりすると端数の一部が切り捨てられる</b>ので、'
+      + '表示が変わる個数は1〜2個ずれることがあります。数値の方を優先してください。'
       + 'また<b>マグLv50 から先は5レベルごとに形態が判定し直される</b>ので、'
       + 'この間は指定と違うジョブ・Section IDのキャラに持たせないでください</div></div>';
   }
