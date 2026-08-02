@@ -144,6 +144,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
          font-weight: 600; background: var(--sid, var(--accent-soft));
          color: var(--sid-fg, var(--accent)); border: 1px solid rgba(0,0,0,0.18); }
 
+/* Char 絞り込みチップ(欲しいものリスト・Magで共用) */
+.charfilter { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.cfchip { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+          border: 1px solid var(--border); background: var(--card); color: var(--text);
+          border-radius: 99px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; }
+.cfchip:hover { border-color: var(--accent); }
+.cfchip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.cfchip .who { font-weight: normal; color: var(--sub); font-size: 0.76rem; }
+.cfchip.on .who { color: var(--accent); }
+.cfnote { font-size: 0.82rem; color: var(--sub); margin: 0 0 12px; }
+
 .chargrid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
 /* Section ID はドロップテーブルを決める最重要属性なので、色で一目で分かるようにする */
 .charcard { border: 1px solid var(--border); border-radius: 12px; background: var(--card);
@@ -221,7 +232,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   <p>Character files do not record how many materials were used. They do store your <b>base stats</b>, so the counts are derived from those.</p>
   <p class="note">Materials used = (base stat − the base value for that class and level) ÷ 2</p>
   <p>The file stores growth with the per-class base value (min) subtracted, so min is added back for display. Verified against Lv1 characters (which cannot have used materials): all six stats match the wiki base values exactly.</p>
-  <p class="note">Note that <b>HP and TP material counts cannot be determined</b>. Those two affect stats differently and are not readable from the file.Simulatorへ渡すときは0として扱うので、必要なら向こうで足してください。</p>
+  <p class="note">Note that <b>HP and TP material counts cannot be determined</b>. Those two affect stats differently and are not readable from the file. They are sent to the simulator as 0, so add them there if needed.</p>
   </div>
 </details>
 </main>

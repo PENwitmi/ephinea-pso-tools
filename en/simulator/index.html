@@ -145,6 +145,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
          font-weight: 600; background: var(--sid, var(--accent-soft));
          color: var(--sid-fg, var(--accent)); border: 1px solid rgba(0,0,0,0.18); }
 
+/* Char 絞り込みチップ(欲しいものリスト・Magで共用) */
+.charfilter { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.cfchip { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+          border: 1px solid var(--border); background: var(--card); color: var(--text);
+          border-radius: 99px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; }
+.cfchip:hover { border-color: var(--accent); }
+.cfchip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.cfchip .who { font-weight: normal; color: var(--sub); font-size: 0.76rem; }
+.cfchip.on .who { color: var(--accent); }
+.cfnote { font-size: 0.82rem; color: var(--sub); margin: 0 0 12px; }
+
 .titlebar { display: flex; align-items: center; gap: 10px; }
 .titlebar .theme-btn { margin-left: auto; }
 h1 { font-size: 1.3rem; margin-bottom: 2px; }

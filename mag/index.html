@@ -144,6 +144,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
          font-weight: 600; background: var(--sid, var(--accent-soft));
          color: var(--sid-fg, var(--accent)); border: 1px solid rgba(0,0,0,0.18); }
 
+/* キャラ絞り込みチップ(欲しいものリスト・マグ育成で共用) */
+.charfilter { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.cfchip { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+          border: 1px solid var(--border); background: var(--card); color: var(--text);
+          border-radius: 99px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; }
+.cfchip:hover { border-color: var(--accent); }
+.cfchip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.cfchip .who { font-weight: normal; color: var(--sub); font-size: 0.76rem; }
+.cfchip.on .who { color: var(--accent); }
+.cfnote { font-size: 0.82rem; color: var(--sub); margin: 0 0 12px; }
+
 .maglayout { display: grid; gap: 16px; grid-template-columns: 1fr; }
 @media (min-width: 980px) {
   .maglayout { grid-template-columns: 380px 1fr; align-items: start; }
@@ -193,6 +204,16 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .cyc { color: var(--accent); }
 /* ① 比べる */
 .pickhead { font-size: 0.88rem; margin-bottom: 10px; }
+/* 計算後の絞り込み(このキャラを多めに使う)。チップ本体は theme.css の .cfchip */
+.cfbar { margin-bottom: 10px; }
+.cfbar .cflab { font-size: 0.78rem; color: var(--sub); margin-bottom: 5px; }
+.magsum.dim { opacity: 0.55; }
+.fbadge { display: inline-block; font-size: 0.76rem; font-weight: 600; border-radius: 99px;
+          padding: 2px 10px; border: 1px solid var(--border); margin-bottom: 6px; }
+.fbadge.f0 { border-color: var(--green); color: var(--green); }
+.fbadge.f1 { border-color: var(--gold); color: var(--gold); }
+.fbadge.f2 { color: var(--sub); }
+.morerow { text-align: center; margin: 4px 0 12px; }
 .magsum { border: 1px solid var(--border); border-radius: 12px; background: var(--card);
           padding: 14px 16px; margin-bottom: 12px; }
 .sumtop { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline;
@@ -927,13 +948,18 @@ function pbOk(pbs, want, avoid, done) {
   return true;
 }
 function fourthOptions(chars) {
-  const out = [];
+  // 同じ (職業, 性別, ID) のキャラが複数いても選択肢としては1つ
+  // (誰が担当するかは alternatives() が案の中で列挙する)
+  const out = [], seen = new Set();
   for (const ref of FOURTH_REF) {
     if (chars && chars.length) {
       chars.forEach(ch => {
+        const key = ref.class + '/' + ref.gender + '/' + ch.section_id + '/' + ref.mag;
         if (ch.class === ref.class && ch.gender === ref.gender
-            && ref.section_ids.includes(ch.section_id))
+            && ref.section_ids.includes(ch.section_id) && !seen.has(key)) {
+          seen.add(key);
           out.push([ref.class, ref.gender, ch.section_id, ref.mag, ref.equality]);
+        }
       });
     } else {
       // IDが効くのは「第3進化の偶奇」と「第4進化のグループ所属」だけ。
@@ -1152,6 +1178,26 @@ function planFromRare(form, startStats, target, bank) {
             continueFrom: { form: form, stats: st }, locked: true }, null];
 }
 
+// 案の同一性キー。replay の一致条件(レア/セル + 各ブロックの餌列と直後の状態)を
+// そのまま文字列にする。キーが同じ2案は alternatives() も同じになるので、
+// 代表1件に潰しても情報は失われない。Python正本(plan_key)と1文字も違えないこと
+function planKey(p) {
+  const parts = [p.rare || '', p.cell || ''];
+  for (const ph of p.phases) {
+    const bs = [];
+    for (const b of (ph.blocks || [])) {
+      const a = b.after;
+      bs.push(String(b.repeat) + 'x'
+        + b.items.map(ic => ic[0] + ':' + ic[1]).join('+')
+        + '>' + a.form + '/' + a.level
+        + '/' + MSTATS.map(s => a.stats[s]).join(',')
+        + '/' + a.pbs.join(','));
+    }
+    parts.push(bs.join(';'));
+  }
+  return parts.join('~');
+}
+
 function magSolve(target, opt) {
   opt = opt || {};
   const wantPbs = opt.wantPbs || null, avoidPbs = opt.avoidPbs || null;
@@ -1162,14 +1208,17 @@ function magSolve(target, opt) {
     ? opt.characters.map(c => Object.assign({}, c, { section_id: canonSid(c.section_id) }))
     : null;
   const bank = !!opt.bank, useCells = opt.useCells !== false;
-  const width = opt.width || 8000, keep = opt.keep || 3, stopAfter = opt.stopAfter || 5;
+  // stopAfter 指定時は上位N件だけ返す旧挙動(収集も N*4 で打ち切る)。
+  // 未指定なら見つかった案を全部返し、maxResults(安全弁)に当たったら truncated=true
+  const width = opt.width || 8000, keep = opt.keep || 3;
+  const stopAfter = opt.stopAfter || null, maxResults = opt.maxResults || 200;
   const tgt = { DEF: target[0], POW: target[1], DEX: target[2], MIND: target[3] };
   const notes = [];
   const total = MSTATS.reduce((a, s) => a + tgt[s], 0);
-  if (MSTATS.some(s => tgt[s] < MSTART[s])) return [[], ['初期値(DEF5)を下回る目標は作れません']];
-  if (MSTATS.some(s => tgt[s] > 200)) return [[], ['1つのステータスの上限は200です']];
-  if (total > 200) return [[], [`4ステの合計が ${total} です。マグのレベル上限は200なのでこの目標には到達できません`]];
-  if (total < 50) return [[], ['4ステの合計が50未満だとLv50の進化に届きません']];
+  if (MSTATS.some(s => tgt[s] < MSTART[s])) return [[], ['初期値(DEF5)を下回る目標は作れません'], false];
+  if (MSTATS.some(s => tgt[s] > 200)) return [[], ['1つのステータスの上限は200です'], false];
+  if (total > 200) return [[], [`4ステの合計が ${total} です。マグのレベル上限は200なのでこの目標には到達できません`], false];
+  if (total < 50) return [[], ['4ステの合計が50未満だとLv50の進化に届きません'], false];
 
   // マグセル経由: 基本マグにセルを使うといきなりテーブル7に入れる
   const cellResults = [];
@@ -1212,9 +1261,9 @@ function magSolve(target, opt) {
   if (!stage1.length) {
     if (cellResults.length) {
       notes.push('通常の育成では作れないため、マグセルを使う案を出しています');
-      return [cellResults.slice(0, stopAfter), notes];
+      return [stopAfter ? cellResults.slice(0, stopAfter) : cellResults, notes, false];
     }
-    return [[], notes.concat([whyBlocked(35, blocked1, wantPbs, avoidPbs)])];
+    return [[], notes.concat([whyBlocked(35, blocked1, wantPbs, avoidPbs)]), false];
   }
 
   // Lv50時点で到達できる状態(必要ならキャラを渡す)
@@ -1244,26 +1293,39 @@ function magSolve(target, opt) {
   if (!stage2.length) {
     if (cellResults.length) {
       notes.push('通常の育成では作れないため、マグセルを使う案を出しています');
-      return [cellResults.slice(0, stopAfter), notes];
+      return [stopAfter ? cellResults.slice(0, stopAfter) : cellResults, notes, false];
     }
-    return [[], notes.concat([whyBlocked(50, blocked2, wantPbs, avoidPbs)])];
+    return [[], notes.concat([whyBlocked(50, blocked2, wantPbs, avoidPbs)]), false];
   }
 
   let results = [];
+  let truncated = false;
+  const cap = stopAfter ? stopAfter * 4 : maxResults;
   for (const st of stage2) {
     finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm).forEach(p => results.push(p));
-    if (results.length >= stopAfter * 4) break;
+    if (results.length >= cap) { truncated = true; break; }
   }
+  // 同じ案(レア/セル + 餌列 + 各ブロック後の状態が全て一致)は1つに潰す。
+  // 取込みキャラに同じ (職業, 性別, ID) が複数いると同一案が量産されるため
+  const seen = new Set();
+  results = results.filter(p => {
+    const k = planKey(p);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
   // レアマグを先に出すのは、一度なれば形態が固定され以降は何も気にせず伸ばせるから。
   // その中では簡単な順。餌の総数は最後の同点処理にだけ使い、300個単位でしか見ない
-  // (何個あげたかは手間にほぼ影響しないため)
+  // (何個あげたかは手間にほぼ影響しないため)。
+  // 丸めは整数演算で行う: Math.round() と Python の round() は .5 で割れる(正本と同式にする)
   results.sort((a, b) => (a.rare == null) - (b.rare == null)
     || cmpEase(planEase(a), planEase(b))
-    || Math.round(a.items / 300) - Math.round(b.items / 300));
+    || Math.floor((a.items + 150) / 300) - Math.floor((b.items + 150) / 300));
   results = results.concat(cellResults);
   if (opt.onlyCell) results = results.filter(p => p.cell === opt.onlyCell);
   if (!results.length && wantForm) notes.push(explainForm(wantForm, tgt));
-  return [results.slice(0, stopAfter), notes];
+  if (stopAfter) results = results.slice(0, stopAfter);
+  return [results, notes, truncated];
 }
 
 // ============ 和名と説明文 (mag_solve.py の同名関数の移植) ============
@@ -1612,7 +1674,7 @@ function timeline(plan) {
     return got;
   };
   const segs = segmentsOf(plan.phases);
-  const alts = alternatives(plan);
+  const alts = altsOf(plan);
   let handNo = 0, no = 0, from = 5;      // from = その手順を始めるときのマグLv
   let prevStats = plan.continueFrom
     ? (Array.isArray(plan.continueFrom.stats)
@@ -1683,15 +1745,97 @@ function timeline(plan) {
   return out;
 }
 
+// ---- 使えるキャラ判定のキャッシュ ----
+// alternatives() は1案あたり数十msかかる(職業12×性別2×ID10 の再生)。候補が数十件
+// あると素朴に呼ぶだけで画面が固まるので、計算結果を案オブジェクトに紐付けて再利用し、
+// 見えていない案のぶんは描画後に少しずつ裏で温める
+const ALTS = new WeakMap();
+function altsOf(plan) {
+  let a = ALTS.get(plan);
+  if (!a) { a = alternatives(plan); ALTS.set(plan, a); }
+  return a;
+}
+const altsReady = plans => plans.every(p => ALTS.has(p));
+let ALT_GEN = 0;
+function ensureAlts(plans, done) {
+  const gen = ++ALT_GEN;                     // 新しい計算が始まったら古い温めは捨てる
+  const todo = plans.filter(p => !ALTS.has(p));
+  if (!todo.length) { if (done) done(false); return; }
+  let i = 0;
+  (function step() {
+    if (gen !== ALT_GEN) return;
+    const t0 = Date.now();
+    while (i < todo.length && Date.now() - t0 < 40) altsOf(todo[i++]);
+    if (i < todo.length) setTimeout(step, 0);
+    else if (done) done(true);
+  })();
+}
+
+// ---- 計算後の絞り込み: このキャラを多めに使う ----
+// 取込みキャラをチップで出し、選ぶと「そのキャラで進められる案」から順に並べ替える。
+// 案は隠さない(使えない案は薄く出す)。LAST 自体は並べ替えず表示順だけ変えるので、
+// data-pick / PICKED のインデックスは影響を受けない
+function filterChars() {
+  const inv = loadInventory();
+  const chars = (inv && inv.chars) ? Object.values(inv.chars) : [];
+  const seen = new Set(), out = [];
+  chars.forEach(c => {
+    const g = genderOf(c.cls);
+    if (!g) return;                          // 職業名から性別が読めないデータは対象外
+    const key = classKeyOf(c.cls) + '/' + g + '/' + canonSid(c.sectionId) + '/' + c.name;
+    if (seen.has(key)) return;               // 同名同IDのスロットが複数ある場合は1人として出す
+    seen.add(key);
+    out.push({ key: key, cls: classKeyOf(c.cls), gender: g, sid: canonSid(c.sectionId),
+               sidRaw: c.sectionId, name: c.name, job: c.cls });
+  });
+  return out;
+}
+// 0 = このキャラだけで最後まで育てられる(区間が1つ、またはセル案で誰でもよい)
+// 1 = 一部の区間を担当できる / 2 = どの区間も担当できない
+function charRank(plan, ch) {
+  const alts = altsOf(plan);
+  if (!alts.length) return 0;
+  const hit = alts.filter(a => a.combos.some(x =>
+    x[0] === ch.cls && x[1] === ch.gender && x[2] === ch.sid)).length;
+  return hit === alts.length ? 0 : hit ? 1 : 2;
+}
+function displayOrder() {
+  const order = LAST.map((r, i) => ({ i: i, rank: -1 }));
+  if (!CFILTER || !altsReady(LAST)) return order;
+  order.forEach(o => o.rank = charRank(LAST[o.i], CFILTER));
+  order.sort((a, b) => a.rank - b.rank || a.i - b.i);   // 同順位はソルバの並びのまま
+  return order;
+}
+function chipBarHTML() {
+  const chars = filterChars();
+  if (!chars.length || LAST.length < 2) return '';
+  const pending = CFILTER && !altsReady(LAST);
+  return `<div class="cfbar"><div class="cflab">このキャラを多めに使う</div>`
+    + `<div class="charfilter">` + chars.map(c =>
+        `<button type="button" class="cfchip${CFILTER && CFILTER.key === c.key ? ' on' : ''}"
+          data-cf="${esc(c.key)}">${sidTag(c.sidRaw)} ${esc(c.name)}
+          <span class="who">${esc(c.job)}</span></button>`).join('')
+    + `</div>`
+    + (pending ? `<div class="cfnote">使えるキャラを判定中…</div>`
+       : CFILTER ? `<div class="cfnote">そのキャラで進められる案から順に並べています。案は隠していません</div>`
+       : '')
+    + `</div>`;
+}
+
 // ---- ① 比べる: 手順は出さず、選ぶのに要る情報だけ ----
-function summaryHTML(r, idx) {
-  const alts = alternatives(r);
+function summaryHTML(r, idx, rank) {
+  const alts = altsOf(r);
   const req = alts.length
     ? alts.map((a, i) => `<div class="sumreq">`
         + (alts.length > 1 ? `<div class="crlab">${i + 1}人目</div>` : '')
         + charReqHTML(a) + '</div>').join('')
     : '<div class="creq"><span class="crval">どのキャラでも育てられます</span></div>';
-  return `<div class="magsum">
+  const badge = (rank === undefined || rank < 0) ? ''
+    : rank === 0 ? '<div><span class="fbadge f0">1人で最後まで育てられます</span></div>'
+    : rank === 1 ? '<div><span class="fbadge f1">一部の区間を担当できます</span></div>'
+    : '<div><span class="fbadge f2">この案では使えません</span></div>';
+  return `<div class="magsum${rank === 2 ? ' dim' : ''}">
+    ${badge}
     <div class="sumtop"><b>${routeText(r)}</b>
       <span class="sumpath">${formPath(r)
         .map(n => esc(jpName(n))).join(' → ')}</span></div>
@@ -2042,19 +2186,28 @@ document.getElementById('magPasteBtn').addEventListener('click', () => {
 });
 
 // ---- 結果の表示 ----
-// VIEW は2つ。'pick' = 3案を要約で比べる / 'run' = 選んだ1案をチェックリストで実行する
+// VIEW は2つ。'pick' = 見つかった案を要約で比べる / 'run' = 選んだ1案をチェックリストで実行する
 let LAST = [], NOTES = [], VIEW = 'pick', PICKED = 0, DONE = [], FROZEN = null;
+let TRUNC = false;        // 探索が上限で打ち切られた(=「N通り以上」)
+let CFILTER = null;       // 「このキャラを多めに使う」で選んだキャラ(filterChars() の1要素)
+let SHOWN = 5;            // 比べる画面に展開する件数。「もっと見る」で増える
 
-function showResults(res, notes, frozen, view, picked, done) {
+function showResults(res, notes, frozen, view, picked, done, trunc) {
   LAST = res; NOTES = notes || []; FROZEN = frozen || null;
   VIEW = view || 'pick'; PICKED = picked || 0; DONE = done || [];
+  TRUNC = !!trunc;
   if (FROZEN) VIEW = 'run';                 // 保存プランは1案なので実行画面から始める
   render();
+  // 使えるキャラの判定は重いので、描画したあと見えていない案のぶんを裏で温める。
+  // 終わったら再描画して、絞り込みと「該当キャラなし」の注記を確定させる
+  if (LAST.length > 1)
+    ensureAlts(LAST, changed => { if (changed && VIEW === 'pick') render(); });
 }
 function saveLast() {
   try {
     localStorage.setItem(MAG_LAST_KEY, JSON.stringify({ input: readMagState(),
-      results: LAST, notes: NOTES, view: VIEW, picked: PICKED, done: DONE }));
+      results: LAST, notes: NOTES, view: VIEW, picked: PICKED, done: DONE,
+      trunc: TRUNC, filter: CFILTER ? CFILTER.key : null }));
   } catch (e) {}
 }
 function render() {
@@ -2073,15 +2226,25 @@ function render() {
       + ' <button class="btn" id="magRecalc">いまの条件で計算し直す</button></div>'
     : '';
   if (VIEW === 'pick') {
+    const order = displayOrder();
+    const shown = order.slice(0, SHOWN);
     out.innerHTML = head + noteHtml
-      + `<div class="pickhead">${LAST.length}通りの育て方が見つかりました。`
+      + (TRUNC
+         ? `<div class="pickhead">${LAST.length}通り以上の育て方が見つかりました。`
+         : `<div class="pickhead">${LAST.length}通りの育て方が見つかりました。`)
       + '<b>育てる案を1つ選んでください</b>'
-      + (loadInventory() && LAST.every(r => alternatives(r).some(a => !altChars(a).length))
+      // 全案の判定が済むまでこの注記は出せない(途中で出すと誤報になる)
+      + (loadInventory() && altsReady(LAST)
+         && LAST.every(r => altsOf(r).some(a => !altChars(a).length))
          ? '<div class="magnote">※ どの案も、担当できるキャラが取込みデータにいません。'
            + '「手持ちのキャラだけで育てる」を有効にすると、いるキャラだけで組み直します</div>'
          : '')
       + '</div>'
-      + LAST.map((r, i) => summaryHTML(r, i)).join('');
+      + chipBarHTML()
+      + shown.map(o => summaryHTML(LAST[o.i], o.i, o.rank)).join('')
+      + (order.length > SHOWN
+         ? `<div class="morerow"><button class="btn" id="magMore">残り${order.length - SHOWN}件をもっと見る</button></div>`
+         : '');
   } else {
     const back = LAST.length > 1
       ? '<button class="reset" id="magBack">← ほかの案を見る</button>' : '';
@@ -2097,6 +2260,16 @@ function wire() {
   if (rc) rc.addEventListener('click', calc);
   const bk = document.getElementById('magBack');
   if (bk) bk.addEventListener('click', () => { VIEW = 'pick'; saveLast(); render(); });
+  const more = document.getElementById('magMore');
+  if (more) more.addEventListener('click', () => { SHOWN += 15; render(); });
+  on('[data-cf]', 'click', e => {
+    const key = e.currentTarget.dataset.cf;
+    CFILTER = (CFILTER && CFILTER.key === key) ? null   // もう一度押すと解除
+      : filterChars().find(c => c.key === key) || null;
+    saveLast(); render();
+    // まだ判定していない案が残っていたら温めてから並べ替える
+    if (CFILTER && !altsReady(LAST)) ensureAlts(LAST, () => render());
+  });
   on('[data-pick]', 'click', e => {
     PICKED = +e.currentTarget.dataset.pick; VIEW = 'run'; DONE = [];
     saveLast(); render();
@@ -2138,23 +2311,24 @@ function calc() {
   const from = fromRareStart();
   btn.disabled = true; btn.textContent = '計算中…'; out.classList.add('busy');
   setTimeout(() => {
-    let res = [], notes = [], view = 'pick';
+    let res = [], notes = [], view = 'pick', trunc = false;
     try {
       if (from) {
         // すでにレアマグになっているマグの続き。案は1つしかないので実行画面から始める
         const [p, note] = planFromRare(from.form, from.stats, target, bank);
         res = p ? [p] : []; notes = note ? [note] : []; view = 'run';
       } else {
-        [res, notes] = magSolve(target, { avoidPbs: avoid.length ? avoid : null, bank: bank,
-          wantForm: wantForm, characters: chars,
-          useCells: !document.getElementById('magNoCell').checked, stopAfter: 3 });
+        [res, notes, trunc] = magSolve(target, { avoidPbs: avoid.length ? avoid : null,
+          bank: bank, wantForm: wantForm, characters: chars,
+          useCells: !document.getElementById('magNoCell').checked, maxResults: 200 });
       }
     } catch (err) {
       notes = ['計算中にエラーが起きました: ' + err.message];
     }
     out.classList.remove('busy');
     btn.disabled = false; btn.textContent = '育て方を計算する';
-    showResults(res, notes, null, view, 0, []);
+    CFILTER = null; SHOWN = 5;             // 絞り込みと展開件数は計算のたびに戻す
+    showResults(res, notes, null, view, 0, [], trunc);
     saveLast();          // 次に開いたときのために画面をそのまま残す(計算し直さない)
   }, 20);
 }
@@ -2167,12 +2341,15 @@ document.querySelectorAll('.modebtn').forEach(b => b.addEventListener('click', (
 }));
 document.getElementById('magGo').addEventListener('click', calc);
 renderMagPlanList();
-// 前回の画面を復元する(計算し直さない)。どの案を選んでどこまで進んだかも戻す
+// 前回の画面を復元する(計算し直さない)。どの案を選んでどこまで進んだかも戻す。
+// 絞り込みのキャラは、取込みデータから消えていたら黙って解除する
 try {
   const last = JSON.parse(localStorage.getItem(MAG_LAST_KEY));
   if (last && last.results) {
     applyMagState(last.input);
-    showResults(last.results, last.notes, null, last.view, last.picked, last.done);
+    if (last.filter) CFILTER = filterChars().find(c => c.key === last.filter) || null;
+    showResults(last.results, last.notes, null, last.view, last.picked, last.done,
+                last.trunc);
   }
 } catch (e) {}
 </script>
