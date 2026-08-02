@@ -1,17 +1,20 @@
 # Ephinea Tools
 
 > Unofficial web tools for the PSOBB Ephinea private server (Phantasy Star Online Blue Burst).
-> A character stat & equipment-effect simulator, and an inventory/bank item browser with
+> A mag raising planner that works backwards from your target stats, a character stat &
+> equipment-effect simulator, a character overview, and an inventory/bank item browser with
 > Price guide-based value estimates. All user data stays in the browser (localStorage);
-> nothing is sent to a server. Japanese and English versions available.
+> nothing is sent to a server. Every page exists in both Japanese and English.
 
 ## Pages
 
-- [Home / data import (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/): import your AllItems_with_slot.txt character data
+- [Home / data import (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/): import your character data (.psochar / .psobank binaries, or AllItems_with_slot.txt)
+- [Mag planner (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/mag/): enter target mag stats and get the exact feeding order — which food, how many, and when to hand the mag to another character; covers evolution branching, rare mags, mag cells and the bank trick, ranked by how easy each plan is to execute
+- [Characters (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/characters/): class, Section ID, level, stats, derived material usage and equipment for every imported character
 - [Stat simulator (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/simulator/): class/level/mag/material/gear stat calculation with equipment & set effect breakdown, stat caps, presets
 - [Item list (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/inventory/): search all characters' inventories and banks, with PD value estimates
 - [Wishlist (JA)](https://ephinea-pso-tools.nishimoto-learning.jp/wishlist/): reverse drop-chart lookup (difficulty / Section ID / enemy / rate) and PD values for items you want
-- English versions: [https://ephinea-pso-tools.nishimoto-learning.jp/en/](https://ephinea-pso-tools.nishimoto-learning.jp/en/), [https://ephinea-pso-tools.nishimoto-learning.jp/en/simulator/](https://ephinea-pso-tools.nishimoto-learning.jp/en/simulator/), [https://ephinea-pso-tools.nishimoto-learning.jp/en/inventory/](https://ephinea-pso-tools.nishimoto-learning.jp/en/inventory/), [https://ephinea-pso-tools.nishimoto-learning.jp/en/wishlist/](https://ephinea-pso-tools.nishimoto-learning.jp/en/wishlist/)
+- English versions: same paths under `/en/` — [home](https://ephinea-pso-tools.nishimoto-learning.jp/en/), [mag planner](https://ephinea-pso-tools.nishimoto-learning.jp/en/mag/), [characters](https://ephinea-pso-tools.nishimoto-learning.jp/en/characters/), [stat simulator](https://ephinea-pso-tools.nishimoto-learning.jp/en/simulator/), [item list](https://ephinea-pso-tools.nishimoto-learning.jp/en/inventory/), [wishlist](https://ephinea-pso-tools.nishimoto-learning.jp/en/wishlist/)
 
 ## Data sources
 

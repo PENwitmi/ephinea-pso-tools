@@ -1,0 +1,32 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"><style>
+  html, body { margin: 0; padding: 0; }
+  #card { width: 1200px; height: 630px; box-sizing: border-box; padding: 76px 84px;
+          background: linear-gradient(135deg, #0b1520 0%, #10293c 55%, #0d2233 100%);
+          color: #e8f1f8; font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+          display: flex; flex-direction: column; justify-content: space-between;
+          position: relative; overflow: hidden; }
+  /* サイトのファビコン(マグ型カプセル)を大きく置いて、一目で同じサイトと分かるようにする */
+  #card .mag { position: absolute; right: -60px; top: 50%; transform: translateY(-50%);
+               width: 420px; height: 720px; border-radius: 210px;
+               background: linear-gradient(135deg, #0b7fc2, #31c7e8); opacity: 0.16; }
+  h1 { font-size: 84px; margin: 0; letter-spacing: -0.01em; }
+  .sub { font-size: 34px; color: #9fc4dd; margin-top: 18px; line-height: 1.45; }
+  .tags { display: flex; gap: 14px; flex-wrap: wrap; }
+  .tag { font-size: 25px; border: 2px solid #3db4f2; color: #6fd0f7;
+         border-radius: 99px; padding: 8px 24px; }
+  .host { font-size: 25px; color: #7ea6c2; margin-top: 26px; }
+</style></head><body>
+<div id="card">
+  <div class="mag"></div>
+  <div>
+    <h1>Ephinea Tools</h1>
+    <div class="sub">PSOBB Ephinea の非公式ツール集<br>
+      マグ育成プランナー / ステータスシミュレーター / 査定</div>
+  </div>
+  <div>
+    <div class="tags"><span class="tag">登録不要・無料</span>
+      <span class="tag">データはブラウザ内のみ</span><span class="tag">日本語 / English</span></div>
+    <div class="host">ephinea-pso-tools.nishimoto-learning.jp</div>
+  </div>
+</div>
+</body></html>
