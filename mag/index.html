@@ -1648,12 +1648,21 @@ function stepTrace(plan) {
     for (const p of seg.phases) for (const b of p.blocks) {
       const end = b.after.stats;
       let hitAt = null, k = 0;
+      // 1つの手順が複数の形態にまたがることがある(同じ餌を与え続けるだけなので
+      // 手順としては1本にまとめている)。**形態が変われば給餌テーブルも変わる**ので、
+      // どの形態をどのレベルまで通ったかを再生して記録し、増減を形態ごとに出せるようにする
+      const forms = [{ form: m.form, from: m.level, to: null }];
       for (let i = 0; i < b.repeat; i++) for (const [item, cnt] of b.items)
         for (let j = 0; j < cnt; j++) {
           m.feed(item); k++;
+          const cur = forms[forms.length - 1];
+          if (m.form !== cur.form) {
+            cur.to = m.level;
+            forms.push({ form: m.form, from: m.level, to: null });
+          }
           if (hitAt === null && MSTATS.every(s => m.stats[s] === end[s])) hitAt = k;
         }
-      out.push({ exp: Object.assign({}, m.exp), hitAt: hitAt });
+      out.push({ exp: Object.assign({}, m.exp), hitAt: hitAt, forms: forms });
     }
   }
   return out;
@@ -1726,7 +1735,7 @@ function timeline(plan) {
     out.forEach(ev => {
       if (ev.kind !== 'feed') return;
       const t = tr[gi++] || {};
-      ev.gauge = t.exp; ev.hitAt = t.hitAt;
+      ev.gauge = t.exp; ev.hitAt = t.hitAt; ev.forms = t.forms;
     });
   }
   // レアマグが確定した手順までが「個数厳守」。それ以降は進化しないので個数がずれてよい。
@@ -1894,27 +1903,66 @@ function gaugeLine(ev) {
 // 例: イラーではアンティドートが DEF を上げてしまうので DEF5 を保てない。
 // 先にディメイトで POW を上げてヴァラーハにすると、そこではアンティドートが DEF を下げる側になる
 const SEP = '、';   // 英語版では対訳表で ', ' に差し替える
-function feedEffect(ev) {
-  const table = MAGDATA.feed_tables[(ALLMAGS[ev.form] || {}).feed_table || '0'];
+const MKEY_S = { DEF: 'def', POW: 'pow', DEX: 'dex', MIND: 'mind' };
+const feedTableOf = form => MAGDATA.feed_tables[(ALLMAGS[form] || {}).feed_table || '0'];
+// その形態での「餌1個あたりの増減」1行分
+function feedRates(form, items) {
+  const table = feedTableOf(form);
   if (!table) return '';
-  const KEY = { DEF: 'def', POW: 'pow', DEX: 'dex', MIND: 'mind' };
   const fmt = v => (v > 0 ? '+' : '') + (v / 100).toFixed(2);
-  const rows = ev.b.items.map(([item]) => {
+  return items.map(([item]) => {
     const v = table[item]; if (!v) return '';
-    const up = MSTATS.filter(s => v[KEY[s]] !== 0)
-      .map(s => `${s} ${fmt(v[KEY[s]])}`).join(' / ');
-    const flat = MSTATS.filter(s => v[KEY[s]] === 0);
+    const up = MSTATS.filter(s => v[MKEY_S[s]] !== 0)
+      .map(s => `${s} ${fmt(v[MKEY_S[s]])}`).join(' / ');
+    const flat = MSTATS.filter(s => v[MKEY_S[s]] === 0);
     return `<b>${esc(jpName(item))}</b> 1個で ${up || '変化なし'}`
          + (flat.length ? `、${flat.join('・')} は動きません` : '');
   }).filter(Boolean).join(' ／ ');
-  if (!rows) return '';
+}
+// **なぜその餌なのか**を形態ごとに出す。
+// 1つの手順が複数の形態にまたがることがあり(同じ餌を続けるだけなので手順は分けていない)、
+// **形態が変わると同じ餌でも増減が別物になる**(例: アンティドートのDEXは
+// マグ +0.40 → カルキ +0.15 → ミトラ +0.07)。最初の形態の数値だけを出すと、
+// 途中から進みが遅くなる理由が分からないまま個数だけが合わなくなる
+function feedEffect(ev) {
+  // ev.forms は手順を再生して得た通過形態。取れないとき(レアマグから再開する案)は
+  // その区間では進化しないので、開始時の形態1つで正しい
+  const spans = (ev.forms && ev.forms.length) ? ev.forms
+    : [{ form: ev.form, from: null, to: null }];
+  // 形態名のあとに続くので「マグLv」とは書かない(形態名の「マグ」と重なって読みにくい)。
+  // このページのレベル表記はすべてマグのレベル
+  const label = (sp, i) => {
+    if (spans.length === 1) return '';
+    if (i === 0) return ` (Lv${sp.to}まで)`;
+    if (sp.to == null) return ` (Lv${sp.from}〜)`;
+    return ` (Lv${sp.from}〜${sp.to})`;
+  };
+  const lines = spans.map((sp, i) => {
+    const rows = feedRates(sp.form, ev.b.items);
+    return rows ? `<div class="tlwhy"><b>${esc(jpName(sp.form))}</b>${label(sp, i)}: ${rows}</div>` : '';
+  }).filter(Boolean);
+  if (!lines.length) return '';
+  const head = spans.length > 1
+    ? '<div class="tlwhy">途中で形態が変わるので、餌1個あたりの上がり方も変わります</div>' : '';
   // **この手順を始める時点で既に目標に届いているステ** = 餌の選択を縛っている条件。
   // いま伸ばしているステは除く(それは目標に向かって上げている最中なので制約ではない)
   const capped = MSTATS.filter(s => ev.from[s] === ev.cap[s] && !ev.moved.includes(s));
-  const note = capped.length
-    ? `<div class="tlwhy2">${capped.map(s => `${s} は ${ev.cap[s]}`).join(SEP)}`
-      + ' のまま保つ必要があるので、それを上げる餌はこの形態では使えません</div>' : '';
-  return `<div class="tlwhy">いまの形態 <b>${esc(jpName(ev.form))}</b>: ${rows}</div>${note}`;
+  // 据え置くステを**この餌が上げてしまう形態**があるなら、そこを名指しする。
+  // 書かないと「上げる餌は使えません」と表示の増減(+0.05等)が矛盾して見える
+  // (実際はゲージが満タンに届かないまま次の形態で止まるので、表示は動かない)
+  const risky = s => spans.filter(sp => {
+    const t = feedTableOf(sp.form);
+    return t && ev.b.items.some(([item]) => t[item] && t[item][MKEY_S[s]] > 0);
+  }).map(sp => jpName(sp.form));
+  const notes = capped.map(s => {
+    const rise = risky(s);
+    return rise.length
+      ? `${s} は <b>${rise.map(esc).join(SEP)}</b> の間だけゲージが進みますが、満タンに届かないので ${ev.cap[s]} のままです`
+      : `${s} は ${ev.cap[s]} のまま保つ必要があるので、それを上げる餌は使えません`;
+  });
+  // 据え置くステごとに1行。まとめると文の形が違うもの同士が読点でつながって読みにくい
+  const note = notes.map(t => `<div class="tlwhy2">${t}</div>`).join('');
+  return head + lines.join('') + note;
 }
 function stepHTML(ev, done, next) {
   const on = done.includes(ev.no);
