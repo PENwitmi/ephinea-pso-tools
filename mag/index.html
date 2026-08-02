@@ -207,6 +207,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 /* 計算後の絞り込み(このキャラを多めに使う)。チップ本体は theme.css の .cfchip */
 .cfbar { margin-bottom: 10px; }
 .cfbar .cflab { font-size: 0.78rem; color: var(--sub); margin-bottom: 5px; }
+.cfnote.cfwarn { color: var(--gold); }
 .magsum.dim { opacity: 0.55; }
 .fbadge { display: inline-block; font-size: 0.76rem; font-weight: 600; border-radius: 99px;
           padding: 2px 10px; border: 1px solid var(--border); margin-bottom: 6px; }
@@ -1806,6 +1807,21 @@ function displayOrder() {
   order.sort((a, b) => a.rank - b.rank || a.i - b.i);   // 同順位はソルバの並びのまま
   return order;
 }
+// キャラを指定したせいで受け渡しが増えるなら、その事実を数字で示す。
+// 「使える案なし」もここで言う(バッジだけだと全カードを見ないと気づけない)
+function filterWarnHTML() {
+  if (!CFILTER || !altsReady(LAST)) return '';
+  const hands = p => planEase(p)[1];
+  const usable = LAST.filter(p => charRank(p, CFILTER) < 2);
+  if (!usable.length)
+    return '<div class="cfnote cfwarn">※ この目標では、このキャラが担当できる案はありません</div>';
+  const minU = Math.min(...usable.map(hands));
+  const minA = Math.min(...LAST.map(hands));
+  if (minU <= minA) return '';
+  const alt = minA === 0 ? '受け渡しなしで育てられる案' : `受け渡し${minA}回の案`;
+  return `<div class="cfnote cfwarn">※ このキャラを使う案は受け渡しが最少${minU}回です。`
+       + `キャラを指定しなければ${alt}があります</div>`;
+}
 function chipBarHTML() {
   const chars = filterChars();
   if (!chars.length || LAST.length < 2) return '';
@@ -1819,6 +1835,7 @@ function chipBarHTML() {
     + (pending ? `<div class="cfnote">使えるキャラを判定中…</div>`
        : CFILTER ? `<div class="cfnote">そのキャラで進められる案から順に並べています。案は隠していません</div>`
        : '')
+    + filterWarnHTML()
     + `</div>`;
 }
 
