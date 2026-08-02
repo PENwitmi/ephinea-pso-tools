@@ -289,6 +289,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
 <meta name="description" content="Mag planner for PSOBB Ephinea. Enter your target stats and get the exact feeding order, ranked by how easy the plan is to actually execute: fewest hand-offs between characters and as few switches of food as possible. Covers rare mags, mag cells and the bank trick.">
 </head>
 <body>
+<div class="wrap">
 <nav class="nav" aria-label="Site menu">
   <a class="brand" href="../">Ephinea Tools</a>
   <a class="tab " href="../">Home / Import</a><a class="tab " href="../characters/">Character</a><a class="tab " href="../simulator/">Simulator</a><a class="tab on" href="../mag/">Mag</a><a class="tab " href="../inventory/">Item List</a><a class="tab " href="../wishlist/">Wishlist</a>
@@ -296,7 +297,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
   <span class="inv-chip" id="invChip"></span>
   <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">🌙 Dark</button>
 </nav>
-<main class="wrap">
+<main>
 <h1>🧬 Mag Planner</h1>
 <p class="lead">Set your target stats and get the exact feeding order. It does not aim for the fastest route but for <b>the easiest one to actually carry out</b>: plans are ranked so that the ones needing fewest hand-offs between characters, and letting you keep feeding the same thing without thinking, come first.</p>
 
@@ -389,6 +390,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
  / <a href="https://buy.stripe.com/7sY6oG6351Xs3Z068V3Je03" target="_blank" rel="noopener">Buy me a coffee (Stripe)</a>
  / <a href="https://dev.nishimoto-learning.jp/tokushoho" target="_blank" rel="noopener">Commercial disclosure (Japanese law)</a></p>
 </footer>
+</div>
 <script>
 
 // ---- テーマ ----
