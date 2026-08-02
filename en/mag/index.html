@@ -1651,14 +1651,15 @@ function stepTrace(plan) {
       // 1つの手順が複数の形態にまたがることがある(同じ餌を与え続けるだけなので
       // 手順としては1本にまとめている)。**形態が変われば給餌テーブルも変わる**ので、
       // どの形態をどのレベルまで通ったかを再生して記録し、増減を形態ごとに出せるようにする
-      const forms = [{ form: m.form, from: m.level, to: null }];
+      const forms = [{ form: m.form, from: m.level, to: null, n: 0 }];
       for (let i = 0; i < b.repeat; i++) for (const [item, cnt] of b.items)
         for (let j = 0; j < cnt; j++) {
-          m.feed(item); k++;
           const cur = forms[forms.length - 1];
+          m.feed(item); k++;
+          cur.n++;                    // 進化を起こした1個も、与えた時点では前の形態
           if (m.form !== cur.form) {
             cur.to = m.level;
-            forms.push({ form: m.form, from: m.level, to: null });
+            forms.push({ form: m.form, from: m.level, to: null, n: 0 });
           }
           if (hitAt === null && MSTATS.every(s => m.stats[s] === end[s])) hitAt = k;
         }
@@ -1926,9 +1927,12 @@ function feedRates(form, items) {
 // 途中から進みが遅くなる理由が分からないまま個数だけが合わなくなる
 function feedEffect(ev) {
   // ev.forms は手順を再生して得た通過形態。取れないとき(Rare magから再開する案)は
-  // その区間では進化しないので、開始時の形態1つで正しい
-  const spans = (ev.forms && ev.forms.length) ? ev.forms
+  // その区間では進化しないので、開始時の形態1つで正しい。
+  // **最後の1個で進化して手順が終わる場合、その形態では1個も与えない**ので出さない
+  // (この手順に関係のない増減を並べると、まだ餌をやるように読める)
+  const spans = (ev.forms && ev.forms.length) ? ev.forms.filter(sp => sp.n > 0)
     : [{ form: ev.form, from: null, to: null }];
+  if (!spans.length) return '';
   // 形態名の に続くので「MagLv」とは書かない(形態名の「Mag」と重なって読みにくい)。
   // このページのレベル表記はAllMagのレベル
   const label = (sp, i) => {
