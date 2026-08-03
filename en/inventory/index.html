@@ -670,6 +670,9 @@ function resolve(it) {
     const pr = parsePrice(s);
     if (pr) return [pr[0], pr[1], `Price list: ${gname}`];
   }
+  // 塗装・メッキ済みRed Ring。相場表は素のRed Ringと素材を別々に載せているだけで
+  // 完成品の相場は無く、素材の値幅(ペイント2-3PD – Angel Plating 300PD)も大きい
+  if (name.startsWith('RED RING*')) return [0, 0, 'Not in the price guide (value varies widely with the skin applied)'];
   return [0, 0, 'Not in price guide'];
 }
 
@@ -680,13 +683,13 @@ function category(it) {
   if (/^.*LV\d+$/.test(n) || n === 'Mag LV5') return 'Mag';
   if (['V101', 'V801', 'ADEPT', 'SMARTLINK'].includes(n) || /^(God|Cure|Heavenly)\//.test(n)) return 'Unit';
   if (COMMON_ARMORS.includes(n) || norm(n) in FRAMES_T) return 'Frame';
-  if (norm(n) in BARRIERS_T) return 'Barrier';
+  if (norm(n) in BARRIERS_T || n.startsWith('RED RING*')) return 'Barrier';   // 塗装済みも中身はRed Ring
   if (CONSUMABLES.includes(n) || ['Scape Doll', 'Monogrinder', 'Digrinder', 'Trigrinder', 'AddSlot'].includes(n)) return 'Consumable';
   if (n.includes('Material')) return 'Materials';
   if (OV.items[n] && (OV.items[n].note || '').includes('クエスト納品')) return 'Enemy part';
   if (["Rappy's Beak", 'Tablet'].includes(n)) return 'Enemy part';
   if (n.toLowerCase().startsWith('disk vol')) return 'Music disk';
-  if (/^(Amplifier of|Heart of|Parts of)/.test(n) || n.includes('Paint')
+  if (/^(Amplifier of|Heart of|Parts of)/.test(n) || n.includes('Paint') || n.includes('Plating')
       || ['magic rock "Moola"', 'Star Amplifier', 'Dragon Scale'].includes(n)) return 'Combination item';
   if (['Saber','Handgun','Cane','Gladius','Calibur','Ripper','Gungnir','Diska','Raygun','Rifle',
        'Laser','Vulcan','Arms','Club','Pole','Striker','Scepter'].includes(n)) return 'Weapons (common)';
