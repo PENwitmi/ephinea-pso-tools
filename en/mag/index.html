@@ -381,15 +381,15 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
   <p>Based on the official Ephinea wiki feeding tables and evolution conditions. It works backwards by <b>fixing the stats at each evolution first, then choosing food</b>. Since stats never decrease, every intermediate state must stay at or below the target — which narrows the candidates to a finite set.</p>
   <p class="note">Steps are given as "N of one food". When two foods must be combined to make progress, it shows a ratio like "[A×7 + B×1] ×15 sets" — you never need to alternate one at a time.</p>
   <h3>When does the character matter?</h3>
-  <p>The form is judged at the <b>instant</b> the mag reaches a checkpoint level. The character matters only at that instant — at any other time it makes no difference who feeds it. The flip side: <b>if a different character is holding it at that instant, you get a different form</b>.</p>
+  <p>The form is judged <b>on every single item you feed</b>, against the mag's level at that moment. If the level is not a checkpoint, it makes no difference who feeds it. The flip side: <b>while the mag sits on a checkpoint level, one item fed by a different character is enough to change its form</b> (it changes even if the level does not go up).</p>
   <table class="whentbl">
     <tr><th>Evolution</th><th>Judged at</th><th>What matters</th></tr>
     <tr><td>1st</td><td>mag Lv10</td><td>class (HU / RA / FO)</td></tr>
     <tr><td>2nd</td><td>mag Lv35</td><td><b>the character does not matter</b> (decided by the current form and stats alone)</td></tr>
-    <tr><td>3rd</td><td>from mag Lv50, <b>re-judged every 5 levels, any number of times</b></td><td>class + whether the Section ID is even or odd</td></tr>
+    <tr><td>3rd</td><td>from mag Lv50, <b>on every feed while the level is a multiple of 5, any number of times</b></td><td>class + whether the Section ID is even or odd</td></tr>
     <tr><td>4th<br>(rare mag)</td><td>from mag Lv100</td><td>class + gender + Section ID. <b>Once it happens, nothing is ever judged again</b></td></tr>
   </table>
-  <p class="note">So the stretch that needs care is <b>from mag Lv50 until the rare mag locks in</b>. It is re-judged every 5 levels there, so handing it to a character other than the one specified will silently turn it into a different form. After the rare mag, no judgement happens at all, so you can hand it to anyone.</p>
+  <p class="note">So the stretch that needs care is <b>from mag Lv50 until the rare mag locks in</b>. While the level is a multiple of 5 it is re-judged any number of times, so handing it to a character other than the one specified will silently turn it into a different form (one item fed by another character at Lv55 is enough, with no level-up). After the rare mag, no judgement happens at all, so you can hand it to anyone.</p>
   <p class="note">Hand the mag between characters through the <b>account-wide common bank</b>. Type <code>/bank</code> in chat to open it, deposit the mag, then withdraw it on another character.</p>
   <p>Rare-mag plans are listed first because everything after that point is just feeding, with no evolution to worry about.</p>
   <p class="note">Plans are ordered by <b>how little hassle they are</b>: (1) fewest ratio steps, (2) fewest hand-offs, (3) fewest steps, (4) fewest kinds of food. Total item count and time are deliberately not part of the ranking — how many items you feed has almost no bearing on how easy a plan is to follow.</p>
@@ -408,24 +408,28 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
 </div>
 <script>
 
+// ---- Python と共有する定数 (tools/constants.py が単一ソース) ----
+const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["ノーマル", "ハード", "ベリーハード", "アルティメット"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "theme": "pso_theme"}};
+const SKEYS = CONST.STORAGE_KEYS;
+
 // ---- テーマ ----
 function applyTheme(t) {
   document.documentElement.dataset.theme = t;
   const b = document.getElementById('themeToggle');
   if (b) b.textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
 }
-let __theme = localStorage.getItem('pso_theme')
+let __theme = localStorage.getItem(SKEYS.theme)
   || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 applyTheme(__theme);
 document.getElementById('themeToggle').addEventListener('click', () => {
   __theme = __theme === 'dark' ? 'light' : 'dark';
-  localStorage.setItem('pso_theme', __theme);
+  localStorage.setItem(SKEYS.theme, __theme);
   applyTheme(__theme);
 });
 
 // ---- Section ID (複数ページで使う。色は theme.css の .idtag.sid-N) ----
-const SIDS = ['Viridia', 'Greenill', 'Skyly', 'Bluefull', 'Purplenum',
-              'Pinkal', 'Redria', 'Oran', 'Yellowboze', 'Whitill'];
+// ドロップ表は**この並びの添字**でデータを埋め込む。並べ替えは constants.py 側だけで行う
+const SIDS = CONST.SECTION_IDS;
 // importedみデータ側は大文字(PINKAL)なので、大小を無視して番号を引く
 const sidIndex = sid => SIDS.findIndex(x => x.toLowerCase() === String(sid || '').toLowerCase());
 
@@ -480,7 +484,7 @@ function jpRaw(raw, name) {
   return raw.toLowerCase().startsWith(name.toLowerCase()) ? jp + raw.slice(name.length) : jp;
 }
 
-const INV_KEY = 'pso_inventory';
+const INV_KEY = SKEYS.inventory;
 function loadInventory() {
   try { return JSON.parse(localStorage.getItem(INV_KEY)); } catch (e) { return null; }
 }

@@ -249,24 +249,28 @@ details.moredrops summary { cursor: pointer; color: var(--accent); font-size: 0.
 </div>
 <script>
 
+// ---- Python と共有する定数 (tools/constants.py が単一ソース) ----
+const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["ノーマル", "ハード", "ベリーハード", "アルティメット"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "theme": "pso_theme"}};
+const SKEYS = CONST.STORAGE_KEYS;
+
 // ---- テーマ ----
 function applyTheme(t) {
   document.documentElement.dataset.theme = t;
   const b = document.getElementById('themeToggle');
   if (b) b.textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
 }
-let __theme = localStorage.getItem('pso_theme')
+let __theme = localStorage.getItem(SKEYS.theme)
   || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 applyTheme(__theme);
 document.getElementById('themeToggle').addEventListener('click', () => {
   __theme = __theme === 'dark' ? 'light' : 'dark';
-  localStorage.setItem('pso_theme', __theme);
+  localStorage.setItem(SKEYS.theme, __theme);
   applyTheme(__theme);
 });
 
 // ---- Section ID (複数ページで使う。色は theme.css の .idtag.sid-N) ----
-const SIDS = ['Viridia', 'Greenill', 'Skyly', 'Bluefull', 'Purplenum',
-              'Pinkal', 'Redria', 'Oran', 'Yellowboze', 'Whitill'];
+// ドロップ表は**この並びの添字**でデータを埋め込む。並べ替えは constants.py 側だけで行う
+const SIDS = CONST.SECTION_IDS;
 // importedみデータ側は大文字(PINKAL)なので、大小を無視して番号を引く
 const sidIndex = sid => SIDS.findIndex(x => x.toLowerCase() === String(sid || '').toLowerCase());
 
@@ -321,7 +325,7 @@ function jpRaw(raw, name) {
   return raw.toLowerCase().startsWith(name.toLowerCase()) ? jp + raw.slice(name.length) : jp;
 }
 
-const INV_KEY = 'pso_inventory';
+const INV_KEY = SKEYS.inventory;
 function loadInventory() {
   try { return JSON.parse(localStorage.getItem(INV_KEY)); } catch (e) { return null; }
 }
@@ -445,9 +449,9 @@ function sealedHTML(name) {
   }
   return '';
 }
-const DIFFS = ['Normal', 'Hard', 'Very Hard', 'Ultimate'];
-const DIFFS_JP = ['Normal', 'Hard', 'Very Hard', 'Ultimate'];
-const WL_KEY = 'pso_wishlist';
+const DIFFS = CONST.DIFFICULTIES;
+const DIFFS_JP = CONST.DIFFICULTIES_JP;
+const WL_KEY = SKEYS.wishlist;
 
 // ---- 正規名の解決 (英名・和名どちらの入力も受ける) ----
 const CANON = {};   // normkey → 正規EN名
