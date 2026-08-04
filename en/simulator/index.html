@@ -450,7 +450,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 <p class="fn-h">Calculation rules</p>
 <ul class="footnote">
   <li>ATA shows one decimal (internally ×10 integers). Each mag DEX gives +0.5 ATA.</li>
-  <li>Frame / barrier / weapon variable stats are set with sliders (default = max). <b>Only hit % is a number field, and it is kept when you switch weapons</b> (so you can compare weapons at the same hit; press Reset on "Equipment" to clear it).</li>
+  <li>Frame / barrier / weapon variable stats are set with sliders (<b>they start at the minimum</b>: a weapon’s ATP roll cannot be recovered from a character file and comes in at the minimum, so picking one by hand starts from the same floor). <b>Only hit % is a number field, and it is kept when you switch weapons</b> (so you can compare weapons at the same hit; press Reset on "Equipment" to clear it).</li>
   <li>A weapon’s <b>hit % is a flat bonus to ATA</b> (50 hit % = +50 ATA, not a percentage). The other four attributes (Native / A.Beast / Machine / Dark) only raise the <b>minimum weapon ATP</b> against enemies of that type and never show up in the stat table, so they are not modelled here (source: wiki Weapons).</li>
   <li>Non-stacking effects like attack speed apply the highest source only; losing sources are struck through.</li>
   <li>How effects stack: technique power <b>adds up</b> / TP cost reduction <b>multiplies</b> / attack speed & V50x: <b>only the strongest applies</b> / Megid pierce does not stack / Technique range boosts: stacking behaviour is unverified, so only a single boost is shown.</li>
@@ -620,11 +620,14 @@ function refreshSelects() {
 
 // ---------- 可変StatsUI ----------
 function syncRange(rid, vid, range, itemKey) {
-  // アイテムが変わったときだけ初期値=最大値にリセット(rangeのmin設定による自動クランプを回避)
+  // アイテムが変わったときだけ初期値にリセットする(rangeのmin設定による自動クランプを回避)。
+  // 初期値は**最小値**。Characterページから読み込んだときの武器ATPが「.psocharに個体値が
+  // 無いため最小」になるので、手で選んだときも同じ底値から始めて食い違わないようにしている
+  // (2026-08-04 変更。以前は最大値始まりだった)
   const el = $(rid);
   el.min = range[0]; el.max = range[1];
   if (el.dataset.for !== itemKey) {
-    el.value = range[1];
+    el.value = range[0];
     el.dataset.for = itemKey;
   }
   $(vid).textContent = el.value;
