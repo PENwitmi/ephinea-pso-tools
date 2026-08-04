@@ -477,7 +477,7 @@ function psoEquipped(data) {
   // 実データ8Char で「武器1, frames 1, barriers ≤1・Unit≤4・Mag≤1」になることを確認済み。
   // アイテム名は既存の item_codes をそのまま使う(psoDecodeItem は表示用の装飾が付くので使わない)
   const IC = PSO.item_codes;
-  const eq = { weapon: null, wGrind: 0, frame: null, fDfp: 0, fEvp: 0,
+  const eq = { weapon: null, wGrind: 0, wHit: 0, frame: null, fDfp: 0, fEvp: 0,
                barrier: null, bDfp: 0, bEvp: 0, units: [], mag: null };
   for (let i = 20; i < 860; i += 28) {
     const d = data.slice(i, i + 28);
@@ -486,7 +486,7 @@ function psoEquipped(data) {
     if (!(flags & 0x8)) continue;
     const code = d[0] << 16 | d[1] << 8 | d[2];
     if (code <= 0x00ED00) {                                   // 武器
-      if (IC[code]) { eq.weapon = IC[code]; eq.wGrind = d[3]; }
+      if (IC[code]) { eq.weapon = IC[code]; eq.wGrind = d[3]; eq.wHit = psoAttr(d, 5); }
       else if (PSO.srank_weapon_codes[code & 0xFFF0] !== undefined) {
         // S-RANK武器はSimulatorの装備DBに無いので、表示だけ行い連携には渡さない
         eq.srank = 'S-RANK ' + PSO.srank_weapon_codes[code & 0xFFF0];

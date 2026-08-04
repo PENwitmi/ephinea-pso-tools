@@ -434,7 +434,7 @@ function toSimState(c, a) {
     mag: m ? { def: Math.floor(m.def), pow: Math.floor(m.pow),
                dex: Math.floor(m.dex), mind: Math.floor(m.mind) }
            : { def: 5, pow: 0, dex: 0, mind: 0 },
-    weapon: eqName(eq.weapon), wAtp: 0, wGrind: eq.wGrind || 0,
+    weapon: eqName(eq.weapon), wAtp: 0, wGrind: eq.wGrind || 0, wHit: eq.wHit || 0,
     frame: eqName(eq.frame), fDfp: eq.fDfp || 0, fEvp: eq.fEvp || 0,
     barrier: eqName(eq.barrier), bDfp: eq.bDfp || 0, bEvp: eq.bEvp || 0,
     units: [0, 1, 2, 3].map(i => eqName((eq.units || [])[i])),

@@ -203,6 +203,9 @@ td.flash { animation: cellflash 0.9s ease-out; }
    (マグ育成の保存一覧と同じ見た目にするため) */
 details.copies summary { cursor: pointer; font-size: 0.74rem; color: var(--accent); margin-top: 4px; user-select: none; }
 details.copies ul { margin-top: 2px; }
+details.copies li.pick { cursor: pointer; border-radius: 6px; padding: 0 4px; margin-left: -4px; }
+details.copies li.pick:hover { background: var(--panel2, rgba(127,127,127,0.15)); }
+details.copies li.picked { color: var(--accent); font-weight: 600; }
 table.stats tbody tr:nth-child(even) { background: color-mix(in srgb, var(--border) 25%, transparent); }
 select, input[type=number], input[type=text] { padding: 5px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 0.85rem; max-width: 100%; }
 input[type=number] { width: 72px; }
@@ -377,6 +380,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <div id="weaponOpts" style="display:none">
       <div class="vrow"><span class="vlabel">ATP</span><input type="range" id="wAtpR" min="0" max="0" value="0" aria-label="武器ATP個体値"><b id="wAtpV">0</b></div>
       <div class="vrow"><span class="vlabel">研磨</span><input type="number" id="wGrind" min="0" max="0" value="0" aria-label="研磨値"><b></b></div>
+      <div class="vrow"><span class="vlabel">hit%</span><input type="number" id="wHit" min="-100" max="100" step="5" value="0" aria-label="武器のhit%"><b></b></div>
     </div>
     <div class="row"><label for="frame">フレーム</label><select id="frame" class="slot-select"><option value="">-</option></select></div>
     <div id="frameOpts" style="display:none">
@@ -446,7 +450,8 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
 <p class="fn-h">計算のルール</p>
 <ul class="footnote">
   <li>ATAは小数1桁まで表示(ゲーム内部は×10整数)。マグDEXは1につきATA+0.5。</li>
-  <li>フレーム/バリア/武器の可変ステータスはスライダーで個体値を指定(初期値=最大)。</li>
+  <li>フレーム/バリア/武器の可変ステータスはスライダーで個体値を指定(初期値=最大)。<b>hit%だけは数値入力で、武器を切り替えても値を保持します</b>(同じhitで武器を見比べるため。0に戻すには「装備」のResetを押す)。</li>
+  <li>武器の <b>hit% はATAへの固定加算</b>です(hit 50% = ATA+50。割合ではありません)。残る4属性(ネイティブ / A.ビースト / マシン / ダーク)は該当する属性の敵に対する<b>最低武器ATP</b>を上げるだけで、ステータス表示には影響しないため扱っていません(出典: wiki Weapons)。</li>
   <li>攻撃速度など重複しない効果は最大値のみ適用。負けた効果は打ち消し表示。</li>
   <li>効果の重なり方: テクニック威力は<b>加算</b> / TP消費軽減は<b>乗算</b> / 攻撃速度・V50xは<b>最大のものだけ適用</b> / メギド貫通は重複させても効果なし / テクニック範囲アップは重複時の挙動が確認できていないため、1つ分のみ表示しています。</li>
 </ul>
@@ -635,6 +640,9 @@ function syncVarUI() {
       $('wGrind').value = w.grind;  // 初期値=最大グラインド
       $('wGrind').dataset.for = $('weapon').value;
     }
+    // hit% は意図的にここで触らない。ATPや研磨と違って武器種ではなく個体の属性で、
+    // 「hit50で武器を見比べる」使い方をするため、武器を切り替えても値を保持する
+    // (0に戻したいときは 装備 Reset)
   }
   const f = EQ.frames[$('frame').value];
   $('frameOpts').style.display = f ? '' : 'none';
@@ -661,6 +669,7 @@ function readState() {
            mind: +$('magMind').value },
     weapon: $('weapon').value || null,
     wAtp: +$('wAtpR').value, wGrind: +$('wGrind').value,
+    wHit: Math.min(100, Math.max(-100, +$('wHit').value || 0)),
     frame: $('frame').value || null, fDfp: +$('fDfpR').value, fEvp: +$('fEvpR').value,
     barrier: $('barrier').value || null, bDfp: +$('bDfpR').value, bEvp: +$('bEvpR').value,
     units: [1, 2, 3, 4].map(i => $('unit' + i).value || null),
@@ -798,7 +807,11 @@ const Engine = {
       const w = EQ.weapons[state.weapon];
       weaponAtpBase = state.wAtp + state.wGrind * 2;
       equip.atp += weaponAtpBase;
-      equip.ata += w.ata * 10;
+      // hit% は ATA への**固定加算**(wiki Weapons: "20 Hit percent is actually a flat bonus
+      // of 20 ATA")。残る4属性(ネイティブ/A.ビースト/マシン/ダーク)はその属性の敵に対する
+      // 最低武器ATPを上げるだけでステータスには出ないため扱わない。
+      // ES(S-RANK)武器は属性を持てないが、そもそも equipment.json に含まれない(_meta.excluded)
+      equip.ata += (w.ata + state.wHit) * 10;
     }
 
     // 内訳(効果パネル用): stat → [{zone:'unit'|'cap'|'equip', slot, label, value(ATAは内部×10)}]
@@ -849,6 +862,9 @@ const Engine = {
       addC('atp', 'equip', 'weapon', state.weapon, state.wAtp);
       if (state.wGrind > 0) addC('atp', 'equip', 'weapon', `研磨+${state.wGrind}`, state.wGrind * 2);
       addC('ata', 'equip', 'weapon', state.weapon, w.ata * 10);
+      // hit は研磨と同じく別チップにする(武器を替えても保持される値なので分けたほうが読める)。
+      // addC は値0を積まないので hit0 のときは出ない。ラベルは英数字なので対訳不要
+      addC('ata', 'equip', 'weapon', `hit ${state.wHit}%`, state.wHit * 10);
     }
     if (state.frame && EQ.frames[state.frame]) {
       addC('dfp', 'equip', 'frame', state.frame, state.fDfp);
@@ -1213,6 +1229,10 @@ function renderEffectsPanel(r, state) {
 
 // ---------- 装備カード ----------
 function renderEquipCards(state) {
+  // renderのたびに innerHTML を作り直すので、開いている所持個体リストのキーを退避しておく
+  // (所持個体をクリックすると render が走るため、これが無いとクリックした瞬間に閉じる)
+  const openKeys = new Set([...$('equipCards').querySelectorAll('details.copies[open]')]
+    .map(d => d.dataset.k));
   const cards = [];
   const slots = [
     ['weapon', state.weapon, EQ.weapons],
@@ -1257,8 +1277,20 @@ function renderEquipCards(state) {
     let copiesHtml = '';
     if (copies.length) {
       const locJP = s => s.startsWith('ShareBank') ? (s === 'ShareBank' ? '共有倉庫' : '共有倉庫(Classic)') : (s.endsWith(' Bank') ? `キャラ${s.split(' ')[0]}倉庫` : `キャラ${s}所持`);
-      copiesHtml = `<details class="copies"><summary>所持個体 (${copies.length})</summary><ul>` +
-        copies.slice(0, 20).map(c => `<li>${jpRaw(c.raw, c.name)} <span class="estat">@${locJP(c.slot)}</span></li>`).join('') +
+      // 武器の個体だけクリックで反映できる。INVが個体ごとに持つのは grind と hit という
+      // 武器の概念だけで、防具のDFP/EVP個体値は raw 文字列の中にしか無いため(今回は対象外)
+      const key = `${slot}:${name}`;
+      const pickable = slot === 'weapon';
+      const hint = pickable ? ' <span class="estat">クリックでhit%と研磨を反映</span>' : '';
+      copiesHtml = `<details class="copies" data-k="${key}"${openKeys.has(key) ? ' open' : ''}>` +
+        `<summary>所持個体 (${copies.length})${hint}</summary><ul>` +
+        copies.slice(0, 20).map(c => {
+          if (!pickable) return `<li>${jpRaw(c.raw, c.name)} <span class="estat">@${locJP(c.slot)}</span></li>`;
+          const hv = c.hit || 0, gv = Math.min(c.grind || 0, e.grind);
+          const on = hv === state.wHit && gv === state.wGrind ? ' picked' : '';
+          return `<li class="pick${on}" data-hit="${hv}" data-grind="${gv}">${jpRaw(c.raw, c.name)}`
+               + ` <span class="estat">@${locJP(c.slot)}</span></li>`;
+        }).join('') +
         (copies.length > 20 ? `<li class="estat">…他${copies.length - 20}個</li>` : '') + '</ul></details>';
     }
     cards.push(`<div class="eqcard"><div class="ename"><span class="chip ${slot}">${SLOT_JP[slot]}</span> ${jpName(name)}${ownMark}</div><div class="estat">${stat}</div>${fxHtml}${copiesHtml}</div>`);
@@ -1355,7 +1387,7 @@ $('wikiPlan').addEventListener('change', () => {
   $('wikiPlanNote').innerHTML = parts.join('<br>');
 });
 ['lv', 'matHP', 'matTP', 'matPow', 'matDef', 'matMind', 'matEva', 'matLck',
- 'magDef', 'magPow', 'magDex', 'magMind', 'wGrind'].forEach(id =>
+ 'magDef', 'magPow', 'magDex', 'magMind', 'wGrind', 'wHit'].forEach(id =>
   $(id).addEventListener('input', render));
 ['weapon', 'frame', 'barrier', 'unit1', 'unit2', 'unit3', 'unit4'].forEach(id =>
   $(id).addEventListener('change', () => { syncVarUI(); render(); }));
@@ -1385,11 +1417,24 @@ if (addWishBtn) addWishBtn.addEventListener('click', () => {
 });
 // 公開版(インベントリなし)では所持品UIを隠す
 if (!INV.length) document.querySelector('.own-toggle').style.display = 'none';
+// 所持個体のクリックで、その個体の hit% と研磨を入力欄へ入れる (武器のみ)。
+// 装備カードは render のたびに作り直されるため、個別バインドではなくイベント委譲にする
+$('equipCards').addEventListener('click', e => {
+  const li = e.target.closest('li.pick');
+  if (!li) return;
+  $('wHit').value = li.dataset.hit;
+  $('wGrind').value = li.dataset.grind;   // dataset.for は一致済みなので syncVarUI に戻されない
+  render();
+});
+
 document.querySelectorAll('.reset').forEach(btn => btn.addEventListener('click', () => {
   const t = btn.dataset.reset;
   if (t === 'mat') ['matHP', 'matTP', 'matPow', 'matDef', 'matMind', 'matEva', 'matLck'].forEach(id => $(id).value = 0);
   if (t === 'mag') { $('magDef').value = 5; ['magPow', 'magDex', 'magMind'].forEach(id => $(id).value = 0); }
-  if (t === 'equip') { ['weapon', 'frame', 'barrier', 'unit1', 'unit2', 'unit3', 'unit4'].forEach(id => $(id).value = ''); }
+  if (t === 'equip') {
+    ['weapon', 'frame', 'barrier', 'unit1', 'unit2', 'unit3', 'unit4'].forEach(id => $(id).value = '');
+    $('wHit').value = 0;   // hitは武器を替えても保持する値なので、ここが唯一の戻し方
+  }
   render();
 }));
 
@@ -1432,6 +1477,9 @@ function applyState(st) {
   // 個体値スライダーをプリセット値で上書き
   const setR = (id, v) => { if (v !== undefined && v !== null) { $(id).value = v; const vid = { wAtpR: 'wAtpV', fDfpR: 'fDfpV', fEvpR: 'fEvpV', bDfpR: 'bDfpV', bEvpR: 'bEvpV' }[id]; if (vid) $(vid).textContent = $(id).value; } };
   setR('wAtpR', st.wAtp); if (st.wGrind !== undefined) $('wGrind').value = st.wGrind;
+  // hitだけは undefined でも 0 に戻す(setR方式と非対称)。プリセット読込は保存状態の完全復元で
+  // あるべきで、wHitを持たない旧プリセットを読んだときに現在のhitが残ると数値が食い違うため
+  $('wHit').value = st.wHit ?? 0;
   setR('fDfpR', st.fDfp); setR('fEvpR', st.fEvp);
   setR('bDfpR', st.bDfp); setR('bEvpR', st.bEvp);
   render();
