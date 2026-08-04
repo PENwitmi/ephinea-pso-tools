@@ -1228,6 +1228,23 @@ function renderEffectsPanel(r, state) {
 }
 
 // ---------- Gear cards ----------
+// inv.データの防具は raw が「Red Ring [20/85|18/25]」の形で、パーサはこのブラケットを
+// extra に文字列のまま入れている。[DFP add/加算の最大|EVP add/加算の最大] を取り出す
+function armorAdd(c) {
+  for (const x of c.extra || []) {
+    const m = String(x).match(/^(\d+)\/(\d+)\|(\d+)\/(\d+)$/);
+    if (m) return [+m[1], +m[3]];
+  }
+  const m = String(c.raw || '').match(/\[(\d+)\/(\d+)\|(\d+)\/(\d+)\]/);
+  return m ? [+m[1], +m[3]] : null;
+}
+
+// 加算値 → 絶対値。Characterページの absArmorStat と同じ式(片方だけ直さないこと)
+function absArmor(e, add, i) {
+  const range = i === 0 ? e.dfp : e.evp;
+  return Math.min(range[1], range[0] + (add || 0));
+}
+
 function renderEquipCards(state) {
   // renderのたびに innerHTML を作り直すので、開いている所持個体リストのキーを退避しておく
   // (所持個体をクリックすると render が走るため、これが無いとクリックした瞬間に閉じる)
@@ -1277,19 +1294,29 @@ function renderEquipCards(state) {
     let copiesHtml = '';
     if (copies.length) {
       const locJP = s => s.startsWith('ShareBank') ? (s === 'ShareBank' ? 'Shared bank' : 'Shared bank (Classic)') : (s.endsWith(' Bank') ? `Char ${s.split(' ')[0]} bank` : `Char ${s} inv.`);
-      // 武器の個体だけクリックで反映できる。INVが個体ごとに持つのは grind と hit という
-      // 武器の概念だけで、防具のDFP/EVP個体値は raw 文字列の中にしか無いため(今回は対象外)
+      // 個体をクリックすると入力欄に反映できる。武器は hit%・研磨、防具はDFP/EVPの個体値。
+      // Unitは個体差が無いので対象外
       const key = `${slot}:${name}`;
-      const pickable = slot === 'weapon';
-      const hint = pickable ? ' <span class="estat">Click to apply hit % and grind</span>' : '';
+      const pickable = slot === 'weapon' || slot === 'frame' || slot === 'barrier';
+      const hint = !pickable ? ''
+        : slot === 'weapon' ? ' <span class="estat">Click to apply hit % and grind</span>'
+                            : ' <span class="estat">Click to apply DFP / EVP</span>';
       copiesHtml = `<details class="copies" data-k="${key}"${openKeys.has(key) ? ' open' : ''}>` +
         `<summary>Owned copies (${copies.length})${hint}</summary><ul>` +
         copies.slice(0, 20).map(c => {
-          if (!pickable) return `<li>${jpRaw(c.raw, c.name)} <span class="estat">@${locJP(c.slot)}</span></li>`;
-          const hv = c.hit || 0, gv = Math.min(c.grind || 0, e.grind);
-          const on = hv === state.wHit && gv === state.wGrind ? ' picked' : '';
-          return `<li class="pick${on}" data-hit="${hv}" data-grind="${gv}">${jpRaw(c.raw, c.name)}`
-               + ` <span class="estat">@${locJP(c.slot)}</span></li>`;
+          const tail = ` <span class="estat">@${locJP(c.slot)}</span></li>`;
+          if (!pickable) return `<li>${jpRaw(c.raw, c.name)}${tail}`;
+          if (slot === 'weapon') {
+            const hv = c.hit || 0, gv = Math.min(c.grind || 0, e.grind);
+            const on = hv === state.wHit && gv === state.wGrind ? ' picked' : '';
+            return `<li class="pick${on}" data-hit="${hv}" data-grind="${gv}">${jpRaw(c.raw, c.name)}${tail}`;
+          }
+          const ad = armorAdd(c);
+          if (!ad) return `<li>${jpRaw(c.raw, c.name)}${tail}`;   // 個体値が読めない行はクリック不可
+          const dv = absArmor(e, ad[0], 0), ev = absArmor(e, ad[1], 1);
+          const cur = slot === 'frame' ? [state.fDfp, state.fEvp] : [state.bDfp, state.bEvp];
+          const on = dv === cur[0] && ev === cur[1] ? ' picked' : '';
+          return `<li class="pick${on}" data-dfp="${dv}" data-evp="${ev}">${jpRaw(c.raw, c.name)}${tail}`;
         }).join('') +
         (copies.length > 20 ? `<li class="estat">…and ${copies.length - 20} more</li>` : '') + '</ul></details>';
     }
@@ -1417,13 +1444,22 @@ if (addWishBtn) addWishBtn.addEventListener('click', () => {
 });
 // 公開版(インベントリなし)では所持品UIを隠す
 if (!INV.length) document.querySelector('.own-toggle').style.display = 'none';
-// inv.個体のクリックで、その個体の hit% と研磨を入力欄へ入れる (武器のみ)。
+// inv.個体のクリックで、その個体の個体値を入力欄へ入れる
+// (武器は hit%・研磨、Frame/Barrierは DFP・EVP)。
 // Gear cardsは render のたびに作り直されるため、個別バインドではなくイベント委譲にする
 $('equipCards').addEventListener('click', e => {
   const li = e.target.closest('li.pick');
   if (!li) return;
-  $('wHit').value = li.dataset.hit;
-  $('wGrind').value = li.dataset.grind;   // dataset.for は一致済みなので syncVarUI に戻されない
+  const slot = (li.closest('details.copies').dataset.k || '').split(':')[0];
+  if (slot === 'weapon') {
+    $('wHit').value = li.dataset.hit;
+    $('wGrind').value = li.dataset.grind;   // dataset.for は一致済みなので syncVarUI に戻されない
+  } else {
+    const [rd, re_, vd, ve] = slot === 'frame' ? ['fDfpR', 'fEvpR', 'fDfpV', 'fEvpV']
+                                               : ['bDfpR', 'bEvpR', 'bDfpV', 'bEvpV'];
+    $(rd).value = li.dataset.dfp; $(vd).textContent = $(rd).value;
+    $(re_).value = li.dataset.evp; $(ve).textContent = $(re_).value;
+  }
   render();
 });
 
