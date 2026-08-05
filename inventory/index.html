@@ -344,7 +344,13 @@ function charsBySid() {
 }
 
 // ---- HTMLエスケープ (複数ページで使う) ----
-function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+// **" も必ずエスケープする**。data-n / data-del などの属性値に入れているので、
+// エスケープしないと `Parasitic Gene "Flow"` や `Gods Shield "Byakko"` のような
+// 引用符入りの名前で属性が途中で切れ、削除ボタンや折りたたみ保存が動かなくなる
+// (プリセット名のようなユーザー入力も同じ経路を通る)
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+}
 
 // ---- インベントリストレージ ----
 // ---- 日本語表示辞書 (内部キーは常に英語名。英語ページでは空オブジェクト) ----
