@@ -186,8 +186,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 /* 狩場ブロック: **1行=敵1体**。左に敵(ID・名前・確率)、右にクエストを並べる。
    出現数と条件を出すのをやめたので縦に伸びず、行の対応も追いやすい */
 .hunt { margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); font-size: 0.8rem; }
-.huntlabel { font-size: 0.78rem; font-weight: 600; }
-.huntnote { color: var(--sub); font-size: 0.7rem; margin-bottom: 4px; }
+/* 見出しは節の始まりだと分かる大きさにする(小さいと表の続きに見える) */
+.huntlabel { font-size: 0.98rem; font-weight: 700; display: flex; align-items: center; gap: 7px; }
+.huntlabel::before { content: ""; width: 4px; height: 0.95em; border-radius: 2px;
+                     background: var(--accent); flex-shrink: 0; }
+.huntnote { color: var(--sub); font-size: 0.72rem; margin: 1px 0 5px 11px; }
 .huntmemo { border-left: 3px solid var(--accent); background: var(--accent-soft);
             border-radius: 0 8px 8px 0; padding: 5px 10px; margin: 4px 0 8px; font-size: 0.78rem; }
 .huntsub { color: var(--sub); font-size: 0.72rem; margin: 4px 0 2px; }
