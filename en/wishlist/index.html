@@ -703,7 +703,13 @@ function render() {
 }
 
 document.getElementById('wAddBtn').addEventListener('click', add);
-document.getElementById('wAdd').addEventListener('keydown', e => { if (e.key === 'Enter') add(); });
+document.getElementById('wAdd').addEventListener('keydown', e => {
+  // IMEの**変換確定のEnter**を「追加」と誤認しない(日本語名を入れるたびに
+  // 未確定の文字列で照合が走り「見つかりませんでした」が出ていた)。
+  // isComposing が立たないブラウザ・IMEの組み合わせがあるため keyCode 229 も併せて見る
+  if (e.key !== 'Enter' || e.isComposing || e.keyCode === 229) return;
+  add();
+});
 function add() {
   const input = document.getElementById('wAdd');
   const name = resolveName(input.value);
