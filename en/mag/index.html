@@ -259,9 +259,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tlsub { font-size: 0.76rem; color: var(--sub); margin-top: 3px; }
 .tlstop.nochange { color: var(--gold); }
 .tlgauge { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
-/*  何個まちがえても事故らないか。危ないものだけ赤くする */
-.tlslack { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
-.tlslack.danger { color: var(--red); font-weight: 600; }
 .tlstop { font-size: 0.86rem; color: var(--text); }
 .tlguide { font-size: 0.76rem; color: var(--sub); margin-top: 1px; }
 .tlwhy { font-size: 0.74rem; color: var(--sub); margin-top: 3px; }
@@ -419,9 +416,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
   <p class="note">So the stretch that needs care is <b>from mag Lv50 until the rare mag locks in</b>. While the level is a multiple of 5 it is re-judged any number of times, so handing it to a character other than the one specified will silently turn it into a different form (one item fed by another character at Lv55 is enough, with no level-up). After the rare mag, no judgement happens at all, so you can hand it to anyone.</p>
   <p class="note">Hand the mag between characters through the <b>account-wide common bank</b>. Type <code>/bank</code> in chat to open it, deposit the mag, then withdraw it on another character.</p>
   <p>Rare-mag plans are listed first because everything after that point is just feeding, with no evolution to worry about.</p>
-  <p class="note">Plans are ranked by <b>(1) how hard they are to break, then (2) how little work they are</b>.<br>
-  <b>Breaking</b> means a stat you must not raise goes up by one more, which cannot be undone. Every step stops early enough that <b>three extra feeds still will not break it</b>, and each step tells you how many spare feeds it has.<br>
-  <b>Work</b> is measured by <b>how many things you have to track</b>, not by how many items you feed. Feeding the same item 292 times while watching a number is 1 thing to track; alternating two items for 34 sets is 34; counting out 292 items with no marker is 292. One hand-over counts as 10 steps (deposit, switch character, withdraw, re-equip are all things you can get wrong, and handing the mag to the wrong character between mag Lv50 and Lv100 breaks it).<br>
+  <p class="note">Plans are ranked by <b>how little work they are</b>. Work is measured by <b>how many things you have to track</b>, not by how many items you feed: feeding the same item 292 times while watching a number is 1 thing to track, alternating two items for 34 sets is 34, and counting out 292 items with no marker is 292. One hand-over counts as 10 steps (deposit, switch character, withdraw, re-equip are all things you can get wrong, and letting another character hold the mag between mag Lv50 and Lv100 changes its form).<br>
   <b>Total items and elapsed time are not used for ranking</b>, but they are shown so you can weigh them yourself.</p>
   </div>
 </details>
@@ -1490,6 +1485,16 @@ function magSolve(target, opt) {
   if (opt.onlyCell) results = results.filter(p => p.cell === opt.onlyCell);
   if (!results.length && wantForm) notes.push(explainForm(wantForm, tgt));
   if (stopAfter) results = results.slice(0, stopAfter);
+  // 床を満たせない案しか作れなかったとき。**画面に余裕の数字は出さない**方針だが、
+  // 「手順どおりに与えても失敗しうる」ことまで黙るのは違う。
+  // 実測では返した817案Allが床を満たしており、ここは発火しない
+  if (results.length) {
+    const bl = [];
+    results[0].phases.forEach(ph => ph.blocks.forEach(b => bl.push(b)));
+    if (blocksRisk(bl) < MAG_FLOOR)
+      notes.push('For this target, drift in the hidden progress can make the steps fail even if you follow them exactly. '
+                 + 'Changing the target slightly allows a plan with more room.');
+  }
   return [results, notes, truncated];
 }
 
@@ -1742,8 +1747,10 @@ const classKeyOf = n => String(n).slice(0, 2).toUpperCase();
 const genderOf = n => /newearl|caseal|marl$|marl\b/i.test(String(n)) ? 'F'
   : /mar$|cast$|newm$/i.test(String(n)) ? 'M' : null;
 
-// 案の指標。Sortは「事故らないこと → 手間」で決まる。
-// 餌の総数と所要時間は**Sortには使わない**が、選ぶときの判断材料になるので表示はする
+// 案の指標。**余裕( 何個まちがえても事故らないか)は出さない。**
+// 手順どおりに与えれば届くようにするのはツールの責任で、ユーザーが管理する予算ではない。
+// 余裕はSortの中だけで使う内部の制約に留める(2026-08-07 にユーザー指摘で撤去)。
+// 餌の総数と所要時間はSortには使わないが、選ぶときの判断材料になるので表示はする
 // (3個 / 3分30秒 が給餌の間隔)
 function easeHTML(r) {
   const bl = [];
@@ -1753,16 +1760,11 @@ function easeHTML(r) {
   const kindSet = new Set(); bl.forEach(b => b.items.forEach(i => kindSet.add(i[0])));
   // 変数名は対訳表のキーに合わせる(`${blocks} feeding steps` などが既存キー)
   const blocks = bl.length, kinds = kindSet.size;
-  const risk = blocksRisk(bl);
   // 対訳は「式ごと1キー」で置換されるので、入れ子のテンプRate リテラルにしない
   const hh = Math.floor(magMinutes(r.items) / 60), mm = magMinutes(r.items) % 60;
   const time = hh ? (mm ? `about ${hh}h ${mm}m` : `about ${hh}h`) : `about ${mm}m`;
-  const riskText = risk >= SLACK_CAP ? `${SLACK_CAP}+ spare feeds before anything breaks`
-                 : risk >= MAG_FLOOR ? `${risk} spare feeds before anything breaks`
-                 : `⚠ only ${risk} spare feeds`;
   const chip = (t, cls) => `<span class="echip ${cls || ''}">${t}</span>`;
-  return chip(riskText, risk >= MAG_FLOOR ? 'good' : 'hard')
-       + chip(hands === 0 ? 'no hand-off (one character does it all)' : `hand over ${hands} time${hands > 1 ? "s" : ""}`,
+  return chip(hands === 0 ? 'no hand-off (one character does it all)' : `hand over ${hands} time${hands > 1 ? "s" : ""}`,
               hands === 0 ? 'good' : '')
        + chip(cyc === 0 ? 'one food at a time, in batches' : `${cyc} step${cyc > 1 ? "s" : ""} mixing two foods`,
               cyc === 0 ? 'good' : 'hard')
@@ -2063,31 +2065,20 @@ function evoLine(e) {
        + `at mag Lv${e.level} it becomes <b>${esc(jpName(e.form))}</b>${pb}${lock}</div>`;
 }
 // 次の手順が数個で1上がるように見えるのは、ゲージが既に溜まっているから。
-// 溜まっている軸だけを出す(0に近い軸は書いても意味がない)
-// ** 何個まちがえても事故らないか**。これを出さないと、危ない手順と余裕のある手順が
-// 同じ顔で並ぶ。以前は「ゲージが 少しで満タン」という中立の注記しか無く、
-// 実際には「次の1個で取り返しがつかない」場面がそう書かれていた(2026-08-06の事故)
-function slackLine(ev) {
-  const sl = ev.b.slack;
-  if (sl === undefined || sl >= SLACK_CAP) return '';
-  const lock = MSTATS.filter(s => ev.cap && ev.b.after.stats[s] >= ev.cap[s]);
-  const who = lock.length ? `${lock.join('/')} will go up` : 'it breaks';
-  if (sl <= 1) {
-    return `<div class="tlslack danger">⚠ only <b>${sl} spare feeds</b> from here`
-         + `<span class="who"> (feed more than that and ${who})</span></div>`;
-  }
-  return `<div class="tlslack">up to <b>${sl} extra feeds</b> from here are safe`
-       + `<span class="who"> (feed more than that and ${who})</span></div>`;
-}
+// 溜まっている軸だけを出す(0に近い軸は書いても意味がない)。
+// **もう目標に達しているステは出さない。** 実測すると表示の9割がそちらで、しかも
+// 「その餌ではもう上がらないので安全」な場面(DEF 0.98 など)。危険に見えるだけで
+// 読む側に打つ手がなく、ツール側で吸収すべき話をユーザーに見せていることになる
 function gaugeLine(ev) {
   if (!ev.gauge) return '';
-  const hot = MSTATS.filter(s => ev.gauge[s] >= 70);
+  const hot = MSTATS.filter(s => ev.gauge[s] >= 70
+                                 && !(ev.cap && ev.b.after.stats[s] >= ev.cap[s]));
   if (!hot.length) return '';
   // 端数は必ず0–99。満タンになった瞬間に数字が1増えて0に戻るので、
   // 「10割溜まったまま」という状態は存在しない。切り上げて10割と書かないこと
   return '<div class="tlgauge">At this point <b>'
        + hot.map(s => `the ${s} gauge is `
-           + (ev.gauge[s] >= 90 ? 'almost full' : `about ${Math.floor(ev.gauge[s] * 10)}% full`))
+           + (ev.gauge[s] >= 90 ? 'almost full' : `about ${Math.floor(ev.gauge[s] / 10)}0% full`))
            .join(' / ')
        + '</b> (the moment it fills, the number goes up by 1 and the gauge resets to 0)</div>';
 }
@@ -2220,7 +2211,7 @@ function stepHTML(ev, done, next) {
            + `<div class="tlguide">roughly ${ev.b.n} items; ${reading}</div></div>`;
     }
     body = `<div class="tlmain">Feed ${blockText(ev.b)}</div>` + stop
-         + feedEffect(ev) + slackLine(ev) + gaugeLine(ev) + ev.evos.map(evoLine).join('');
+         + feedEffect(ev) + gaugeLine(ev) + ev.evos.map(evoLine).join('');
   }
   return `<div class="tlrow${on ? ' is-done' : ''}${now ? ' is-next' : ''}">${box}`
        + `<div class="tlbody">${now}${body}</div></div>`;
@@ -2238,9 +2229,8 @@ function zoneHead(zone, plan, tl) {
       + ' (the few steps where nothing changes say so and give a count). '
       + '<b>Go past the listed numbers and it cannot be undone.</b> '
       + 'The mag reaches a higher level, turns into a different form, and from then on the same food raises different stats. '
-      + 'Each step does tell you <b>how many extra feeds are still safe</b>. '
-      + 'Putting the mag in the bank shaves part of the hidden progress, so the count at which the display changes can be off by 1-2, '
-      + 'but the steps are built to absorb that. '
+      + 'Putting the mag in the bank shaves part of the hidden progress, so the count at which the display changes can be off by 1-2, but '
+      + '<b>the steps already absorb that.</b> '
       + 'Also, <b>from mag Lv50 the form is re-judged every 5 levels</b>, so '
       + 'do not let a character of another class or Section ID hold it during this stretch</div></div>';
   }

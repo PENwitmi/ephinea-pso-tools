@@ -259,9 +259,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tlsub { font-size: 0.76rem; color: var(--sub); margin-top: 3px; }
 .tlstop.nochange { color: var(--gold); }
 .tlgauge { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
-/* あと何個まちがえても事故らないか。危ないものだけ赤くする */
-.tlslack { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
-.tlslack.danger { color: var(--red); font-weight: 600; }
 .tlstop { font-size: 0.86rem; color: var(--text); }
 .tlguide { font-size: 0.76rem; color: var(--sub); margin-top: 1px; }
 .tlwhy { font-size: 0.74rem; color: var(--sub); margin-top: 3px; }
@@ -419,9 +416,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
   <p class="note">つまり気を遣うのは <b>マグLv50 から レアマグになるまで</b> の区間です。ここはレベルが5の倍数のあいだ何度でも判定し直されるので、指定と違うキャラに持たせると途中で別の形態に化けます(Lv55のまま別のキャラが1個やるだけで変わります)。レアマグになった後は判定そのものが起きないので、誰に渡してもかまいません。</p>
   <p class="note">キャラ間の受け渡しは<b>アカウント共通の共有倉庫</b>を使います。チャットで <code>/bank</code> と打つと開き、預けたマグを別のキャラで取り出せます。</p>
   <p>レアマグ経由の案を先に出しているのは、そこから先は進化を気にせず伸ばすだけになるからです。</p>
-  <p class="note">並び順は<b>①事故りにくさ ②手間の少なさ</b>です。<br>
-  <b>事故</b>とは「上げてはいけないステータスがもう1つ上がること」で、一度起きると取り返しがつきません。どの手順でも<b>あと3個まちがえて多く与えても事故らない</b>ところまでしか進めない手順にしてあります。手順ごとに「あと何個まで平気か」を書いています。<br>
-  <b>手間</b>は、餌の個数ではなく<b>追いかけるものの数</b>で測っています。同じ餌を292個与えて数字が変わるのを待つのは追跡1つ、2種類を34セット交互に与えるのは追跡34、目印が無くて292個数えるのは追跡292、という数え方です。受け渡し1回は手順10個ぶんとして扱います(預ける・持ち替える・取り出す・装備し直す、と間違えられる操作が並ぶうえ、マグLv50〜100で違うキャラに持たせると事故になるため)。<br>
+  <p class="note">並び順は<b>手間の少なさ</b>です。手間は餌の個数ではなく<b>追いかけるものの数</b>で測っています。同じ餌を292個与えて数字が変わるのを待つのは追跡1つ、2種類を34セット交互に与えるのは追跡34、目印が無くて292個数えるのは追跡292、という数え方です。受け渡し1回は手順10個ぶんとして扱います(預ける・持ち替える・取り出す・装備し直す、と間違えられる操作が並ぶうえ、マグLv50〜100で違うキャラに持たせると形態が変わってしまうため)。<br>
   <b>餌の総数と所要時間は並び順には使いません</b>が、選ぶときの判断材料になるので表示しています。</p>
   </div>
 </details>
@@ -1490,6 +1485,16 @@ function magSolve(target, opt) {
   if (opt.onlyCell) results = results.filter(p => p.cell === opt.onlyCell);
   if (!results.length && wantForm) notes.push(explainForm(wantForm, tgt));
   if (stopAfter) results = results.slice(0, stopAfter);
+  // 床を満たせない案しか作れなかったとき。**画面に余裕の数字は出さない**方針だが、
+  // 「手順どおりに与えても失敗しうる」ことまで黙るのは違う。
+  // 実測では返した817案すべてが床を満たしており、ここは発火しない
+  if (results.length) {
+    const bl = [];
+    results[0].phases.forEach(ph => ph.blocks.forEach(b => bl.push(b)));
+    if (blocksRisk(bl) < MAG_FLOOR)
+      notes.push('この目標は、端数のずれで手順どおりに与えても失敗することがあります。'
+                 + '目標を少し変えると余裕のある手順が組めます');
+  }
   return [results, notes, truncated];
 }
 
@@ -1742,8 +1747,10 @@ const classKeyOf = n => String(n).slice(0, 2).toUpperCase();
 const genderOf = n => /newearl|caseal|marl$|marl\b/i.test(String(n)) ? 'F'
   : /mar$|cast$|newm$/i.test(String(n)) ? 'M' : null;
 
-// 案の指標。並び順は「事故らないこと → 手間」で決まる。
-// 餌の総数と所要時間は**並び順には使わない**が、選ぶときの判断材料になるので表示はする
+// 案の指標。**余裕(あと何個まちがえても事故らないか)は出さない。**
+// 手順どおりに与えれば届くようにするのはツールの責任で、ユーザーが管理する予算ではない。
+// 余裕は並び順の中だけで使う内部の制約に留める(2026-08-07 にユーザー指摘で撤去)。
+// 餌の総数と所要時間は並び順には使わないが、選ぶときの判断材料になるので表示はする
 // (3個 / 3分30秒 が給餌の間隔)
 function easeHTML(r) {
   const bl = [];
@@ -1753,16 +1760,11 @@ function easeHTML(r) {
   const kindSet = new Set(); bl.forEach(b => b.items.forEach(i => kindSet.add(i[0])));
   // 変数名は対訳表のキーに合わせる(`餌をやる回数 ${blocks}回` などが既存キー)
   const blocks = bl.length, kinds = kindSet.size;
-  const risk = blocksRisk(bl);
   // 対訳は「式ごと1キー」で置換されるので、入れ子のテンプレートリテラルにしない
   const hh = Math.floor(magMinutes(r.items) / 60), mm = magMinutes(r.items) % 60;
   const time = hh ? (mm ? `約${hh}時間${mm}分` : `約${hh}時間`) : `約${mm}分`;
-  const riskText = risk >= SLACK_CAP ? `まちがえても あと${SLACK_CAP}個以上は平気`
-                 : risk >= MAG_FLOOR ? `まちがえても あと${risk}個までは平気`
-                 : `⚠ 余裕が あと${risk}個しかありません`;
   const chip = (t, cls) => `<span class="echip ${cls || ''}">${t}</span>`;
-  return chip(riskText, risk >= MAG_FLOOR ? 'good' : 'hard')
-       + chip(hands === 0 ? '受け渡しなし (1人で育てられる)' : `途中で${hands}回 別のキャラに渡す`,
+  return chip(hands === 0 ? '受け渡しなし (1人で育てられる)' : `途中で${hands}回 別のキャラに渡す`,
               hands === 0 ? 'good' : '')
        + chip(cyc === 0 ? '1種類ずつ与えるだけ' : `2種類を混ぜる場面 ${cyc}回`,
               cyc === 0 ? 'good' : 'hard')
@@ -2063,25 +2065,14 @@ function evoLine(e) {
        + `マグLv${e.level} で <b>${esc(jpName(e.form))}</b> に変わり${pb}${lock}</div>`;
 }
 // 次の手順が数個で1上がるように見えるのは、ゲージが既に溜まっているから。
-// 溜まっている軸だけを出す(0に近い軸は書いても意味がない)
-// **あと何個まちがえても事故らないか**。これを出さないと、危ない手順と余裕のある手順が
-// 同じ顔で並ぶ。以前は「ゲージがあと少しで満タン」という中立の注記しか無く、
-// 実際には「次の1個で取り返しがつかない」場面がそう書かれていた(2026-08-06の事故)
-function slackLine(ev) {
-  const sl = ev.b.slack;
-  if (sl === undefined || sl >= SLACK_CAP) return '';
-  const lock = MSTATS.filter(s => ev.cap && ev.b.after.stats[s] >= ev.cap[s]);
-  const who = lock.length ? `${lock.join('・')} が上がってしまいます` : '事故になります';
-  if (sl <= 1) {
-    return `<div class="tlslack danger">⚠ ここから<b>あと${sl}個</b>しか余裕がありません`
-         + `<span class="who">(それ以上与えると ${who})</span></div>`;
-  }
-  return `<div class="tlslack">ここから<b>あと${sl}個</b>までなら多く与えても大丈夫`
-       + `<span class="who">(それ以上与えると ${who})</span></div>`;
-}
+// 溜まっている軸だけを出す(0に近い軸は書いても意味がない)。
+// **もう目標に達しているステは出さない。** 実測すると表示の9割がそちらで、しかも
+// 「その餌ではもう上がらないので安全」な場面(DEF 0.98 など)。危険に見えるだけで
+// 読む側に打つ手がなく、ツール側で吸収すべき話をユーザーに見せていることになる
 function gaugeLine(ev) {
   if (!ev.gauge) return '';
-  const hot = MSTATS.filter(s => ev.gauge[s] >= 70);
+  const hot = MSTATS.filter(s => ev.gauge[s] >= 70
+                                 && !(ev.cap && ev.b.after.stats[s] >= ev.cap[s]));
   if (!hot.length) return '';
   // 端数は必ず0〜99。満タンになった瞬間に数字が1増えて0に戻るので、
   // 「10割溜まったまま」という状態は存在しない。切り上げて10割と書かないこと
@@ -2220,7 +2211,7 @@ function stepHTML(ev, done, next) {
            + `<div class="tlguide">目安 ${ev.b.n}個。${reading}</div></div>`;
     }
     body = `<div class="tlmain">${blockText(ev.b)} を あげる</div>` + stop
-         + feedEffect(ev) + slackLine(ev) + gaugeLine(ev) + ev.evos.map(evoLine).join('');
+         + feedEffect(ev) + gaugeLine(ev) + ev.evos.map(evoLine).join('');
   }
   return `<div class="tlrow${on ? ' is-done' : ''}${now ? ' is-next' : ''}">${box}`
        + `<div class="tlbody">${now}${body}</div></div>`;
@@ -2238,9 +2229,8 @@ function zoneHead(zone, plan, tl) {
       + '(数字が動かない手順だけは、その旨を書いて個数を出しています)。'
       + '<b>書いてある数値を超えたら取り返せません。</b>'
       + 'マグのレベルが先に進んで別の形態になり、それ以降は同じ餌でも上がるステータスが変わります。'
-      + 'ただし<b>各手順には、あと何個まで多く与えても事故らないかを書いてあります</b>。'
-      + '倉庫に入れると端数の一部が切り捨てられて、表示が変わる個数は1〜2個ずれますが、'
-      + 'その範囲は吸収できるように手順を組んでいます。'
+      + 'なお倉庫に入れると端数の一部が切り捨てられて、表示が変わる個数は1〜2個ずれますが、'
+      + '<b>そのずれは手順の側で吸収してあります</b>。'
       + 'また<b>マグLv50 から先は5レベルごとに形態が判定し直される</b>ので、'
       + 'この間は指定と違うジョブ・Section IDのキャラに持たせないでください</div></div>';
   }
