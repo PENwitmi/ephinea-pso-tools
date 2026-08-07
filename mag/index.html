@@ -259,6 +259,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tlsub { font-size: 0.76rem; color: var(--sub); margin-top: 3px; }
 .tlstop.nochange { color: var(--gold); }
 .tlgauge { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
+/* あと何個まちがえても事故らないか。危ないものだけ赤くする */
+.tlslack { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
+.tlslack.danger { color: var(--red); font-weight: 600; }
 .tlstop { font-size: 0.86rem; color: var(--text); }
 .tlguide { font-size: 0.76rem; color: var(--sub); margin-top: 1px; }
 .tlwhy { font-size: 0.74rem; color: var(--sub); margin-top: 3px; }
@@ -278,6 +281,25 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
 .frozen .btn { padding: 3px 10px; font-size: 0.76rem; margin-left: auto; }
 .magempty { color: var(--sub); text-align: center; padding: 40px 10px; }
 .busy { opacity: 0.5; }
+/* 計算中の表示。**計算はメインスレッドを塞ぐ**ので、動かしてよいのは
+   transform と opacity だけ(この2つだけがコンポジタスレッドで進む)。
+   width / left / color を動かすアニメーションはブロック中に固まる */
+.magbusy { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+  margin-bottom: 12px; background: var(--panel); }
+.magbusy .mbtitle { font-weight: 600; margin-bottom: 8px;
+  will-change: opacity; animation: mbpulse 1.4s ease-in-out infinite; }
+.mbbar { position: relative; height: 6px; border-radius: 99px;
+  background: var(--border); overflow: hidden; }
+.mbbar > span { position: absolute; top: 0; bottom: 0; left: 0; width: 35%;
+  border-radius: 99px; background: var(--accent);
+  will-change: transform; animation: mbslide 1.15s ease-in-out infinite; }
+.magbusy .mbnote { font-size: 0.8rem; color: var(--sub); margin-top: 8px; }
+@keyframes mbpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes mbslide { 0% { transform: translateX(-110%); } 100% { transform: translateX(320%); } }
+@media (prefers-reduced-motion: reduce) {
+  .magbusy .mbtitle, .mbbar > span { animation: none; }
+  .mbbar > span { width: 100%; opacity: 0.5; }
+}
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%230b7fc2%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2331c7e8%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20x%3D%279%27%20y%3D%274%27%20width%3D%2714%27%20height%3D%2724%27%20rx%3D%276%27%20fill%3D%27url(%23g)%27%2F%3E%3C%2Fsvg%3E">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7fa">
@@ -372,6 +394,11 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
   </div>
 </div>
 
+<div id="magBusy" class="magbusy" hidden>
+  <div class="mbtitle">育て方を計算しています…</div>
+  <div class="mbbar"><span></span></div>
+  <div class="mbnote">何万通りもの与え方を試して、<b>事故らない手順</b>を探しています。目標によっては10秒ほどかかります。この間ページは反応しませんが、止まってはいません。</div>
+</div>
 <div id="magOut"><div class="magempty">目標を決めて「育て方を計算する」を押してください。</div></div>
 </div>
 
@@ -392,7 +419,10 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
   <p class="note">つまり気を遣うのは <b>マグLv50 から レアマグになるまで</b> の区間です。ここはレベルが5の倍数のあいだ何度でも判定し直されるので、指定と違うキャラに持たせると途中で別の形態に化けます(Lv55のまま別のキャラが1個やるだけで変わります)。レアマグになった後は判定そのものが起きないので、誰に渡してもかまいません。</p>
   <p class="note">キャラ間の受け渡しは<b>アカウント共通の共有倉庫</b>を使います。チャットで <code>/bank</code> と打つと開き、預けたマグを別のキャラで取り出せます。</p>
   <p>レアマグ経由の案を先に出しているのは、そこから先は進化を気にせず伸ばすだけになるからです。</p>
-  <p class="note">並び順は<b>手間の少なさ</b>です。① 比率で混ぜる箇所が少ない ② 受け渡しが少ない ③ 手順が少ない ④ 餌の種類が少ない、の順で比べています。餌の総数や所要時間は評価に入れていません(何個あげたかは育てやすさにほとんど関係しないため)。</p>
+  <p class="note">並び順は<b>①事故りにくさ ②手間の少なさ</b>です。<br>
+  <b>事故</b>とは「上げてはいけないステータスがもう1つ上がること」で、一度起きると取り返しがつきません。どの手順でも<b>あと3個まちがえて多く与えても事故らない</b>ところまでしか進めない手順にしてあります。手順ごとに「あと何個まで平気か」を書いています。<br>
+  <b>手間</b>は、餌の個数ではなく<b>追いかけるものの数</b>で測っています。同じ餌を292個与えて数字が変わるのを待つのは追跡1つ、2種類を34セット交互に与えるのは追跡34、目印が無くて292個数えるのは追跡292、という数え方です。受け渡し1回は手順10個ぶんとして扱います(預ける・持ち替える・取り出す・装備し直す、と間違えられる操作が並ぶうえ、マグLv50〜100で違うキャラに持たせると事故になるため)。<br>
+  <b>餌の総数と所要時間は並び順には使いません</b>が、選ぶときの判断材料になるので表示しています。</p>
   </div>
 </details>
 </main>
@@ -604,12 +634,15 @@ class Mag {
   feed(item, bank) {
     const g = FEED[this.feedTable][item];
     if (!g) throw new Error('未知の餌: ' + item);
+    // レベルは4ステの合計なので、ステが動くたびに数え直さず手元で足していく
+    // (ソルバから百万回単位で呼ばれる。計算結果は数え直しと同じ)
+    let lv = this.level;
     for (const s of MSTATS) {
-      if (this.level >= 200) break;
+      if (lv >= 200) break;
       this.exp[s] += g[MKEY[s]];
       if (this.exp[s] < 0) this.exp[s] = 0;       // マイナスでレベルは下がらない
-      while (this.exp[s] >= 100 && this.stats[s] < 200 && this.level < 200) {
-        this.exp[s] -= 100; this.stats[s] += 1;
+      while (this.exp[s] >= 100 && this.stats[s] < 200 && lv < 200) {
+        this.exp[s] -= 100; this.stats[s] += 1; lv += 1;
       }
     }
     if (bank) this.bankRound();
@@ -719,8 +752,8 @@ class Mag {
 
 // ============ 給餌手順 (mag_planner/tools/mag_planner.py の移植) ============
 // 「1種類の餌をN個」のブロック列にする。人間が実行できる形にするのが目的。
-function planBlocks(mag, target, bank, preferCycle, sticky, maxBlocks, maxFeed) {
-  maxBlocks = maxBlocks || 40; maxFeed = maxFeed || 6000;
+function planBlocks(mag, target, bank, preferCycle, sticky, maxBlocks, maxFeed, floor) {
+  maxBlocks = maxBlocks || 40; maxFeed = maxFeed || 6000; floor = floor || 0;
   const tgt = Array.isArray(target)
     ? { DEF: target[0], POW: target[1], DEX: target[2], MIND: target[3] } : target;
   const blocks = []; let fed = 0;
@@ -733,28 +766,59 @@ function planBlocks(mag, target, bank, preferCycle, sticky, maxBlocks, maxFeed) 
     // 単一ブロックを先に使うと伸ばしやすいステを上限まで使い切って詰むことがある。
     // 一度失敗したら preferCycle でサイクル優先に切り替える
     const blk = preferCycle
-      ? (cycleBlock(mag, tgt, table, bank, maxFeed - fed, true)
-         || singleBlock(mag, tgt, table, bank, maxFeed - fed, prev))
-      : (singleBlock(mag, tgt, table, bank, maxFeed - fed, prev)
-         || cycleBlock(mag, tgt, table, bank, maxFeed - fed, false));
+      ? (cycleBlock(mag, tgt, table, bank, maxFeed - fed, true, floor)
+         || singleBlock(mag, tgt, table, bank, maxFeed - fed, prev, floor))
+      : (singleBlock(mag, tgt, table, bank, maxFeed - fed, prev, floor)
+         || cycleBlock(mag, tgt, table, bank, maxFeed - fed, false, floor));
     if (!blk) break;
     blocks.push(blk); fed += blk.n;
   }
   return [mag, foldCycles(mergeBlocks(blocks))];
 }
 
+const SLACK_CAP = 20;   // 「あと◯個」はこれ以上数えても意味がないので頭打ちにする
+
+// このブロックを終えた地点から、**同じ与え方をあと何個続けても事故らないか**。
+// 事故 = もう目標に達しているステータスがもう1つ上がること(取り返しがつかない)。
+// 現場の失敗は「1個多く与えた」「端数のずれで目印が1〜2個ずれた」なので、単位は餌の個数。
+// 単一の餌は閉じた式(整数除算のみ)。Python 側 mag_planner.block_slack と同じ計算にすること
+function blockSlack(mag, tgt, items, cap) {
+  cap = cap || SLACK_CAP;
+  const locked = MSTATS.filter(s => mag.stats[s] >= tgt[s]);
+  if (!locked.length) return cap;
+  if (items.length === 1) {
+    const g = FEED[mag.feedTable][items[0][0]];
+    let worst = cap;
+    for (const s of locked) {
+      const v = g[MKEY[s]];
+      if (v > 0) worst = Math.min(worst, Math.floor((100 - mag.exp[s]) / v));
+    }
+    return worst;
+  }
+  const seq = [];
+  items.forEach(([it, cnt]) => { for (let i = 0; i < cnt; i++) seq.push(it); });
+  const probe = mag.clone();
+  for (let i = 0; i < cap; i++) {
+    probe.feed(seq[i % seq.length]);
+    if (locked.some(s => probe.stats[s] > tgt[s])) return i;
+  }
+  return cap;
+}
+
 // visible=false は「最後まで画面の数字が1つも動かないブロック」。
 // 前とまとめると、まとめた側まで『数字が動いたのに続きがある』形になるので mergeBlocks で区別する
-function mkBlock(items, repeat, n, mag, form, visible) {
+function mkBlock(items, repeat, n, mag, tgt, form, visible) {
   return { items: items, repeat: repeat, n: n, form: form,
-           visible: visible !== false, after: mag.snapshot() };
+           visible: visible !== false, slack: blockSlack(mag, tgt, items),
+           after: mag.snapshot() };
 }
 const sameStats = (a, b) => MSTATS.every(s => a[s] === b[s]);
 
 // 1種類の餌を、超過の直前まで与える。
 // preferItem = 直前のブロックで与えていた餌。リスクが同じなら同じ餌を続ける
 // (ブロックは進化のたびに切れるので、続けられれば mergeBlocks で1行にまとまる)
-function singleBlock(mag, tgt, table, bank, budget, preferItem) {
+function singleBlock(mag, tgt, table, bank, budget, preferItem, floor) {
+  floor = floor || 0;
   const short = {}; MSTATS.forEach(s => short[s] = tgt[s] - mag.stats[s]);
   const cands = [];
   for (const [item, v] of Object.entries(table)) {
@@ -768,36 +832,68 @@ function singleBlock(mag, tgt, table, bank, budget, preferItem) {
   }
   cands.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]
                        || (a[3] < b[3] ? -1 : 1));
+  // **画面の数字が動く切り口を取れる餌を優先する**。床を上げると、その餌のままでは
+  // 数字が動く前に余裕が尽きることがあり、そこで妥協すると「数えるだけの手順」が増える
+  let fallback = null;
+  const formBefore = mag.form, start = mag.clone();
+  const restore = () => {
+    Object.assign(mag, start); mag.stats = Object.assign({}, start.stats);
+    mag.exp = Object.assign({}, start.exp); mag.pbs = start.pbs.slice();
+    mag.log = start.log.slice();
+  };
   for (const [, , , item] of cands) {
-    const formBefore = mag.form, start = mag.clone();
     const probe = mag.clone();
-    let n = 0, lastVisible = 0, seen = Object.assign({}, probe.stats);
+    let n = 0, safeVisible = 0, safeAny = 0, seen = Object.assign({}, probe.stats);
     while (n < budget) {
-      const nxt = probe.clone(); nxt.feed(item, bank);
-      if (MSTATS.some(s => nxt.stats[s] > tgt[s])) break;
+      // 「次の1個で超過するか」は閉じた式で判定する(毎回クローンして試すと重い)。
+      // 超過 = もう目標に達しているステの端数が、その1個で100に届くこと
+      const g = FEED[probe.feedTable][item];
+      if (probe.level < 200 && MSTATS.some(s => probe.stats[s] >= tgt[s]
+          && probe.stats[s] < 200 && probe.exp[s] + g[MKEY[s]] >= 100)) break;
       probe.feed(item, bank); n++;
-      if (!sameStats(probe.stats, seen)) {   // 画面の数字が動いた = 人間が確認できる区切り
-        lastVisible = n; seen = Object.assign({}, probe.stats);
+      // blockSlack と同じ計算をここに展開している(このループは数十万回まわる)
+      const g2 = FEED[probe.feedTable][item];
+      let slack = SLACK_CAP;
+      for (const s of MSTATS) {
+        if (probe.stats[s] >= tgt[s]) {
+          const v = g2[MKEY[s]];
+          if (v > 0) {
+            const q = Math.floor((100 - probe.exp[s]) / v);
+            if (q < slack) slack = q;
+          }
+        }
       }
+      if (slack >= floor) {
+        safeAny = n;
+        if (!sameStats(probe.stats, seen)) safeVisible = n;  // 人間が確認できる区切り
+      } else if (probe.form === formBefore) {
+        // 単一の餌では余裕は**単調に減る**(効くのはロック中でプラスの餌だけ、
+        // ロック対象は増える一方)。一度床を割ったら戻らないので、ここで打ち切る
+        break;
+      }
+      if (!sameStats(probe.stats, seen)) seen = Object.assign({}, probe.stats);
       if (MSTATS.every(s => probe.stats[s] >= tgt[s])) break;
       if (probe.form !== formBefore) break;        // 進化でテーブルが変わったら切る
     }
-    // **画面の数字が最後に動いたところで切る**。そこから先は見た目が変わらず、
-    // 「◯◯が△△になったら止める」と言えなくなる。1つも動かせないときだけ従来どおり
-    const take = lastVisible || n;
-    if (take) {
-      Object.assign(mag, start); mag.stats = Object.assign({}, start.stats);
-      mag.exp = Object.assign({}, start.exp); mag.pbs = start.pbs.slice();
-      mag.log = start.log.slice();
-      mag.feedMany(item, take, bank);
-      return mkBlock([[item, take]], 1, take, mag, formBefore, !!lastVisible);
+    // **画面の数字が動いたところで切る**のが第一。そこから先は見た目が変わらず、
+    // 「◯◯が△△になったら止める」と言えなくなる
+    if (safeVisible) {
+      restore(); mag.feedMany(item, safeVisible, bank);
+      return mkBlock([[item, safeVisible]], 1, safeVisible, mag, tgt, formBefore, true);
     }
+    if (safeAny && fallback === null) fallback = [item, safeAny];
+  }
+  // どの餌でも数字を動かせないときだけ、数えるだけのブロックを許す
+  if (fallback) {
+    restore(); mag.feedMany(fallback[0], fallback[1], bank);
+    return mkBlock([[fallback[0], fallback[1]]], 1, fallback[1], mag, tgt, formBefore, false);
   }
   return null;
 }
 
 // 2種類の餌を比率で組み、上げたくないステの収支をゼロにする
-function cycleBlock(mag, tgt, table, bank, budget, onlyOffset) {
+function cycleBlock(mag, tgt, table, bank, budget, onlyOffset, floor) {
+  floor = floor || 0;
   const short = {}; MSTATS.forEach(s => short[s] = tgt[s] - mag.stats[s]);
   const need = MSTATS.filter(s => short[s] > 0), full = MSTATS.filter(s => short[s] <= 0);
   let best = null;
@@ -826,25 +922,27 @@ function cycleBlock(mag, tgt, table, bank, budget, onlyOffset) {
   const [, aItem, k, bItem] = best;
   const formBefore = mag.form, start = mag.clone();
   const probe = mag.clone();
-  let n = 0, reps = 0, lastVisible = 0, seen = Object.assign({}, probe.stats);
+  const cyc = [[aItem, k], [bItem, 1]];
+  let n = 0, reps = 0, safeVisible = 0, safeAny = 0, seen = Object.assign({}, probe.stats);
   while (n + k + 1 <= budget) {
     const nxt = probe.clone(); nxt.feedMany(aItem, k, bank); nxt.feed(bItem, bank);
     if (MSTATS.some(s => nxt.stats[s] > tgt[s])) break;
     probe.feedMany(aItem, k, bank); probe.feed(bItem, bank);
     n += k + 1; reps++;
-    if (!sameStats(probe.stats, seen)) {   // 単一ブロックと同じく、見える変化で区切る
-      lastVisible = reps; seen = Object.assign({}, probe.stats);
+    if (blockSlack(probe, tgt, cyc) >= floor) {
+      safeAny = reps;
+      if (!sameStats(probe.stats, seen)) safeVisible = reps;  // 見える変化で区切る
     }
+    if (!sameStats(probe.stats, seen)) seen = Object.assign({}, probe.stats);
     if (MSTATS.every(s => probe.stats[s] >= tgt[s]) || probe.form !== formBefore) break;
   }
-  const take = lastVisible || reps;
+  const take = safeVisible || safeAny;
   if (!take) return null;
   Object.assign(mag, start); mag.stats = Object.assign({}, start.stats);
   mag.exp = Object.assign({}, start.exp); mag.pbs = start.pbs.slice();
   mag.log = start.log.slice();
   for (let i = 0; i < take; i++) { mag.feedMany(aItem, k, bank); mag.feed(bItem, bank); }
-  return mkBlock([[aItem, k], [bItem, 1]], take, take * (k + 1), mag, formBefore,
-                 !!lastVisible);
+  return mkBlock(cyc, take, take * (k + 1), mag, tgt, formBefore, !!safeVisible);
 }
 
 // 隣り合う同じ内容のブロックをまとめる(形態が変わっても与える餌が同じなら操作は同じ)
@@ -868,6 +966,10 @@ function mergeBlocks(blocks) {
       continue;
     }
     prev.n += b.n; prev.after = b.after;
+    // まとめると途中の区切りは消えるが、そこを通ることは変わらない。
+    // 危険度は構成ブロックの最悪値を引き継ぐ(隠さない)
+    prev.slack = Math.min(prev.slack === undefined ? SLACK_CAP : prev.slack,
+                          b.slack === undefined ? SLACK_CAP : b.slack);
   }
   return out;
 }
@@ -885,8 +987,13 @@ function foldCycles(blocks) {
         let reps = 2, j = i + 4;
         while (j + 1 < blocks.length && same(blocks[j], a) && same(blocks[j + 1], b)
                && blocks[j].repeat === 1 && blocks[j + 1].repeat === 1) { reps++; j += 2; }
-        let n = 0; for (let t = i; t < j; t++) n += blocks[t].n;
-        out.push({ items: a.items.concat(b.items), repeat: reps, n: n,
+        let n = 0, sl = SLACK_CAP;
+        for (let t = i; t < j; t++) {
+          n += blocks[t].n;
+          const s = blocks[t].slack === undefined ? SLACK_CAP : blocks[t].slack;
+          if (s < sl) sl = s;
+        }
+        out.push({ items: a.items.concat(b.items), repeat: reps, n: n, slack: sl,
                    form: a.form, after: blocks[j - 1].after });
         i = j; continue;
       }
@@ -939,34 +1046,60 @@ function handOver(mag, cls, gender, sid) {
   if (sid) mag.sectionId = canonSid(sid);     // 取込みデータは大文字で来る
   return mag;
 }
-// 給餌ブロック列の「面倒さ」。小さいほど simple。
-// このプランナーが最小化したいのは所要時間ではなく手間なので、餌の総数は含めない。
-// 比率で2種類を混ぜるサイクルは数えながら与える必要があり、圧倒的に面倒
-function blocksEase(blocks) {
-  const cycles = blocks.filter(b => b.items.length > 1).length;
+// 各手順の終端で保証する余裕(あと何個まちがえても事故らないか)。
+// Python 側 mag_solve.FLOOR と同じ値にすること。実測で決めた値の根拠はそちらのコメント
+const MAG_FLOOR = 3;
+const TRACK_HAND = 10;   // 受け渡し1回ぶんの手間(預ける/持ち替える/取り出す/装備し直す)
+const TRACK_KIND = 2;    // 餌1種類ぶんの手間(買い揃えて持ち歩く)
+
+// その手順で人間が**追わなければならないものの数**。
+// 同じ餌を292個与えて数字を待つのは追跡1つ。34セット交互は追跡34。292個数えるのは追跡292。
+// 手間は餌の個数ではなく追跡の数に比例する、というのが唯一の原則
+function blockTracking(b) {
+  if (b.visible === false) return b.n;        // 目印が無い = 全部数えるしかない
+  if (b.items.length > 1) return b.repeat;    // 比率は繰り返し回数だけ追う
+  return 1;                                   // 単一の餌 + 目印 = 何個でも追跡1つ
+}
+function blocksCost(blocks) {
   const kinds = new Set(); blocks.forEach(b => b.items.forEach(i => kinds.add(i[0])));
-  return [cycles, blocks.length, kinds.size];
+  let t = 0; blocks.forEach(b => t += blockTracking(b));
+  return t + TRACK_KIND * kinds.size;
+}
+// この案の危険度 = 全手順の中で最も余裕の無いところ(単位: 餌の個数)
+function blocksRisk(blocks) {
+  let r = SLACK_CAP;
+  blocks.forEach(b => { const s = b.slack === undefined ? SLACK_CAP : b.slack;
+                        if (s < r) r = s; });
+  return r;
+}
+// ①事故らないこと(床を満たすか) → ②手間(追跡の数) → ③余裕は大きいほど良い
+function blocksEase(blocks) {
+  const risk = blocksRisk(blocks);
+  return [risk >= MAG_FLOOR ? 0 : 1, blocksCost(blocks), -risk];
 }
 const cmpEase = (a, b) => {
   for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
   return 0;
 };
-// 3通りの組み方を試して、成功した中から一番簡単なものを採る
-//   sticky: 直前と同じ餌を続けられるだけ続ける(手順が最も少なくなりやすい)
-//   単一優先/サイクル優先: sticky や単一だけでは詰む場合の保険
-function runTo(mag, goal, bank) {
+// 3通りの組み方を必ず全部試して、一番良いものを採る。
+// 「サイクルが要らなければそれが最良」という打ち切りをしていたが、比率給餌のほうが
+// 手順が7分の1で余裕も大きい実例がある(シャトの最終区間)。打ち切ると生成すらされない
+function runTo(mag, goal, bank, floor) {
+  floor = floor === undefined ? MAG_FLOOR : floor;
   let best = null, blocks = [];
   for (const [preferCycle, sticky] of [[false, true], [false, false], [true, false]]) {
-    const r = planBlocks(mag.clone(), goal, bank, preferCycle, sticky);
+    const r = planBlocks(mag.clone(), goal, bank, preferCycle, sticky, 0, 0, floor);
     if (!MSTATS.every(s => r[0].stats[s] === goal[s])) {
       if (!blocks.length) blocks = r[1];
       continue;
     }
     const e = blocksEase(r[1]);
     if (!best || cmpEase(e, best[0]) < 0) best = [e, r[0], r[1]];
-    if (e[0] === 0 && sticky) break;   // 同じ餌を続けるだけで済む = 最も簡単
   }
-  return best ? [best[1], best[2]] : [null, blocks];
+  if (best) return [best[1], best[2]];
+  // 床を満たしたまま届かないなら床を1段ずつ下げる。届く中で最も安全な案を出し、表示側で警告する
+  if (floor > 0) return runTo(mag, goal, bank, floor - 1);
+  return [null, blocks];
 }
 function pbOk(pbs, want, avoid, done) {
   if (avoid && avoid.length && pbs.some(p => avoid.includes(p))) return false;
@@ -1110,12 +1243,13 @@ function alternatives(plan) {
              combos: combos };
   });
 }
-// 案そのものの面倒さ。優先順位は 比率給餌 > 受け渡し回数 > 手順数 > 餌の種類
+// 案そのものの評価。①事故らないこと → ②手間(追跡の数 + 受け渡し) → ③余裕
 function planEase(p) {
   const blocks = [];
   p.phases.forEach(ph => ph.blocks.forEach(b => blocks.push(b)));
-  const [cycles, nblocks, kinds] = blocksEase(blocks);
-  return [cycles, handOffs(p.phases), nblocks, kinds];
+  const risk = blocksRisk(blocks);
+  return [risk >= MAG_FLOOR ? 0 : 1,
+          blocksCost(blocks) + TRACK_HAND * handOffs(p.phases), -risk];
 }
 
 function prune(states, keep) {
@@ -1608,18 +1742,36 @@ const classKeyOf = n => String(n).slice(0, 2).toUpperCase();
 const genderOf = n => /newearl|caseal|marl$|marl\b/i.test(String(n)) ? 'F'
   : /mar$|cast$|newm$/i.test(String(n)) ? 'M' : null;
 
-// 手間の指標。餌の総数や所要時間は載せない
-// (何個あげたか・何時間かかるかは、育てやすさにほとんど関係しないため)
+// 案の指標。並び順は「事故らないこと → 手間」で決まる。
+// 餌の総数と所要時間は**並び順には使わない**が、選ぶときの判断材料になるので表示はする
+// (3個 / 3分30秒 が給餌の間隔)
 function easeHTML(r) {
-  const [cyc, hands, blocks, kinds] = planEase(r);
+  const bl = [];
+  r.phases.forEach(ph => ph.blocks.forEach(b => bl.push(b)));
+  const hands = handOffs(r.phases);
+  const cyc = bl.filter(b => b.items.length > 1).length;
+  const kindSet = new Set(); bl.forEach(b => b.items.forEach(i => kindSet.add(i[0])));
+  // 変数名は対訳表のキーに合わせる(`餌をやる回数 ${blocks}回` などが既存キー)
+  const blocks = bl.length, kinds = kindSet.size;
+  const risk = blocksRisk(bl);
+  // 対訳は「式ごと1キー」で置換されるので、入れ子のテンプレートリテラルにしない
+  const hh = Math.floor(magMinutes(r.items) / 60), mm = magMinutes(r.items) % 60;
+  const time = hh ? (mm ? `約${hh}時間${mm}分` : `約${hh}時間`) : `約${mm}分`;
+  const riskText = risk >= SLACK_CAP ? `まちがえても あと${SLACK_CAP}個以上は平気`
+                 : risk >= MAG_FLOOR ? `まちがえても あと${risk}個までは平気`
+                 : `⚠ 余裕が あと${risk}個しかありません`;
   const chip = (t, cls) => `<span class="echip ${cls || ''}">${t}</span>`;
-  return chip(hands === 0 ? '受け渡しなし (1人で育てられる)' : `途中で${hands}回 別のキャラに渡す`,
+  return chip(riskText, risk >= MAG_FLOOR ? 'good' : 'hard')
+       + chip(hands === 0 ? '受け渡しなし (1人で育てられる)' : `途中で${hands}回 別のキャラに渡す`,
               hands === 0 ? 'good' : '')
        + chip(cyc === 0 ? '1種類ずつ与えるだけ' : `2種類を混ぜる場面 ${cyc}回`,
               cyc === 0 ? 'good' : 'hard')
        // blocks は「餌をやる回数」。手順番号(準備や持ち替えも含む)とは別物なので言い分ける
-       + chip(`餌をやる回数 ${blocks}回`) + chip(`餌 ${kinds}種類`);
+       + chip(`餌をやる回数 ${blocks}回`) + chip(`餌 ${kinds}種類`)
+       + chip(`餌 ${r.items}個 (${time})`);
 }
+// 給餌は3個 / 3分30秒。所要時間は並び順には使わないが、選ぶときの判断材料として出す
+const magMinutes = items => Math.round(items / 3 * 3.5);
 const routeText = r => r.continueFrom
     ? `${esc(jpName(r.continueFrom.form))} を マグLv${MSTATS.reduce((a, s) => a + r.mag.stats[s], 0)} まで伸ばす`
   : r.cell ? `マグセル ${esc(r.cell)} を使う`
@@ -1851,7 +2003,7 @@ function displayOrder() {
 // 「使える案なし」もここで言う(バッジだけだと全カードを見ないと気づけない)
 function filterWarnHTML() {
   if (!CFILTER || !altsReady(LAST)) return '';
-  const hands = p => planEase(p)[1];
+  const hands = p => handOffs(p.phases);   // planEase の添字を借りない(並びが変わると黙って壊れる)
   const usable = LAST.filter(p => charRank(p, CFILTER) < 2);
   if (!usable.length)
     return '<div class="cfnote cfwarn">※ この目標では、このキャラが担当できる案はありません</div>';
@@ -1912,6 +2064,21 @@ function evoLine(e) {
 }
 // 次の手順が数個で1上がるように見えるのは、ゲージが既に溜まっているから。
 // 溜まっている軸だけを出す(0に近い軸は書いても意味がない)
+// **あと何個まちがえても事故らないか**。これを出さないと、危ない手順と余裕のある手順が
+// 同じ顔で並ぶ。以前は「ゲージがあと少しで満タン」という中立の注記しか無く、
+// 実際には「次の1個で取り返しがつかない」場面がそう書かれていた(2026-08-06の事故)
+function slackLine(ev) {
+  const sl = ev.b.slack;
+  if (sl === undefined || sl >= SLACK_CAP) return '';
+  const lock = MSTATS.filter(s => ev.cap && ev.b.after.stats[s] >= ev.cap[s]);
+  const who = lock.length ? `${lock.join('・')} が上がってしまいます` : '事故になります';
+  if (sl <= 1) {
+    return `<div class="tlslack danger">⚠ ここから<b>あと${sl}個</b>しか余裕がありません`
+         + `<span class="who">(それ以上与えると ${who})</span></div>`;
+  }
+  return `<div class="tlslack">ここから<b>あと${sl}個</b>までなら多く与えても大丈夫`
+       + `<span class="who">(それ以上与えると ${who})</span></div>`;
+}
 function gaugeLine(ev) {
   if (!ev.gauge) return '';
   const hot = MSTATS.filter(s => ev.gauge[s] >= 70);
@@ -2053,7 +2220,7 @@ function stepHTML(ev, done, next) {
            + `<div class="tlguide">目安 ${ev.b.n}個。${reading}</div></div>`;
     }
     body = `<div class="tlmain">${blockText(ev.b)} を あげる</div>` + stop
-         + feedEffect(ev) + gaugeLine(ev) + ev.evos.map(evoLine).join('');
+         + feedEffect(ev) + slackLine(ev) + gaugeLine(ev) + ev.evos.map(evoLine).join('');
   }
   return `<div class="tlrow${on ? ' is-done' : ''}${now ? ' is-next' : ''}">${box}`
        + `<div class="tlbody">${now}${body}</div></div>`;
@@ -2064,14 +2231,16 @@ function zoneHead(zone, plan, tl) {
     const lock = tl.find(e => e.evos && e.evos.some(x => x.locks));
     const at = lock ? lock.evos.find(x => x.locks) : null;
     return `<div class="zhead zstrict"><b>${at ? `マグLv${at.level} で`
-        + `${esc(jpName(at.form))}になるまでは、` : ''}書いてある個数どおりに与えてください</b>`
-      + '<div class="zsub"><b>表示が変わっても、そこで止めないでください。</b>'
-      + 'ステータスには表示されない端数(ゲージ)があり、表示が変わったあとも'
-      + '端数を溜めるために続きがある手順があります(手順ごとに何個目で変わるか書いてあります)。'
-      + '逆に<b>書いてある数値を超えたら取り返せません</b>。'
+        + `${esc(jpName(at.form))}になるまでは、` : ''}<b>書いてある数値になったら止めてください</b>`
+      + '</b><div class="zsub"><b>個数は目安です。数えなくてかまいません。</b>'
+      + '各手順は<b>画面の数字が動くところで区切ってある</b>ので、'
+      + 'その数字になったら次の手順に進んでください'
+      + '(数字が動かない手順だけは、その旨を書いて個数を出しています)。'
+      + '<b>書いてある数値を超えたら取り返せません。</b>'
       + 'マグのレベルが先に進んで別の形態になり、それ以降は同じ餌でも上がるステータスが変わります。'
-      + 'なお<b>倉庫に入れたり部屋を出たりすると端数の一部が切り捨てられる</b>ので、'
-      + '表示が変わる個数は1〜2個ずれることがあります。数値の方を優先してください。'
+      + 'ただし<b>各手順には、あと何個まで多く与えても事故らないかを書いてあります</b>。'
+      + '倉庫に入れると端数の一部が切り捨てられて、表示が変わる個数は1〜2個ずれますが、'
+      + 'その範囲は吸収できるように手順を組んでいます。'
       + 'また<b>マグLv50 から先は5レベルごとに形態が判定し直される</b>ので、'
       + 'この間は指定と違うジョブ・Section IDのキャラに持たせないでください</div></div>';
   }
@@ -2408,8 +2577,13 @@ function calc() {
     ? Object.values(inv.chars).map(c => ({ class: classKeyOf(c.cls), gender: genderOf(c.cls),
                                            section_id: c.sectionId })) : null;
   const from = fromRareStart();
-  btn.disabled = true; btn.textContent = '計算中…'; out.classList.add('busy');
-  setTimeout(() => {
+  const busy = document.getElementById('magBusy');
+  btn.disabled = true; btn.textContent = '計算中…';
+  out.classList.add('busy'); if (busy) busy.hidden = false;
+  // **計算を始める前に必ず1回描画させる**。ここを setTimeout だけで済ませると、
+  // 描画より先にブロックが始まって「計算中」が出ないまま固まって見えることがある。
+  // rAF を2回待つと1フレーム描き終わってから次が走る
+  const heavy = () => {
     let res = [], notes = [], view = 'pick', trunc = false;
     try {
       if (from) {
@@ -2424,12 +2598,13 @@ function calc() {
     } catch (err) {
       notes = ['計算中にエラーが起きました: ' + err.message];
     }
-    out.classList.remove('busy');
+    out.classList.remove('busy'); if (busy) busy.hidden = true;
     btn.disabled = false; btn.textContent = '育て方を計算する';
     CFILTER = null; SHOWN = 5;             // 絞り込みと展開件数は計算のたびに戻す
     showResults(res, notes, null, view, 0, [], trunc);
     saveLast();          // 次に開いたときのために画面をそのまま残す(計算し直さない)
-  }, 20);
+  };
+  requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(heavy, 0)));
 }
 
 buildStatRows(); buildOptions(); updateSum();
