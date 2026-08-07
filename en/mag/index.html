@@ -261,6 +261,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tlgauge { font-size: 0.76rem; color: var(--sub); margin-top: 2px; }
 .tlstop { font-size: 0.86rem; color: var(--text); }
 .tlguide { font-size: 0.76rem; color: var(--sub); margin-top: 1px; }
+/* 到達したときのMagLvとStats。止める目印と同じ重さで読ませる
+   (薄い補足にしていたら読み飛ばされた。MagLvが合っていれば同じ地点だと分かる) */
+.tlmark { font-size: 0.84rem; color: var(--text); margin-top: 2px; }
+.tlmark b { color: var(--accent); }
+/* 交互に与える並びの導入。ここから先は同じことの繰り返しだとFirst import your伝える */
+.tlalt { font-size: 0.84rem; margin: 10px 0 4px; padding: 8px 10px;
+  border-left: 3px solid var(--accent); background: var(--panel2, transparent);
+  border-radius: 0 6px 6px 0; }
 .tlwhy { font-size: 0.74rem; color: var(--sub); margin-top: 3px; }
 .tlwhy2 { font-size: 0.74rem; color: var(--gold); margin-top: 1px; }
 .tlreq { margin-top: 4px; }
@@ -768,7 +776,7 @@ function planBlocks(mag, target, bank, preferCycle, sticky, maxBlocks, maxFeed, 
     if (!blk) break;
     blocks.push(blk); fed += blk.n;
   }
-  return [mag, foldCycles(mergeBlocks(blocks))];
+  return [mag, mergeBlocks(blocks)];   // foldCycles は廃止(mag_planner.py のコメント参照)
 }
 
 const SLACK_CAP = 20;   // 「 ◯個」はこれ以上数えても意味がないので頭打ちにする
@@ -969,34 +977,11 @@ function mergeBlocks(blocks) {
   return out;
 }
 
-// A×n → B×m の繰り返しを「[A×n + B×m] ×kセット」に畳む
-function foldCycles(blocks) {
-  const out = []; let i = 0;
-  const same = (x, y) => JSON.stringify(x.items) === JSON.stringify(y.items);
-  while (i < blocks.length) {
-    const a = blocks[i];
-    if (i + 3 < blocks.length) {
-      const b = blocks[i + 1], c = blocks[i + 2], d = blocks[i + 3];
-      if (same(a, c) && same(b, d) &&
-          a.repeat === 1 && b.repeat === 1 && c.repeat === 1 && d.repeat === 1) {
-        let reps = 2, j = i + 4;
-        while (j + 1 < blocks.length && same(blocks[j], a) && same(blocks[j + 1], b)
-               && blocks[j].repeat === 1 && blocks[j + 1].repeat === 1) { reps++; j += 2; }
-        let n = 0, sl = SLACK_CAP;
-        for (let t = i; t < j; t++) {
-          n += blocks[t].n;
-          const s = blocks[t].slack === undefined ? SLACK_CAP : blocks[t].slack;
-          if (s < sl) sl = s;
-        }
-        out.push({ items: a.items.concat(b.items), repeat: reps, n: n, slack: sl,
-                   form: a.form, after: blocks[j - 1].after });
-        i = j; continue;
-      }
-    }
-    out.push(a); i++;
-  }
-  return out;
-}
+// foldCycles(A×n → B×m の繰り返しを畳む処理)は 2026-08-07 に廃止。
+// 畳むと停止目印が1ブロックぶん消えるうえ、条件が「個数まで完全一致」だったため
+// 11個/12個の1個差で畳めたり畳めなかったりして、同じ操作が別のLooksになっていた。
+// 交互の並びは素のまま残し、表示側(build_site.py の timeline)でまとめて見せる。
+// 詳細は mag_planner/tools/mag_planner.py の同名コメント
 
 // ============ 逆算ソルバ (mag_planner/tools/mag_solve.py の移植) ============
 // 「進化の瞬間のStats(中間目標)をFirst import your確定してから餌を選ぶ」方式。
@@ -1815,6 +1800,33 @@ function charReqHTML(alt) {
 // を取る。hitAt < n のブロックが実在する(例: アンティドート66個は58個目で表示が変わり、
 // 残り8個はLooksが動かないまま端数を溜める)。これを書かないと
 // 「表示が変わったら止める」と読まれて、手順が途中で切れてしまう
+// 工程(phase)の境目は「進化の関門ごとに目標Statsを決めて、そこまで育てる」という
+// **ソルバ内部の計算単位**であって、プレイヤーには見えない。同じ工程の中では同じ餌は
+// 1手順にまとまっている(形態が変わってもまとめる)ので、境目だけ分ける理由がない。
+// 例: ディメイト×8 → ディメイト×1131 が、Char も餌も変わらないのに2手順に割れていた。
+// Rare magが確定する工程の直後だけは「個数厳守 → ずれてよい」の切り替え点なので分けたまま
+function segBlocks(seg) {
+  const out = [];
+  seg.phases.forEach(ph => ph.blocks.forEach((b, k) => {
+    const prev = out.length ? out[out.length - 1] : null;
+    const last = k === ph.blocks.length - 1 && ph.rare;
+    // 後ろが可視なら、前が「数字が動かない1個」でもまとめてよい(餌が同じなら操作は同じで、
+    // まとめた側は可視の区切りで終わる)。逆に後ろが不可視のときはまとめない
+    if (prev && !prev.zlock && prev.items.length === 1 && b.items.length === 1
+        && prev.items[0][0] === b.items[0][0] && b.visible !== false) {
+      prev.items = [[prev.items[0][0], prev.items[0][1] + b.items[0][1]]];
+      prev.n += b.n; prev.after = b.after; prev.visible = true;
+      prev.slack = Math.min(prev.slack === undefined ? SLACK_CAP : prev.slack,
+                            b.slack === undefined ? SLACK_CAP : b.slack);
+      if (last) prev.zlock = true;
+      return;
+    }
+    const c = Object.assign({}, b, { items: b.items.map(x => x.slice()) });
+    if (last) c.zlock = true;
+    out.push(c);
+  }));
+  return out;
+}
 function stepTrace(plan) {
   const out = [];
   let m = null;
@@ -1824,7 +1836,7 @@ function stepTrace(plan) {
       m = m === null ? new Mag(r.cls, r.gender || 'M', r.sid || 'Viridia')
                      : handOver(m, r.cls, r.gender, r.sid);
     } else if (m === null) m = new Mag();
-    for (const p of seg.phases) for (const b of p.blocks) {
+    for (const b of segBlocks(seg)) {          // timeline と同じ並びにする
       const end = b.after.stats;
       let hitAt = null, k = 0;
       // 1つの手順が複数の形態にまたがることがある(同じ餌を与え続けるだけなので
@@ -1886,7 +1898,7 @@ function timeline(plan) {
   for (const seg of segs) {
     if (seg.req)
       out.push({ kind: 'hand', no: ++no, alt: alts[handNo], at: ++handNo, total: alts.length });
-    for (const ph of seg.phases) for (const b of ph.blocks) {
+    for (const b of segBlocks(seg)) {          // stepTrace と同じ並びにする
       const evs = b.form === b.after.form ? [] : evoUntil(b.after.form);
       // 受け渡した直後は、まだレベルが上がらないof which に第3進化が再判定されることがある。
       // 「あげ始めてすぐ」と書かないと、手順の終わりのレベルと食い違って見える
@@ -1925,6 +1937,38 @@ function timeline(plan) {
     ev.zone = strict ? 'strict' : 'free';
     if (strict && ev.kind === 'feed' && ev.evos.some(e => e.locks)) strict = false;
   });
+  // **2種類を交互に与える並びは、ひとつの流れとして案内する。**
+  // 以前はソルバ側(foldCycles)が「[A×n + B×m] ×kセット」に畳んでいたが、
+  // 畳むと停止目印が消えるうえ、個数が1個ずれるだけで畳めたり畳めなかったりして、
+  // 同じ操作が手順によって別のLooksになっていた。手順は分けたまま(目印を全部残す)、
+  // 先頭に「◯◯が N 上がるごとに切り替え」という導入を付けるだけにする
+  for (let i = 0; i < out.length;) {
+    const head = out[i];
+    if (head.kind !== 'feed' || head.b.items.length !== 1 || head.noChange) { i++; continue; }
+    const A = head.b.items[0][0];
+    let j = i, B = null;
+    while (j + 1 < out.length) {
+      const nx = out[j + 1];
+      if (nx.kind !== 'feed' || nx.b.items.length !== 1 || nx.noChange
+          || nx.zone !== head.zone) break;
+      const f = nx.b.items[0][0];
+      if (B === null) { if (f === A) break; B = f; }
+      else if (f !== ((j - i) % 2 === 0 ? B : A)) break;
+      j++;
+    }
+    if (B && j - i >= 2) {                 // 3手順以上 = 2回以上切り替える
+      const run = out.slice(i, j + 1);
+      // 切り替えごとの増分が一定なら「N上がるごと」と言える。揃わない場合は言わない
+      const steps = run.map(e => e.moved.length === 1
+        ? [e.moved[0], e.b.after.stats[e.moved[0]] - e.from[e.moved[0]]] : null);
+      const uni = steps.every(x => x && x[0] === steps[0][0] && x[1] === steps[0][1]);
+      const last = run[run.length - 1].b.after.stats;
+      head.altLead = { a: A, b: B, n: run.length,
+                       stat: uni ? steps[0][0] : null, inc: uni ? steps[0][1] : 0,
+                       end: uni ? last[steps[0][0]] : 0 };
+      i = j + 1;
+    } else i++;
+  }
   // 各Char が「どの進化を迎えることになるか」。ここを書かないと
   // 「なぜこのChar なのか」「いつまで持たせるのか」が伝わらない。
   // holdThrough = MagLv50以降(第3形態のof which )を含む区間。5レベルごとに判定し直されるので、
@@ -2195,7 +2239,6 @@ function stepHTML(ev, done, next) {
              : '');
   } else {
     const a = ev.b.after;
-    const reading = `<span class="who">it will read mag Lv${a.level}  ${statLine(a.stats)}</span>`;
     let stop;
     if (ev.noChange || !ev.moved.length) {
       // 数字が1つも動かない手順。ここは個数を数えるしかない(ゲージだけが伸びる)
@@ -2205,16 +2248,32 @@ function stepHTML(ev, done, next) {
     } else {
       // **止める指標は「どのStatsがいくつになったか」**。個数は目安にすぎない。
       // 端数は倉庫の出し入れで削れるので、個数を信じると1–2個ずれる
+      // **MagLvも止める目印と同じ重さで出す。** Statsを1つずつ見比べなくても
+      // MagLvが合っていれば同じ地点にいると分かる(薄い補足にしていて読み飛ばされていた)
       const marks = ev.moved.map(s => `<b>${s} reaches ${a.stats[s]}</b>`).join(' and ');
       stop = `<div class="tlstop">▸ Stop when ${marks}`
            + `${ev.final ? ' <span class="tldone">✔ done</span>' : ''}`
-           + `<div class="tlguide">roughly ${ev.b.n} items; ${reading}</div></div>`;
+           + `<div class="tlmark">You should then be at <b>mag Lv${a.level}</b>  ${statLine(a.stats)}</div>`
+           + `<div class="tlguide">roughly ${ev.b.n} items</div></div>`;
     }
     body = `<div class="tlmain">Feed ${blockText(ev.b)}</div>` + stop
          + feedEffect(ev) + gaugeLine(ev) + ev.evos.map(evoLine).join('');
   }
-  return `<div class="tlrow${on ? ' is-done' : ''}${now ? ' is-next' : ''}">${box}`
+  return altLeadHTML(ev)
+       + `<div class="tlrow${on ? ' is-done' : ''}${now ? ' is-next' : ''}">${box}`
        + `<div class="tlbody">${now}${body}</div></div>`;
+}
+// 交互に与える並びの導入。ここから何手順かは「同じことの繰り返し」だとFirst import your言う
+function altLeadHTML(ev) {
+  const L = ev.altLead;
+  if (!L) return '';
+  const pair = `<b>${esc(jpName(L.a))}</b> and <b>${esc(jpName(L.b))}</b>`;
+  const rule = L.stat
+    ? `Switch every time <b>${L.stat} goes up by ${L.inc}</b>, `
+      + `and stop when <b>${L.stat} reaches ${L.end}</b>`
+    : 'Each step says the number to switch at';
+  return `<div class="tlalt">From here, alternate between ${pair}`
+       + `<span class="who"> (${L.n} steps)</span>. ${rule}</div>`;
 }
 // 「個数厳守」と「ずれても大丈夫" 箱で分ける。ここが育て方の一番の勘所
 function zoneHead(zone, plan, tl) {
