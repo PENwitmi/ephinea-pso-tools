@@ -1796,10 +1796,11 @@ function charReqHTML(alt) {
 
 // 手順を1個ずつ再生して、ブロックごとに
 //   exp   … 与え終えた時点の見えない端数(0〜99)
-//   hitAt … **表示がそのブロックの最終値に変わる何個目か**(変わらなければ null)
-// を取る。hitAt < n のブロックが実在する(例: アンティドート66個は58個目で表示が変わり、
-// 残り8個は見た目が動かないまま端数を溜める)。これを書かないと
-// 「表示が変わったら止める」と読まれて、手順が途中で切れてしまう
+//   forms … どの形態をどのレベルまで通ったか(形態ごとの増減を出すのに要る)
+// を取る。
+// (hitAt「表示が変わるのは何個目か」も計算していたが、2026-08-07 に
+//  「◯個目で変わります、そこからあと◯個」の書き分けを撤去して読み手がいなくなったので削除。
+//  いまはブロックが必ず可視の変化で終わるので、この情報は要らない)
 // 工程(phase)の境目は「進化の関門ごとに目標ステータスを決めて、そこまで育てる」という
 // **ソルバ内部の計算単位**であって、プレイヤーには見えない。同じ工程の中では同じ餌は
 // 1手順にまとまっている(形態が変わってもまとめる)ので、境目だけ分ける理由がない。
@@ -1837,8 +1838,6 @@ function stepTrace(plan) {
                      : handOver(m, r.cls, r.gender, r.sid);
     } else if (m === null) m = new Mag();
     for (const b of segBlocks(seg)) {          // timeline と同じ並びにする
-      const end = b.after.stats;
-      let hitAt = null, k = 0;
       // 1つの手順が複数の形態にまたがることがある(同じ餌を与え続けるだけなので
       // 手順としては1本にまとめている)。**形態が変われば給餌テーブルも変わる**ので、
       // どの形態をどのレベルまで通ったかを再生して記録し、増減を形態ごとに出せるようにする
@@ -1846,15 +1845,14 @@ function stepTrace(plan) {
       for (let i = 0; i < b.repeat; i++) for (const [item, cnt] of b.items)
         for (let j = 0; j < cnt; j++) {
           const cur = forms[forms.length - 1];
-          m.feed(item); k++;
+          m.feed(item);
           cur.n++;                    // 進化を起こした1個も、与えた時点では前の形態
           if (m.form !== cur.form) {
             cur.to = m.level;
             forms.push({ form: m.form, from: m.level, to: null, n: 0 });
           }
-          if (hitAt === null && MSTATS.every(s => m.stats[s] === end[s])) hitAt = k;
         }
-      out.push({ exp: Object.assign({}, m.exp), hitAt: hitAt, forms: forms });
+      out.push({ exp: Object.assign({}, m.exp), forms: forms });
     }
   }
   return out;
@@ -1927,7 +1925,7 @@ function timeline(plan) {
     out.forEach(ev => {
       if (ev.kind !== 'feed') return;
       const t = tr[gi++] || {};
-      ev.gauge = t.exp; ev.hitAt = t.hitAt; ev.forms = t.forms;
+      ev.gauge = t.exp; ev.forms = t.forms;
     });
   }
   // レアマグが確定した手順までが「個数厳守」。それ以降は進化しないので個数がずれてよい。
