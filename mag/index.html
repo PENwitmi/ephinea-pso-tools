@@ -211,10 +211,34 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .cyc { color: var(--accent); }
 /* ① 比べる */
 .pickhead { font-size: 0.88rem; margin-bottom: 10px; }
-/* 計算後の絞り込み(このキャラを多めに使う)。チップ本体は theme.css の .cfchip */
-.cfbar { margin-bottom: 10px; }
-.cfbar .cflab { font-size: 0.78rem; color: var(--sub); margin-bottom: 5px; }
+/* 計算後の絞り込みパネル。3軸(マグの最終形態 / PBの並び / キャラ)を1枚にまとめる。
+   3本のチップ列を素朴に積むとカードが3行ぶん下がるので、選んだら畳んで
+   要約(✕付きチップ)と件数だけ残す。チップ本体は theme.css の .cfchip */
 .cfnote.cfwarn { color: var(--gold); }
+.fpanel { border: 1px solid var(--border); border-radius: 10px; background: var(--panel);
+          margin-bottom: 12px; }
+.fphead { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 7px 10px; }
+.fptog { background: none; border: 0; color: var(--text); font: inherit; font-weight: 600;
+         font-size: 0.86rem; cursor: pointer; padding: 2px; flex: none; }
+.fptog:hover { color: var(--accent); }
+.fpsum { display: flex; flex-wrap: wrap; gap: 6px; }
+.fpcnt { margin-left: auto; font-size: 0.78rem; font-weight: 600;
+         color: var(--accent); white-space: nowrap; }
+.fpcnt.fpdim { color: var(--sub); font-weight: normal; }
+.fpclr { flex: none; padding: 3px 10px; font-size: 0.76rem; }
+.fpbody { padding: 2px 10px 8px; border-top: 1px solid var(--border); }
+.fprow { display: grid; grid-template-columns: 9.6em 1fr; gap: 10px;
+         align-items: start; padding: 9px 0; }
+.fprow + .fprow { border-top: 1px dashed var(--border); }
+.fprow .cflab { font-size: 0.78rem; color: var(--sub); padding-top: 5px; }
+.fprow .charfilter { margin: 0; }
+/* 他の条件と組み合わせると0件になる選択肢。押させてから「0件でした」と言わない */
+.cfchip.dead { opacity: 0.32; cursor: default; }
+.cfchip.dead:hover { border-color: var(--border); }
+@media (max-width: 640px) {
+  .fprow { grid-template-columns: 1fr; gap: 3px; }
+  .fpcnt { margin-left: 0; }
+}
 .magsum.dim { opacity: 0.55; }
 .fbadge { display: inline-block; font-size: 0.76rem; font-weight: 600; border-radius: 99px;
           padding: 2px 10px; border: 1px solid var(--border); margin-bottom: 6px; }
@@ -1807,13 +1831,24 @@ function easeHTML(r) {
 }
 // 給餌は3個 / 3分30秒。所要時間は並び順には使わないが、選ぶときの判断材料として出す
 const magMinutes = items => Math.round(items / 3 * 3.5);
-const routeText = r => r.continueFrom
-    ? `${esc(jpName(r.continueFrom.form))} を マグLv${MSTATS.reduce((a, s) => a + r.mag.stats[s], 0)} まで伸ばす`
-  : r.cell ? `マグセル ${esc(r.cell)} を使う`
-  : r.rare ? `レアマグ ${esc(jpName(r.rare))} にする` : 'レアマグにしない';
 // 形態のうつり変わり。レアマグから再開する案は log が空なので出発点から書く
 const formPath = r => (r.continueFrom ? [r.continueFrom.form] : ['Mag'])
   .concat(r.mag.log.map(e => e.to));
+// 仕上がりの形態。**plan.rare で判定してはいけない。**
+// 目標の合計がちょうど100の案は、ソルバが「レアマグを狙う」経路を通らなくても
+// 最後の1個で第4進化が起きるので、rare=null のままプーシャン等になる
+// (それを「レアマグにしない」と書いていた。2026-08-10 修正)。
+// replay() はブロックごとの form も突き合わせるので、この形態は候補キャラ全員で同じ
+const finalFormOf = r => {
+  const p = formPath(r);
+  return p[p.length - 1];
+};
+const isRareForm = f => (MAGDATA.mags[f] || {}).stage === 4;
+const routeText = r => r.continueFrom
+    ? `${esc(jpName(r.continueFrom.form))} を マグLv${MSTATS.reduce((a, s) => a + r.mag.stats[s], 0)} まで伸ばす`
+  : r.cell ? `マグセル ${esc(r.cell)} を使う`
+  : isRareForm(finalFormOf(r)) ? `レアマグ ${esc(jpName(finalFormOf(r)))} にする`
+  : 'レアマグにしない';
 
 // 取込みキャラのうち、この区間を任せられる人。
 // alt.combos は手順を再生して確かめた組み合わせなので、ここに出た人は必ず同じ結果になる
@@ -2070,10 +2105,15 @@ function ensureAlts(plans, done) {
   })();
 }
 
-// ---- 計算後の絞り込み: このキャラを多めに使う ----
-// 取込みキャラをチップで出し、選ぶと「そのキャラで進められる案」から順に並べ替える。
-// 案は隠さない(使えない案は薄く出す)。LAST 自体は並べ替えず表示順だけ変えるので、
-// data-pick / PICKED のインデックスは影響を受けない
+// ---- 計算後の絞り込み ----
+// 軸は3つ(マグの最終形態 / フォトンブラストの並び / このキャラで育てる)。1枚のパネルにまとめる。
+// **押したら絞る**(合わない案は消える)。以前は「並べ替えるだけで案は隠さない」だったが、
+// 軸が3つに増えると、同じ見た目のチップなのに押すと消えるものと消えないものが混ざる。
+// 同じ操作は同じ見た目で出す(原則#7)以上、挙動のほうも揃える。
+// 消えたことは見出しの「157通り → 24通り」と解除ボタンで分かるようにし、
+// **他の軸を選んだ状態で0件になるチップは押せなくする**
+// (押させてから「0件でした」と言うのは、ツールの都合をユーザーに肩代わりさせている)。
+// LAST 自体は並べ替えないので data-pick / PICKED のインデックスは影響を受けない
 function filterChars() {
   const inv = loadInventory();
   const chars = (inv && inv.chars) ? Object.values(inv.chars) : [];
@@ -2098,71 +2138,117 @@ function charRank(plan, ch) {
     x[0] === ch.cls && x[1] === ch.gender && x[2] === ch.sid)).length;
   return hit === alts.length ? 0 : hit ? 1 : 2;
 }
+// PBの並び。**順番はユーザーに入力させず、出てきた並びから選ばせる**
+// (順序を先に決めさせると、成立する並びの大半が見えなくなる)。集合の条件は計算に
+// 組み込んであるので、ここで絞るのは「探索が捨てたものを拾おうとする」後付けではない
+const pbSeqOf = p => (p.mag.pbs || []).join('|');
+const pbSeqLabel = k => k ? k.split('|').map(x => esc(pbJp(x))).join(' → ') : 'PBなし';
+// キャラだけは判定(alternatives)が重く、描画の時点ではまだ終わっていないことがある。
+// 終わるまでは絞り込みを効かせない(途中で絞ると、まだ判定していない案を誤って消す)
+const fMatch = {
+  form: (p, k) => finalFormOf(p) === k,
+  pb: (p, k) => pbSeqOf(p) === k,
+  char: (p, c) => !altsReady(LAST) || charRank(p, c) < 2,
+};
+const fPicked = dim => dim === 'form' ? FFILTER : dim === 'pb' ? PBFILTER
+                     : (CFILTER ? CFILTER.key : null);
+// skip 以外の軸を適用した母集団(LAST の添字)。skip=null で3軸とも適用
+function fPool(skip) {
+  const out = [];
+  LAST.forEach((p, i) => {
+    if (skip !== 'form' && FFILTER !== null && !fMatch.form(p, FFILTER)) return;
+    if (skip !== 'pb' && PBFILTER !== null && !fMatch.pb(p, PBFILTER)) return;
+    if (skip !== 'char' && CFILTER && !fMatch.char(p, CFILTER)) return;
+    out.push(i);
+  });
+  return out;
+}
+// その選択肢を押したら何案残るか。**他の軸の選択を効かせたうえで**数える
+const fCount = (dim, key) => fPool(dim).filter(i => fMatch[dim](LAST[i], key)).length;
 function displayOrder() {
-  const order = LAST.map((r, i) => ({ i: i, rank: -1 }));
-  // PBの並びで選ばれていたら、それを先に出す(キャラの絞り込みと同じく案は隠さない)
-  if (PBFILTER) {
-    order.forEach(o => o.rank = pbSeqOf(LAST[o.i]) === PBFILTER ? 0 : 2);
-    order.sort((a, b) => a.rank - b.rank || a.i - b.i);
-  }
-  if (!CFILTER || !altsReady(LAST)) return order;
-  order.forEach(o => o.rank = Math.max(o.rank < 0 ? 0 : o.rank,
-                                       charRank(LAST[o.i], CFILTER)));
-  order.sort((a, b) => a.rank - b.rank || a.i - b.i);   // 同順位はソルバの並びのまま
+  const rank = CFILTER && altsReady(LAST);
+  const order = fPool(null).map(i => ({ i: i, rank: rank ? charRank(LAST[i], CFILTER) : -1 }));
+  // キャラを選んだときは「1人で最後まで」を先に。同順位はソルバの並びのまま
+  if (rank) order.sort((a, b) => a.rank - b.rank || a.i - b.i);
   return order;
 }
-// キャラを指定したせいで受け渡しが増えるなら、その事実を数字で示す。
-// 「使える案なし」もここで言う(バッジだけだと全カードを見ないと気づけない)
-function filterWarnHTML() {
-  if (!CFILTER || !altsReady(LAST)) return '';
-  const hands = p => handOffs(p.phases);   // planEase の添字を借りない(並びが変わると黙って壊れる)
-  const usable = LAST.filter(p => charRank(p, CFILTER) < 2);
-  if (!usable.length)
-    return '<div class="cfnote cfwarn">※ この目標では、このキャラが担当できる案はありません</div>';
-  const minU = Math.min(...usable.map(hands));
-  const minA = Math.min(...LAST.map(hands));
-  if (minU <= minA) return '';
-  const alt = minA === 0 ? '受け渡しなしで育てられる案' : `受け渡し${minA}回の案`;
-  return `<div class="cfnote cfwarn">※ このキャラを使う案は受け渡しが最少${minU}回です。`
-       + `キャラを指定しなければ${alt}があります</div>`;
-}
-// ---- PBの並びで絞る ----
-// **順番はユーザーに入力させず、出てきた並びから選ばせる**(順序を先に決めさせると、
-// 成立する並びの大半が見えなくなる)。集合の条件は計算に組み込んであるので、
-// ここで絞るのは「探索が捨てたものを拾おうとする」後付けフィルターではない
-const pbSeqOf = p => (p.mag.pbs || []).join('|');
-function pbOrders() {
+// 選択肢は多い順(同数のときは名前順)。件数が並ぶので、目当ての形態を探しやすい
+function fOptions(dim) {
   const m = new Map();
-  LAST.forEach(p => { const k = pbSeqOf(p); m.set(k, (m.get(k) || 0) + 1); });
-  return [...m.entries()].sort((a, b) => b[1] - a[1]);   // 多い順
+  LAST.forEach(p => {
+    const k = dim === 'form' ? finalFormOf(p) : pbSeqOf(p);
+    m.set(k, (m.get(k) || 0) + 1);
+  });
+  return [...m.entries()].sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : 1)).map(e => e[0]);
 }
-function pbBarHTML() {
-  const orders = pbOrders();
-  if (orders.length < 2) return '';          // 1通りしか無いなら選ばせる意味がない
-  return `<div class="cfbar"><div class="cflab">フォトンブラストの並びで絞る</div>`
-    + `<div class="charfilter">` + orders.map(([k, n]) =>
-        `<button type="button" class="cfchip${PBFILTER === k ? ' on' : ''}"
-          data-pbf="${esc(k)}">${k ? k.split('|').map(x => esc(pbJp(x))).join(' → ') : 'PBなし'}
-          <span class="who">${n}案</span></button>`).join('')
-    + `</div>`
-    + (PBFILTER ? `<div class="cfnote">この並びの案から順に並べています。案は隠していません</div>` : '')
-    + `</div>`;
+const fSub = n => `${n}案`;
+function fChip(dim, key, label, sub, n) {
+  const on = fPicked(dim) === key;
+  const dead = !on && n === 0;               // 押しても0件になる選択肢は押させない
+  return `<button type="button" class="cfchip${on ? ' on' : ''}${dead ? ' dead' : ''}"`
+    + `${dead ? ' disabled' : ''} data-f="${dim}" data-fk="${esc(key)}">${label}`
+    + (sub ? `<span class="who">${sub}</span>` : '') + `</button>`;
 }
-function chipBarHTML() {
-  const chars = filterChars();
-  if (!chars.length || LAST.length < 2) return '';
-  const pending = CFILTER && !altsReady(LAST);
-  return `<div class="cfbar"><div class="cflab">このキャラを多めに使う</div>`
-    + `<div class="charfilter">` + chars.map(c =>
-        `<button type="button" class="cfchip${CFILTER && CFILTER.key === c.key ? ' on' : ''}"
-          data-cf="${esc(c.key)}">${sidTag(c.sidRaw)} ${esc(c.name)}
-          <span class="who">${esc(c.job)}</span></button>`).join('')
+const fRow = (lab, chips) => `<div class="fprow"><div class="cflab">${lab}</div>`
+  + `<div class="charfilter">${chips}</div></div>`;
+function filterPanelHTML() {
+  if (LAST.length < 2) return '';
+  const ready = altsReady(LAST);
+  const forms = fOptions('form'), pbs = fOptions('pb'), chars = filterChars();
+  const rows = [];
+  // 選択肢が1つしかない軸は出さない(選ばせる意味がないうえ、場所を食う)
+  if (forms.length > 1) rows.push(fRow('マグの最終形態', forms.map(k => {
+    const n = fCount('form', k);
+    return fChip('form', k, esc(jpName(k)), fSub(n), n);
+  }).join('')));
+  if (pbs.length > 1) rows.push(fRow('フォトンブラストの並び', pbs.map(k => {
+    const n = fCount('pb', k);
+    return fChip('pb', k, pbSeqLabel(k), fSub(n), n);
+  }).join('')));
+  if (chars.length) rows.push(fRow('このキャラで育てる', chars.map(c => {
+    // 判定が終わるまでは件数を出さない(途中の数字は誤報になる)
+    const n = ready ? fCount('char', c) : null;
+    return fChip('char', c.key, `${sidTag(c.sidRaw)} ${esc(c.name)}`,
+                 esc(c.job) + (n === null ? '' : ' ' + fSub(n)), n);
+  }).join('')));
+  if (!rows.length) return '';
+  // 閉じているときは、選んだ条件を✕付きで出す(開かなくても外せる)
+  const sum = [];
+  if (FFILTER !== null) sum.push(fChip('form', FFILTER, esc(jpName(FFILTER)) + ' ✕', '', null));
+  if (PBFILTER !== null) sum.push(fChip('pb', PBFILTER, pbSeqLabel(PBFILTER) + ' ✕', '', null));
+  if (CFILTER) sum.push(fChip('char', CFILTER.key, esc(CFILTER.name) + ' ✕', '', null));
+  const shown = fPool(null).length;
+  return `<div class="fpanel"><div class="fphead">`
+    + `<button type="button" class="fptog" id="magFTog" aria-expanded="${FOPEN}">`
+    + `${FOPEN ? '▾' : '▸'} 絞り込み</button>`
+    + (FOPEN || !sum.length ? '' : `<span class="fpsum">${sum.join('')}</span>`)
+    + (sum.length ? `<span class="fpcnt">${LAST.length}通り → ${shown}通り</span>`
+       : `<span class="fpcnt fpdim">形態・PB・キャラで絞れます</span>`)
+    + (sum.length ? `<button type="button" class="reset fpclr" id="magFClear">すべて解除</button>` : '')
     + `</div>`
-    + (pending ? `<div class="cfnote">使えるキャラを判定中…</div>`
-       : CFILTER ? `<div class="cfnote">そのキャラで進められる案から順に並べています。案は隠していません</div>`
-       : '')
-    + filterWarnHTML()
-    + `</div>`;
+    + (FOPEN ? `<div class="fpbody">${rows.join('')}</div>` : '')
+    + `</div>` + filterNoteHTML();
+}
+// パネルの外に出す注意書き。閉じていても読めるようにするため。
+// キャラを指定したせいで受け渡しが増えるなら、その事実を数字で示す
+function filterNoteHTML() {
+  const out = [];
+  if (CFILTER && !altsReady(LAST))
+    out.push('使えるキャラを判定中…');
+  else if (CFILTER) {
+    const hands = p => handOffs(p.phases);   // planEase の添字を借りない(並びが変わると黙って壊れる)
+    const usable = LAST.filter(p => charRank(p, CFILTER) < 2);
+    if (usable.length) {
+      const minU = Math.min(...usable.map(hands)), minA = Math.min(...LAST.map(hands));
+      const alt = minA === 0 ? '受け渡しなしで育てられる案' : `受け渡し${minA}回の案`;
+      if (minU > minA)
+        out.push(`このキャラを使う案は受け渡しが最少${minU}回です。`
+          + `キャラを指定しなければ${alt}があります`);
+    }
+  }
+  if (!fPool(null).length)
+    out.push('この条件に合う案はありません。「すべて解除」で戻せます');
+  return out.map(t => `<div class="cfnote cfwarn">※ ${t}</div>`).join('');
 }
 
 // ---- ① 比べる: 手順は出さず、選ぶのに要る情報だけ ----
@@ -2707,8 +2793,11 @@ document.getElementById('magPasteBtn').addEventListener('click', () => {
 // VIEW は2つ。'pick' = 見つかった案を要約で比べる / 'run' = 選んだ1案をチェックリストで実行する
 let LAST = [], NOTES = [], VIEW = 'pick', PICKED = 0, DONE = [], FROZEN = null;
 let TRUNC = false;        // 探索が上限で打ち切られた(=「N通り以上」)
-let CFILTER = null;       // 「このキャラを多めに使う」で選んだキャラ(filterChars() の1要素)
-let PBFILTER = null;      // 「PBの並びで絞る」で選んだ並び(pbSeqOf の値)
+// 計算後の絞り込み。3軸とも「押したら絞る」(合わない案は消える)
+let FFILTER = null;       // マグの最終形態(finalFormOf の値)
+let PBFILTER = null;      // フォトンブラストの並び(pbSeqOf の値。'' = PBなし も有効な選択)
+let CFILTER = null;       // このキャラで育てる(filterChars() の1要素)
+let FOPEN = true;         // 絞り込みパネルを開いているか。選ぶと畳んでカードを前に出す
 let SHOWN = 5;            // 比べる画面に展開する件数。「もっと見る」で増える
 
 function showResults(res, notes, frozen, view, picked, done, trunc) {
@@ -2726,7 +2815,8 @@ function saveLast() {
   try {
     localStorage.setItem(MAG_LAST_KEY, JSON.stringify({ input: readMagState(),
       results: LAST, notes: NOTES, view: VIEW, picked: PICKED, done: DONE,
-      trunc: TRUNC, filter: CFILTER ? CFILTER.key : null, pbf: PBFILTER }));
+      trunc: TRUNC, filter: CFILTER ? CFILTER.key : null, pbf: PBFILTER,
+      ff: FFILTER, fopen: FOPEN }));
   } catch (e) {}
 }
 function render() {
@@ -2759,8 +2849,7 @@ function render() {
            + '「手持ちのキャラだけで育てる」を有効にすると、いるキャラだけで組み直します</div>'
          : '')
       + '</div>'
-      + pbBarHTML()
-      + chipBarHTML()
+      + filterPanelHTML()
       + shown.map(o => summaryHTML(LAST[o.i], o.i, o.rank)).join('')
       + (order.length > SHOWN
          ? `<div class="morerow"><button class="btn" id="magMore">残り${order.length - SHOWN}件をもっと見る</button></div>`
@@ -2782,17 +2871,24 @@ function wire() {
   if (bk) bk.addEventListener('click', () => { VIEW = 'pick'; saveLast(); render(); });
   const more = document.getElementById('magMore');
   if (more) more.addEventListener('click', () => { SHOWN += 15; render(); });
-  on('[data-pbf]', 'click', e => {
-    const k = e.currentTarget.dataset.pbf;
-    PBFILTER = PBFILTER === k ? null : k;          // もう一度押すと解除
+  const ftog = document.getElementById('magFTog');
+  if (ftog) ftog.addEventListener('click', () => { FOPEN = !FOPEN; saveLast(); render(); });
+  const fclr = document.getElementById('magFClear');
+  if (fclr) fclr.addEventListener('click', () => {
+    FFILTER = null; PBFILTER = null; CFILTER = null; SHOWN = 5;
     saveLast(); render();
   });
-  on('[data-cf]', 'click', e => {
-    const key = e.currentTarget.dataset.cf;
-    CFILTER = (CFILTER && CFILTER.key === key) ? null   // もう一度押すと解除
-      : filterChars().find(c => c.key === key) || null;
+  on('[data-f]', 'click', e => {
+    const dim = e.currentTarget.dataset.f, k = e.currentTarget.dataset.fk;
+    const wasOn = e.currentTarget.classList.contains('on');   // もう一度押すと解除
+    if (dim === 'form') FFILTER = wasOn ? null : k;
+    else if (dim === 'pb') PBFILTER = wasOn ? null : k;
+    else CFILTER = wasOn ? null : (filterChars().find(c => c.key === k) || null);
+    // 絞ったらパネルを畳んでカードを前に出す。外したときは畳まない(続けて選び直せる)
+    if (!wasOn) FOPEN = false;
+    SHOWN = 5;                                     // 「残りN件」が古い数のまま残らないように
     saveLast(); render();
-    // まだ判定していない案が残っていたら温めてから並べ替える
+    // まだ判定していない案が残っていたら温めてから絞り込む
     if (CFILTER && !altsReady(LAST)) ensureAlts(LAST, () => render());
   });
   on('[data-pick]', 'click', e => {
@@ -2846,7 +2942,8 @@ function calc() {
     CALC_RUN = false;
     out.classList.remove('busy'); if (busy) busy.hidden = true;
     btn.disabled = false; btn.textContent = '育て方を計算する';
-    CFILTER = null; PBFILTER = null; SHOWN = 5;   // 絞り込みと展開件数は計算のたびに戻す
+    // 絞り込みと展開件数は計算のたびに戻す(古い条件が残っていると案が消えて見える)
+    FFILTER = null; PBFILTER = null; CFILTER = null; FOPEN = true; SHOWN = 5;
     showResults(res, notes, null, view, 0, [], trunc);
     saveLast();          // 次に開いたときのために画面をそのまま残す(計算し直さない)
   };
@@ -2911,7 +3008,11 @@ try {
   if (last && last.results) {
     applyMagState(last.input);
     if (last.filter) CFILTER = filterChars().find(c => c.key === last.filter) || null;
-    PBFILTER = last.pbf || null;          // 後から足したので、無い保存データでも壊れない
+    // 後から足したので、持たない保存データでも壊れないようにする。
+    // PBFILTER は '' (PBなし) が有効な選択なので、`|| null` では潰れる
+    PBFILTER = last.pbf === undefined ? null : last.pbf;
+    FFILTER = last.ff === undefined ? null : last.ff;
+    FOPEN = last.fopen === undefined ? true : !!last.fopen;
     showResults(last.results, last.notes, null, last.view, last.picked, last.done,
                 last.trunc);
   }
