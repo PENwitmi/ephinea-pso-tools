@@ -180,7 +180,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .pbpick { display: flex; flex-wrap: wrap; gap: 5px; }
 .pbtog { cursor: pointer; border: 1px solid var(--border); background: var(--card);
          color: var(--text); border-radius: 99px; padding: 3px 10px; font-size: 0.78rem; }
-.pbtog.on { border-color: var(--red); background: #feecec; color: var(--red); font-weight: 600; }
+/* 三状態: 無印=どちらでも / .want=覚えさせたい / .avoid=避けたい */
+.pbtog.want { border-color: var(--green); background: #eafaf0; color: var(--green);
+              font-weight: 600; }
+.pbtog.avoid { border-color: var(--red); background: #feecec; color: var(--red);
+               font-weight: 600; }
+.pblegend { font-size: 0.74rem; color: var(--sub); margin-top: 4px; }
+.sumpb { font-size: 0.82rem; margin: 2px 0 4px; display: flex; gap: 8px; }
+.pblegend.warn { color: var(--red); }
 .chkrow { display: flex; align-items: center; gap: 6px; font-size: 0.82rem; margin: 5px 0; }
 .chkrow label { cursor: pointer; }
 .chkrow .hint { color: var(--sub); font-size: 0.74rem; }
@@ -372,8 +379,9 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
         <select id="magForm"><option value="">指定なし</option></select></div>
       <div class="optrow"><label for="magRare">レアマグ</label>
         <select id="magRare"><option value="">指定なし</option></select></div>
-      <div class="optrow" style="align-items:start"><label>避けたいPB</label>
-        <div class="pbpick" id="magAvoid"></div></div>
+      <div class="optrow" style="align-items:start"><label>フォトンブラスト</label>
+        <div><div class="pbpick" id="magPb"></div>
+        <div class="pblegend" id="magPbNote">押すたびに 指定なし → <b>✓覚えさせたい</b> → <b>✕避けたい</b> と変わります。順番は指定しません(計算したあと、出てきた並びから選べます)</div></div></div>
       <div class="chkrow"><input type="checkbox" id="magBank">
         <label for="magBank">バンクを使う <span class="hint">DEFを抑えられるが、1個ごとに預け直す手間が要る</span></label></div>
       <div class="chkrow"><input type="checkbox" id="magOwn">
@@ -1557,6 +1565,25 @@ function explainForm(form, tgt) {
 
 
 // ---- 入力UI ----
+// PBチップの下の説明。既定の案内に戻すか、警告を出すかの2用途
+const PB_HELP = '押すたびに 指定なし → <b>✓覚えさせたい</b> → <b>✕避けたい</b> と変わります。'
+  + '順番は指定しません(計算したあと、出てきた並びから選べます)';
+function pbNote(msg, warn) {
+  const el = document.getElementById('magPbNote');
+  el.innerHTML = msg || PB_HELP;
+  el.classList.toggle('warn', !!warn);
+}
+// チップの見た目に ✓ / ✕ を出す。**順番の番号は出さない**(順番は指定させないため)
+function renderPbLabels() {
+  document.querySelectorAll('#magPb .pbtog').forEach(b => {
+    const mark = b.classList.contains('want') ? '✓ '
+               : b.classList.contains('avoid') ? '✕ ' : '';
+    b.textContent = mark + pbJp(b.dataset.pb);
+  });
+}
+const pbPicked = kind =>
+  [...document.querySelectorAll('#magPb .pbtog.' + kind)].map(b => b.dataset.pb);
+
 const STAT_LABEL = { DEF: 'DEF', POW: 'POW', DEX: 'DEX', MIND: 'MIND' };
 const DEFAULT_TARGET = { DEF: 5, POW: 147, DEX: 48, MIND: 0 };
 function buildStatRows() {
@@ -1611,11 +1638,28 @@ function buildOptions() {
     .sort((a, b) => jpName(a) < jpName(b) ? -1 : 1);
   document.getElementById('magRare').innerHTML = '<option value="">指定なし</option>'
     + rares.map(n => `<option value="${n}">${esc(jpName(n))}</option>`).join('');
-  document.getElementById('magAvoid').innerHTML = Object.keys(PB_JP)
+  document.getElementById('magPb').innerHTML = Object.keys(PB_JP)
     // 英語ページでは pbJp() が英語名を返す(PB_JP を直接引くと和名が出てしまう)
     .map(p => `<button type="button" class="pbtog" data-pb="${esc(p)}">${esc(pbJp(p))}</button>`).join('');
-  document.querySelectorAll('#magAvoid .pbtog').forEach(b =>
-    b.addEventListener('click', () => b.classList.toggle('on')));
+  // 三状態: 無印 → ✓覚えさせたい → ✕避けたい → 無印。
+  // **順番は入力させない**。指定できるのは集合だけで、並びは計算後に結果から選ばせる
+  // (順序を先に決めさせると、成立する並びの大半が見えなくなる)
+  document.querySelectorAll('#magPb .pbtog').forEach(b =>
+    b.addEventListener('click', () => {
+      if (b.classList.contains('want')) { b.classList.remove('want'); b.classList.add('avoid'); }
+      else if (b.classList.contains('avoid')) b.classList.remove('avoid');
+      else {
+        // PB枠は3つしかない。4つ目を✓にすると pb_ok が必ず落とすので、押した時点で止める
+        if (document.querySelectorAll('#magPb .pbtog.want').length >= 3) {
+          pbNote('フォトンブラストは最大3つまでです。覚えさせたいPBは3つまで選べます', true);
+          return;
+        }
+        b.classList.add('want');
+      }
+      pbNote('', false);
+      renderPbLabels();
+    }));
+  renderPbLabels();
   buildPresets();
 }
 
@@ -2056,8 +2100,14 @@ function charRank(plan, ch) {
 }
 function displayOrder() {
   const order = LAST.map((r, i) => ({ i: i, rank: -1 }));
+  // PBの並びで選ばれていたら、それを先に出す(キャラの絞り込みと同じく案は隠さない)
+  if (PBFILTER) {
+    order.forEach(o => o.rank = pbSeqOf(LAST[o.i]) === PBFILTER ? 0 : 2);
+    order.sort((a, b) => a.rank - b.rank || a.i - b.i);
+  }
   if (!CFILTER || !altsReady(LAST)) return order;
-  order.forEach(o => o.rank = charRank(LAST[o.i], CFILTER));
+  order.forEach(o => o.rank = Math.max(o.rank < 0 ? 0 : o.rank,
+                                       charRank(LAST[o.i], CFILTER)));
   order.sort((a, b) => a.rank - b.rank || a.i - b.i);   // 同順位はソルバの並びのまま
   return order;
 }
@@ -2075,6 +2125,28 @@ function filterWarnHTML() {
   const alt = minA === 0 ? '受け渡しなしで育てられる案' : `受け渡し${minA}回の案`;
   return `<div class="cfnote cfwarn">※ このキャラを使う案は受け渡しが最少${minU}回です。`
        + `キャラを指定しなければ${alt}があります</div>`;
+}
+// ---- PBの並びで絞る ----
+// **順番はユーザーに入力させず、出てきた並びから選ばせる**(順序を先に決めさせると、
+// 成立する並びの大半が見えなくなる)。集合の条件は計算に組み込んであるので、
+// ここで絞るのは「探索が捨てたものを拾おうとする」後付けフィルターではない
+const pbSeqOf = p => (p.mag.pbs || []).join('|');
+function pbOrders() {
+  const m = new Map();
+  LAST.forEach(p => { const k = pbSeqOf(p); m.set(k, (m.get(k) || 0) + 1); });
+  return [...m.entries()].sort((a, b) => b[1] - a[1]);   // 多い順
+}
+function pbBarHTML() {
+  const orders = pbOrders();
+  if (orders.length < 2) return '';          // 1通りしか無いなら選ばせる意味がない
+  return `<div class="cfbar"><div class="cflab">フォトンブラストの並びで絞る</div>`
+    + `<div class="charfilter">` + orders.map(([k, n]) =>
+        `<button type="button" class="cfchip${PBFILTER === k ? ' on' : ''}"
+          data-pbf="${esc(k)}">${k ? k.split('|').map(x => esc(pbJp(x))).join(' → ') : 'PBなし'}
+          <span class="who">${n}案</span></button>`).join('')
+    + `</div>`
+    + (PBFILTER ? `<div class="cfnote">この並びの案から順に並べています。案は隠していません</div>` : '')
+    + `</div>`;
 }
 function chipBarHTML() {
   const chars = filterChars();
@@ -2110,6 +2182,8 @@ function summaryHTML(r, idx, rank) {
     <div class="sumtop"><b>${routeText(r)}</b>
       <span class="sumpath">${formPath(r)
         .map(n => esc(jpName(n))).join(' → ')}</span></div>
+    ${r.continueFrom ? '' : `<div class="sumpb"><span class="crlab">フォトンブラスト</span>
+      <span>${r.mag.pbs.length ? r.mag.pbs.map(p => esc(pbJp(p))).join(' → ') : 'なし'}</span></div>`}
     <div class="reshead">${easeHTML(r)}</div>
     ${req}
     <div class="resbtns"><button class="btn" data-pick="${idx}">この案で育てる →</button></div>
@@ -2439,12 +2513,46 @@ function magAsk(msg, onPartial) {
   });
 }
 
+// ---- 覚えさせたいPBは「集合」で受け取り、順列に展開して解く ----
+// ソルバの pbOk は want を**順序付き**で見る(取得した want の相対順序が指定順と一致するか)。
+// ユーザーに順番を決めさせると、成立する並びの大半が見えなくなるので、集合だけ受け取って
+// **こちらで全順列を試し、結果を連結する**。
+//   - 全部揃った案はちょうど1つの順列にだけ一致するので、**重複は原理的に出ない**
+//   - 指定していないPBの位置は自由(1つ指定なら、それが1番目に付く案も3番目の案も出る)
+//   - PB枠は3つなので順列は最大 3! = 6通り。実測 2秒。ソルバには手を入れない
+const permsOf = a => a.length <= 1 ? [a]
+  : a.flatMap((x, i) => permsOf(a.slice(0, i).concat(a.slice(i + 1))).map(p => [x].concat(p)));
+async function solveAll(target, opts, want) {
+  const perms = want && want.length ? permsOf(want) : [null];
+  let results = [], notes = [], truncated = false, anyHit = false;
+  for (const p of perms) {
+    const r = await magAsk({ type: 'solve', target: target,
+                             opts: Object.assign({}, opts, { wantPbs: p }) });
+    if (!CALC_RUN) return { results: [], notes: [], truncated: false };  // 中止された
+    if (r.results.length) { anyHit = true; results = results.concat(r.results); }
+    else notes = notes.concat(r.notes);       // 成立しなかった理由。全滅時だけ使う
+    truncated = truncated || r.truncated;
+    if (r.results.length) notes = notes.concat(r.notes.filter(n => !/PB/.test(n)));
+  }
+  // 1つでも成立したら「両立しません」の説明は捨てる(5回並ぶと読めない)
+  if (anyHit) notes = [...new Set(notes)];
+  else notes = notes.slice(0, 1);
+  results.sort((a, b) => (a.rare == null) - (b.rare == null)
+    || cmpEase(planEase(a), planEase(b))
+    || Math.floor((a.items + 150) / 300) - Math.floor((b.items + 150) / 300));
+  if (results.length > (opts.maxResults || 200)) {
+    results = results.slice(0, opts.maxResults || 200);
+    truncated = true;
+  }
+  return { results: results, notes: notes, truncated: truncated };
+}
+
 // ---- 入力の読み書き (シミュレーターの readState / applyState と同じ役割) ----
 function readMagState() {
   return { target: getTarget(),
     form: document.getElementById('magForm').value,
     rare: document.getElementById('magRare').value,
-    avoid: [...document.querySelectorAll('#magAvoid .pbtog.on')].map(b => b.dataset.pb),
+    avoid: pbPicked('avoid'), want: pbPicked('want'),
     bank: document.getElementById('magBank').checked,
     own: document.getElementById('magOwn').checked,
     noCell: document.getElementById('magNoCell').checked,
@@ -2465,9 +2573,13 @@ function applyMagState(st) {
   syncFromRareMins();                   // 出発点を戻したあとに下限を合わせ直す
   document.getElementById('magForm').value = st.form || '';
   document.getElementById('magRare').value = st.rare || '';
-  const avoid = st.avoid || [];
-  document.querySelectorAll('#magAvoid .pbtog').forEach(b =>
-    b.classList.toggle('on', avoid.includes(b.dataset.pb)));
+  // want は後から足したので、持たない保存データを読んでも壊れないようにする
+  const avoid = st.avoid || [], want = st.want || [];
+  document.querySelectorAll('#magPb .pbtog').forEach(b => {
+    b.classList.toggle('avoid', avoid.includes(b.dataset.pb));
+    b.classList.toggle('want', want.includes(b.dataset.pb));
+  });
+  renderPbLabels(); pbNote('', false);
   document.getElementById('magBank').checked = !!st.bank;
   document.getElementById('magOwn').checked = !!st.own;
   document.getElementById('magNoCell').checked = !!st.noCell;
@@ -2596,6 +2708,7 @@ document.getElementById('magPasteBtn').addEventListener('click', () => {
 let LAST = [], NOTES = [], VIEW = 'pick', PICKED = 0, DONE = [], FROZEN = null;
 let TRUNC = false;        // 探索が上限で打ち切られた(=「N通り以上」)
 let CFILTER = null;       // 「このキャラを多めに使う」で選んだキャラ(filterChars() の1要素)
+let PBFILTER = null;      // 「PBの並びで絞る」で選んだ並び(pbSeqOf の値)
 let SHOWN = 5;            // 比べる画面に展開する件数。「もっと見る」で増える
 
 function showResults(res, notes, frozen, view, picked, done, trunc) {
@@ -2613,7 +2726,7 @@ function saveLast() {
   try {
     localStorage.setItem(MAG_LAST_KEY, JSON.stringify({ input: readMagState(),
       results: LAST, notes: NOTES, view: VIEW, picked: PICKED, done: DONE,
-      trunc: TRUNC, filter: CFILTER ? CFILTER.key : null }));
+      trunc: TRUNC, filter: CFILTER ? CFILTER.key : null, pbf: PBFILTER }));
   } catch (e) {}
 }
 function render() {
@@ -2646,6 +2759,7 @@ function render() {
            + '「手持ちのキャラだけで育てる」を有効にすると、いるキャラだけで組み直します</div>'
          : '')
       + '</div>'
+      + pbBarHTML()
       + chipBarHTML()
       + shown.map(o => summaryHTML(LAST[o.i], o.i, o.rank)).join('')
       + (order.length > SHOWN
@@ -2668,6 +2782,11 @@ function wire() {
   if (bk) bk.addEventListener('click', () => { VIEW = 'pick'; saveLast(); render(); });
   const more = document.getElementById('magMore');
   if (more) more.addEventListener('click', () => { SHOWN += 15; render(); });
+  on('[data-pbf]', 'click', e => {
+    const k = e.currentTarget.dataset.pbf;
+    PBFILTER = PBFILTER === k ? null : k;          // もう一度押すと解除
+    saveLast(); render();
+  });
   on('[data-cf]', 'click', e => {
     const key = e.currentTarget.dataset.cf;
     CFILTER = (CFILTER && CFILTER.key === key) ? null   // もう一度押すと解除
@@ -2706,7 +2825,7 @@ function wire() {
 function calc() {
   const btn = document.getElementById('magGo'), out = document.getElementById('magOut');
   const target = getTarget();
-  const avoid = [...document.querySelectorAll('#magAvoid .pbtog.on')].map(b => b.dataset.pb);
+  const avoid = pbPicked('avoid'), want = pbPicked('want');
   const bank = document.getElementById('magBank').checked;
   const wantForm = document.getElementById('magForm').value
                 || document.getElementById('magRare').value || null;
@@ -2727,7 +2846,7 @@ function calc() {
     CALC_RUN = false;
     out.classList.remove('busy'); if (busy) busy.hidden = true;
     btn.disabled = false; btn.textContent = '育て方を計算する';
-    CFILTER = null; SHOWN = 5;             // 絞り込みと展開件数は計算のたびに戻す
+    CFILTER = null; PBFILTER = null; SHOWN = 5;   // 絞り込みと展開件数は計算のたびに戻す
     showResults(res, notes, null, view, 0, [], trunc);
     saveLast();          // 次に開いたときのために画面をそのまま残す(計算し直さない)
   };
@@ -2735,14 +2854,17 @@ function calc() {
   CALC_RUN = true;
 
   // 別スレッドで解く。ここが返るまでの間もページは普通に操作できる
-  const ask = from
-    ? magAsk({ type: 'fromRare', form: from.form, stats: from.stats,
-               target: target, bank: bank })
-    : magAsk({ type: 'solve', target: target, opts: opts });
-  if (ask) {
-    ask.then(p => from
-      ? finish(p.plan ? [p.plan] : [], p.note ? [p.note] : [], 'run', false)
-      : finish(p.results, p.notes, 'pick', p.truncated)).catch(fail);
+  if (from) {
+    const ask = magAsk({ type: 'fromRare', form: from.form, stats: from.stats,
+                         target: target, bank: bank });
+    if (ask) {
+      ask.then(p => finish(p.plan ? [p.plan] : [], p.note ? [p.note] : [], 'run', false))
+         .catch(fail);
+      return;
+    }
+  } else if (magWorker()) {
+    solveAll(target, opts, want).then(r => finish(r.results, r.notes, 'pick', r.truncated))
+                               .catch(fail);
     return;
   }
 
@@ -2755,7 +2877,18 @@ function calc() {
         const [p, note] = planFromRare(from.form, from.stats, target, bank);
         finish(p ? [p] : [], note ? [note] : [], 'run', false);
       } else {
-        const [res, notes, trunc] = magSolve(target, opts);
+        // Worker と同じく順列に展開する(こちらは同期なのでページは固まる)
+        let res = [], notes = [], trunc = false, hit = false;
+        for (const p of (want.length ? permsOf(want) : [null])) {
+          const [r, n, t] = magSolve(target, Object.assign({}, opts, { wantPbs: p }));
+          if (r.length) { hit = true; res = res.concat(r); } else notes = notes.concat(n);
+          trunc = trunc || t;
+        }
+        notes = hit ? [] : notes.slice(0, 1);
+        res.sort((a, b) => (a.rare == null) - (b.rare == null)
+          || cmpEase(planEase(a), planEase(b))
+          || Math.floor((a.items + 150) / 300) - Math.floor((b.items + 150) / 300));
+        if (res.length > 200) { res = res.slice(0, 200); trunc = true; }
         finish(res, notes, 'pick', trunc);
       }
     } catch (err) { fail(err); }
@@ -2778,6 +2911,7 @@ try {
   if (last && last.results) {
     applyMagState(last.input);
     if (last.filter) CFILTER = filterChars().find(c => c.key === last.filter) || null;
+    PBFILTER = last.pbf || null;          // 後から足したので、無い保存データでも壊れない
     showResults(last.results, last.notes, null, last.view, last.picked, last.done,
                 last.trunc);
   }
