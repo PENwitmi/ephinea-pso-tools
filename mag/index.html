@@ -291,7 +291,10 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
    width / left / color を動かすアニメーションはブロック中に固まる */
 .magbusy { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
   margin-bottom: 12px; background: var(--panel); }
-.magbusy .mbtitle { font-weight: 600; margin-bottom: 8px;
+.mbhead { display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 8px; }
+.mbstop { padding: 3px 12px; font-size: 0.8rem; flex: none; }
+.magbusy .mbtitle { font-weight: 600;
   will-change: opacity; animation: mbpulse 1.4s ease-in-out infinite; }
 .mbbar { position: relative; height: 6px; border-radius: 99px;
   background: var(--border); overflow: hidden; }
@@ -400,9 +403,10 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
 </div>
 
 <div id="magBusy" class="magbusy" hidden>
-  <div class="mbtitle">育て方を計算しています…</div>
+  <div class="mbhead"><div class="mbtitle">育て方を計算しています…</div>
+    <button type="button" class="btn mbstop" id="magStop">中止</button></div>
   <div class="mbbar"><span></span></div>
-  <div class="mbnote">何万通りもの与え方を試して、<b>事故らない手順</b>を探しています。目標によっては10秒ほどかかります。この間ページは反応しませんが、止まってはいません。</div>
+  <div class="mbnote">何万通りもの与え方を試して、<b>事故らない手順</b>を探しています。目標によっては10秒ほどかかります。計算は別スレッドで走っているので、待っている間もページは普通に操作できます。</div>
 </div>
 <div id="magOut"><div class="magempty">目標を決めて「育て方を計算する」を押してください。</div></div>
 </div>
@@ -1989,15 +1993,29 @@ function timeline(plan) {
 const ALTS = new WeakMap();
 function altsOf(plan) {
   let a = ALTS.get(plan);
-  if (!a) { a = alternatives(plan); ALTS.set(plan, a); }
+  if (!a) { a = alternatives(plan); ALTS.set(plan, a); }   // 未計算ならその場で(同期)
   return a;
 }
 const altsReady = plans => plans.every(p => ALTS.has(p));
 let ALT_GEN = 0;
+// 別スレッドで計算し、届いた順に入れていく。
+// 以前はメインスレッドで 40ms ずつ刻んで裏で温めていたが、あのやり方は
+// 「計算がメインスレッドを塞ぐ」ことへの対処だったので、Worker に出したぶん不要になった
 function ensureAlts(plans, done) {
   const gen = ++ALT_GEN;                     // 新しい計算が始まったら古い温めは捨てる
-  const todo = plans.filter(p => !ALTS.has(p));
+  const todo = [], idx = [];
+  plans.forEach((p, i) => { if (!ALTS.has(p)) { todo.push(p); idx.push(i); } });
   if (!todo.length) { if (done) done(false); return; }
+  const ask = magAsk({ type: 'alts', plans: todo, indexes: idx }, msg => {
+    if (gen !== ALT_GEN) return;
+    ALTS.set(plans[msg.index], msg.payload);
+  });
+  if (ask) {
+    ask.then(() => { if (gen === ALT_GEN && done) done(true); })
+       .catch(() => { if (gen === ALT_GEN && done) done(true); });
+    return;
+  }
+  // Worker が使えない環境。従来どおり 40ms ずつ刻んでメインスレッドで温める
   let i = 0;
   (function step() {
     if (gen !== ALT_GEN) return;
@@ -2348,6 +2366,79 @@ function blockText(b) {
        + `<span class="st">(合計${b.n}個)</span>`;
 }
 
+// ---- ソルバを別スレッドで走らせる ----
+// 計算中もページを操作できるようにするため。詳細は tools/magpage/worker.js の冒頭。
+// Worker が作れない環境ではメインスレッドで同じ関数を呼ぶ(無言で壊れないように)。
+let MAGW = null, MAGW_URL = null, MAGW_SEQ = 0, CALC_RUN = false;
+const MAGW_WAIT = new Map();          // id → {resolve, reject, onPartial}
+function magWorker() {
+  if (MAGW) return MAGW;
+  if (typeof Worker === 'undefined') return null;
+  try {
+    if (!MAGW_URL) {
+      // **並びが重要**: データ → ソルバ → shim。engine.js が評価時に MAGDATA を読む。
+      // データはページが持っているものを文字列にして渡す(2つ目のコピーを埋め込まない)
+      const data = 'const MAGDATA=' + JSON.stringify(MAGDATA)
+        + ';const THIRD_IDS=' + JSON.stringify(THIRD_IDS)
+        + ';const CELL_IDS=' + JSON.stringify(CELL_IDS)
+        + ';const PB_JP=' + JSON.stringify(PB_JP)
+        + ';const JPN=' + JSON.stringify(JPN)
+        + ';const SIDS=' + JSON.stringify(SIDS)
+        + ';const jpKey=' + jpKey.toString()
+        + ';const JPN_CF={};if(JPN.names)Object.entries(JPN.names)'
+        + '.forEach(([en,jp])=>{JPN_CF[jpKey(en)]=jp;});'
+        + 'const jpName=' + jpName.toString() + ';';
+      // ソースは text/plain のブロックから読む(JS文字列リテラルにすると対訳の
+      // 英訳に含まれる " が literal を閉じてページごと壊れる)
+      const srcOf = id => document.getElementById(id).textContent;
+      MAGW_URL = URL.createObjectURL(new Blob(
+        [data, srcOf('magSolverSrc'), srcOf('magWorkerSrc')],
+        { type: 'text/javascript' }));
+    }
+    MAGW = new Worker(MAGW_URL);
+    MAGW.onmessage = ev => {
+      const w = MAGW_WAIT.get(ev.data.id);
+      if (!w) return;                              // 中止した古い依頼の応答は捨てる
+      if (ev.data.partial) { if (w.onPartial) w.onPartial(ev.data); return; }
+      MAGW_WAIT.delete(ev.data.id);
+      ev.data.ok ? w.resolve(ev.data.payload) : w.reject(new Error(ev.data.error));
+    };
+    MAGW.onerror = ev => {
+      MAGW_WAIT.forEach(w => w.reject(new Error(ev.message || 'worker error')));
+      MAGW_WAIT.clear();
+      magWorkerStop();                             // 壊れたら捨てて次から作り直す
+    };
+  } catch (err) { MAGW = null; }
+  return MAGW;
+}
+// 中止。密なループは協調フラグでは止められないので terminate する。
+// 待っている依頼は全部捨て、次の計算で新しい Worker を作る
+function magWorkerStop() {
+  if (MAGW) { try { MAGW.terminate(); } catch (e) {} }
+  MAGW = null;
+  MAGW_WAIT.clear();
+}
+// 計算を中止する。Worker ごと捨てるので、どんなに深いループでも即座に止まる
+function magCancel() {
+  if (!CALC_RUN) return;
+  CALC_RUN = false;
+  magWorkerStop();
+  const busy = document.getElementById('magBusy');
+  const btn = document.getElementById('magGo');
+  if (busy) busy.hidden = true;
+  document.getElementById('magOut').classList.remove('busy');
+  btn.disabled = false; btn.textContent = '育て方を計算する';
+}
+function magAsk(msg, onPartial) {
+  const w = magWorker();
+  if (!w) return null;                             // 呼び出し側が同期にフォールバックする
+  const id = ++MAGW_SEQ;
+  return new Promise((resolve, reject) => {
+    MAGW_WAIT.set(id, { resolve, reject, onPartial });
+    w.postMessage(Object.assign({ id: id }, msg));
+  });
+}
+
 // ---- 入力の読み書き (シミュレーターの readState / applyState と同じ役割) ----
 function readMagState() {
   return { target: getTarget(),
@@ -2624,34 +2715,51 @@ function calc() {
     ? Object.values(inv.chars).map(c => ({ class: classKeyOf(c.cls), gender: genderOf(c.cls),
                                            section_id: c.sectionId })) : null;
   const from = fromRareStart();
+  const opts = { avoidPbs: avoid.length ? avoid : null, bank: bank, wantForm: wantForm,
+                 characters: chars, maxResults: 200,
+                 useCells: !document.getElementById('magNoCell').checked };
   const busy = document.getElementById('magBusy');
   btn.disabled = true; btn.textContent = '計算中…';
   out.classList.add('busy'); if (busy) busy.hidden = false;
-  // **計算を始める前に必ず1回描画させる**。ここを setTimeout だけで済ませると、
-  // 描画より先にブロックが始まって「計算中」が出ないまま固まって見えることがある。
-  // rAF を2回待つと1フレーム描き終わってから次が走る
-  const heavy = () => {
-    let res = [], notes = [], view = 'pick', trunc = false;
-    try {
-      if (from) {
-        // すでにレアマグになっているマグの続き。案は1つしかないので実行画面から始める
-        const [p, note] = planFromRare(from.form, from.stats, target, bank);
-        res = p ? [p] : []; notes = note ? [note] : []; view = 'run';
-      } else {
-        [res, notes, trunc] = magSolve(target, { avoidPbs: avoid.length ? avoid : null,
-          bank: bank, wantForm: wantForm, characters: chars,
-          useCells: !document.getElementById('magNoCell').checked, maxResults: 200 });
-      }
-    } catch (err) {
-      notes = ['計算中にエラーが起きました: ' + err.message];
-    }
+
+  const finish = (res, notes, view, trunc) => {
+    if (!CALC_RUN) return;                 // 中止されていたら何もしない
+    CALC_RUN = false;
     out.classList.remove('busy'); if (busy) busy.hidden = true;
     btn.disabled = false; btn.textContent = '育て方を計算する';
     CFILTER = null; SHOWN = 5;             // 絞り込みと展開件数は計算のたびに戻す
     showResults(res, notes, null, view, 0, [], trunc);
     saveLast();          // 次に開いたときのために画面をそのまま残す(計算し直さない)
   };
-  requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(heavy, 0)));
+  const fail = err => finish([], ['計算中にエラーが起きました: ' + err.message], 'pick', false);
+  CALC_RUN = true;
+
+  // 別スレッドで解く。ここが返るまでの間もページは普通に操作できる
+  const ask = from
+    ? magAsk({ type: 'fromRare', form: from.form, stats: from.stats,
+               target: target, bank: bank })
+    : magAsk({ type: 'solve', target: target, opts: opts });
+  if (ask) {
+    ask.then(p => from
+      ? finish(p.plan ? [p.plan] : [], p.note ? [p.note] : [], 'run', false)
+      : finish(p.results, p.notes, 'pick', p.truncated)).catch(fail);
+    return;
+  }
+
+  // Worker が使えない環境。メインスレッドで同じ関数を呼ぶ(ページは固まる)。
+  // **計算を始める前に必ず1回描画させる**。setTimeout だけだと描画より先にブロックが
+  // 始まって「計算中」が出ないまま固まって見えることがある
+  requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => {
+    try {
+      if (from) {
+        const [p, note] = planFromRare(from.form, from.stats, target, bank);
+        finish(p ? [p] : [], note ? [note] : [], 'run', false);
+      } else {
+        const [res, notes, trunc] = magSolve(target, opts);
+        finish(res, notes, 'pick', trunc);
+      }
+    } catch (err) { fail(err); }
+  }, 0)));
 }
 
 buildStatRows(); buildOptions(); updateSum();
@@ -2661,6 +2769,7 @@ document.querySelectorAll('.modebtn').forEach(b => b.addEventListener('click', (
   buildPresets();
 }));
 document.getElementById('magGo').addEventListener('click', calc);
+document.getElementById('magStop').addEventListener('click', magCancel);
 renderMagPlanList();
 // 前回の画面を復元する(計算し直さない)。どの案を選んでどこまで進んだかも戻す。
 // 絞り込みのキャラは、取込みデータから消えていたら黙って解除する
@@ -2673,6 +2782,1027 @@ try {
                 last.trunc);
   }
 } catch (e) {}
+</script>
+<!-- 別スレッド用のソース。ページ側で「データ + これ + shim」を連結して Blob URL にする。
+     JS文字列リテラルにすると、対訳の英訳に含まれる " が literal を閉じて
+     ページ全体が壊れる(2026-08-10 に実際に踏んだ)。text/plain なら壊れない -->
+<script type="text/plain" id="magSolverSrc">// ============ マグ育成エンジン (mag_planner/tools/mag_engine.py の移植) ============
+// Python版は回帰テスト130項目で検証済み。ロジックは1対1で写し、独自の変更を入れない。
+const MG = MAGDATA.mags, MG_CELLS = MAGDATA.cells || {}, MG_CELLMAGS = MAGDATA.cell_mags || {};
+const FEED = MAGDATA.feed_tables, FOURTH_REF = MAGDATA.fourth_evolution_reference;
+const MSTATS = ['DEF', 'POW', 'DEX', 'MIND'];
+const MKEY = { DEF: 'def', POW: 'pow', DEX: 'dex', MIND: 'mind' };
+const ALLMAGS = Object.assign({}, MG, MG_CELLMAGS);
+
+function cmpOk(a, op, b) {
+  if (op === '>') return a > b;
+  if (op === '≥' || op === '>=') return a >= b;
+  if (op === '=') return a === b;
+  return false;
+}
+function statsMatch(st, rules) {
+  for (const r of (rules || [])) {
+    const lhs = st[r.lhs];
+    if (r.rhs === 'Others') {
+      if (!MSTATS.filter(k => k !== r.lhs).every(k => cmpOk(lhs, r.op, st[k]))) return false;
+    } else if (!cmpOk(lhs, r.op, st[r.rhs])) return false;
+  }
+  return true;
+}
+function evalEq(st, eq) {
+  const [l, r] = eq.split('=');
+  const sum = s => s.split('+').reduce((a, t) => a + st[t], 0);
+  return sum(l) === sum(r);
+}
+
+// Section ID を正式表記に寄せる。ゲームの取込みデータは大文字(WHITILL)で来る。
+// 表記が揃っていないと SIDS.indexOf() が効かず、**第3進化の偶奇も第4進化のグループ判定も
+// 黙って外れる**(エラーにならず、別のIDで育てたのと同じ手順が出てしまう)。入口で必ず揃える
+const canonSid = sid => sid
+  ? (SIDS.find(s => s.toLowerCase() === String(sid).toLowerCase()) || sid) : sid;
+
+class Mag {
+  constructor(cls = 'HU', gender = 'M', sectionId = 'Viridia', form = 'Mag', stats = null) {
+    this.cls = cls; this.gender = gender;
+    this.sectionId = canonSid(sectionId); this.form = form;
+    this.stats = stats ? Object.assign({}, stats) : { DEF: 5, POW: 0, DEX: 0, MIND: 0 };
+    this.exp = { DEF: 0, POW: 0, DEX: 0, MIND: 0 };
+    this.sync = 0; this.iq = 0; this.pbs = []; this.log = [];
+    const pb = (ALLMAGS[form] || {}).pb;
+    if (pb) this.pbs.push(pb);
+  }
+  get level() { return MSTATS.reduce((a, s) => a + this.stats[s], 0); }
+  get feedTable() { return (ALLMAGS[this.form] || {}).feed_table || '0'; }
+  clone() {
+    const c = new Mag(this.cls, this.gender, this.sectionId, this.form, this.stats);
+    c.exp = Object.assign({}, this.exp); c.pbs = this.pbs.slice(); c.log = this.log.slice();
+    c.sync = this.sync; c.iq = this.iq;
+    return c;
+  }
+  snapshot() {
+    return { form: this.form, level: this.level, stats: Object.assign({}, this.stats),
+             pbs: this.pbs.slice() };
+  }
+  // 倉庫に預けると奇数の進捗が1点切り捨てられる(DEF抑制の定石)
+  bankRound() { for (const s of MSTATS) if (this.exp[s] % 2 === 1) this.exp[s] -= 1; return this; }
+  feed(item, bank) {
+    const g = FEED[this.feedTable][item];
+    if (!g) throw new Error('未知の餌: ' + item);
+    // レベルは4ステの合計なので、ステが動くたびに数え直さず手元で足していく
+    // (ソルバから百万回単位で呼ばれる。計算結果は数え直しと同じ)
+    let lv = this.level;
+    for (const s of MSTATS) {
+      if (lv >= 200) break;
+      this.exp[s] += g[MKEY[s]];
+      if (this.exp[s] < 0) this.exp[s] = 0;       // マイナスでレベルは下がらない
+      while (this.exp[s] >= 100 && this.stats[s] < 200 && lv < 200) {
+        this.exp[s] -= 100; this.stats[s] += 1; lv += 1;
+      }
+    }
+    if (bank) this.bankRound();
+    this.sync = Math.max(0, Math.min(120, this.sync + g.sync));
+    this.iq = Math.max(0, Math.min(200, this.iq + g.iq));
+    this._checkEvolution();
+    return this;
+  }
+  feedMany(item, n, bank) { for (let i = 0; i < n; i++) this.feed(item, bank); return this; }
+
+  _checkEvolution() {
+    const lv = this.level, stage = (ALLMAGS[this.form] || {}).stage || 0;
+    if (stage >= 4) return;                       // レアマグ/セルマグは以降変わらない
+    if (lv >= 10 && stage === 0) this._evolve(this._first());
+    else if (lv >= 35 && stage === 1) this._evolve(this._second());
+    else if (lv === 50 && stage === 2) this._evolve(this._third());
+    else if (lv > 50 && lv % 5 === 0 && stage === 2) this._evolve(this._third());
+    else if (stage === 3) {
+      // 第4進化はLv100から。それ以外は5レベルごとに第3形態同士でも変わる
+      if (lv >= 100 && this._fourth()) this._evolve(this._fourth());
+      else if (lv >= 50 && lv % 5 === 0) {
+        const nx = this._third();
+        if (nx && nx !== this.form) this._evolve(nx);
+      }
+    }
+  }
+  _evolve(name) {
+    if (!name || name === this.form) return;
+    this.form = name;
+    const pb = (ALLMAGS[name] || {}).pb;
+    if (pb && !this.pbs.includes(pb) && this.pbs.length < 3) this.pbs.push(pb);
+    this.log.push({ level: this.level, to: name, pb: pb || null });
+  }
+  _first() {
+    for (const [n, m] of Object.entries(MG))
+      if (m.stage === 1 && (m.conditions || []).some(c => c.class === this.cls)) return n;
+    return null;
+  }
+  _second() {
+    for (const [n, m] of Object.entries(MG)) {
+      if (m.stage !== 2) continue;
+      for (const c of m.conditions)
+        if (c.evolves_from === this.form && statsMatch(this.stats, c.stat_rules)) return n;
+    }
+    return null;
+  }
+  // 第3進化は 職業 × 大小関係 × Section IDの偶奇
+  _third() {
+    const cands = [];
+    for (const [n, m] of Object.entries(MG)) {
+      if (m.stage !== 3) continue;
+      for (const c of m.conditions) {
+        if (c.class && c.class !== this.cls) continue;
+        if (Object.entries(c.stat_min || {}).some(([k, v]) => this.stats[k] < v)) continue;
+        if (statsMatch(this.stats, c.stat_rules)) { cands.push(n); break; }
+      }
+    }
+    if (cands.length <= 1) return cands[0] || null;
+    const i = SIDS.indexOf(this.sectionId);
+    if (i >= 0) {
+      const grp = i % 2 === 0 ? 'even' : 'odd';
+      const allowed = new Set(Object.values((THIRD_IDS[grp] || {})[this.cls] || {}));
+      const hit = cands.filter(n => allowed.has(n));
+      if (hit.length) return hit[0];
+    }
+    return cands[0];
+  }
+  _fourth() {
+    for (const ref of FOURTH_REF) {
+      if (ref.class !== this.cls || ref.gender !== this.gender) continue;
+      if (!ref.section_ids.includes(this.sectionId)) continue;
+      if (evalEq(this.stats, ref.equality)) return ref.mag;
+    }
+    return null;
+  }
+  // ---- マグセル ----
+  _cellOk(name, m, charLevel) {
+    const c = m.conditions[0], stage = (ALLMAGS[this.form] || {}).stage || 0;
+    if ('from_stage' in c && stage !== c.from_stage) return false;
+    if ('from_mag' in c && this.form !== c.from_mag) return false;
+    if ('min_level' in c && this.level < c.min_level) return false;
+    if ('all_stats_min' in c && MSTATS.some(s => this.stats[s] < c.all_stats_min)) return false;
+    if ('two_stats_min' in c &&
+        MSTATS.filter(s => this.stats[s] >= c.two_stats_min).length < 2) return false;
+    if ('min_sync' in c && this.sync < c.min_sync) return false;
+    if ('min_iq' in c && this.iq < c.min_iq) return false;
+    if (charLevel != null && 'char_level' in c && charLevel < c.char_level) return false;
+    const split = CELL_IDS[m.cell];               // 同じセルで2形態に分かれるものはIDの偶奇
+    if (split) {
+      const i = SIDS.indexOf(this.sectionId);
+      if (i >= 0 && split[i % 2 === 0 ? 'even' : 'odd'] !== name) return false;
+    }
+    return true;
+  }
+  useCell(cell, charLevel) {
+    for (const [name, m] of Object.entries(MG_CELLMAGS)) {
+      if (m.cell !== cell) continue;
+      if (!this._cellOk(name, m, charLevel)) continue;
+      this.form = name;
+      if (m.no_pb) this.pbs = [];
+      this.log.push({ level: this.level, to: name, pb: null, cell: cell });
+      return this;
+    }
+    return null;
+  }
+}
+
+// ============ 給餌手順 (mag_planner/tools/mag_planner.py の移植) ============
+// 「1種類の餌をN個」のブロック列にする。人間が実行できる形にするのが目的。
+function planBlocks(mag, target, bank, preferCycle, sticky, maxBlocks, maxFeed, floor) {
+  maxBlocks = maxBlocks || 40; maxFeed = maxFeed || 6000; floor = floor || 0;
+  const tgt = Array.isArray(target)
+    ? { DEF: target[0], POW: target[1], DEX: target[2], MIND: target[3] } : target;
+  const blocks = []; let fed = 0;
+  while (blocks.length < maxBlocks && fed < maxFeed) {
+    if (MSTATS.every(s => tgt[s] - mag.stats[s] <= 0)) break;
+    const table = FEED[mag.feedTable];
+    // sticky=true なら直前と同じ餌を優先して続け、手順の数そのものを減らす
+    const last = blocks.length ? blocks[blocks.length - 1] : null;
+    const prev = (sticky && last && last.items.length === 1) ? last.items[0][0] : null;
+    // 単一ブロックを先に使うと伸ばしやすいステを上限まで使い切って詰むことがある。
+    // 一度失敗したら preferCycle でサイクル優先に切り替える
+    const blk = preferCycle
+      ? (cycleBlock(mag, tgt, table, bank, maxFeed - fed, true, floor)
+         || singleBlock(mag, tgt, table, bank, maxFeed - fed, prev, floor))
+      : (singleBlock(mag, tgt, table, bank, maxFeed - fed, prev, floor)
+         || cycleBlock(mag, tgt, table, bank, maxFeed - fed, false, floor));
+    if (!blk) break;
+    blocks.push(blk); fed += blk.n;
+  }
+  return [mag, mergeBlocks(blocks)];   // foldCycles は廃止(mag_planner.py のコメント参照)
+}
+
+const SLACK_CAP = 20;   // 「あと◯個」はこれ以上数えても意味がないので頭打ちにする
+
+// このブロックを終えた地点から、**同じ与え方をあと何個続けても事故らないか**。
+// 事故 = もう目標に達しているステータスがもう1つ上がること(取り返しがつかない)。
+// 現場の失敗は「1個多く与えた」「端数のずれで目印が1〜2個ずれた」なので、単位は餌の個数。
+// 単一の餌は閉じた式(整数除算のみ)。Python 側 mag_planner.block_slack と同じ計算にすること
+function blockSlack(mag, tgt, items, cap) {
+  cap = cap || SLACK_CAP;
+  const locked = MSTATS.filter(s => mag.stats[s] >= tgt[s]);
+  if (!locked.length) return cap;
+  if (items.length === 1) {
+    const g = FEED[mag.feedTable][items[0][0]];
+    let worst = cap;
+    for (const s of locked) {
+      const v = g[MKEY[s]];
+      if (v > 0) worst = Math.min(worst, Math.floor((100 - mag.exp[s]) / v));
+    }
+    return worst;
+  }
+  const seq = [];
+  items.forEach(([it, cnt]) => { for (let i = 0; i < cnt; i++) seq.push(it); });
+  const probe = mag.clone();
+  for (let i = 0; i < cap; i++) {
+    probe.feed(seq[i % seq.length]);
+    if (locked.some(s => probe.stats[s] > tgt[s])) return i;
+  }
+  return cap;
+}
+
+// visible=false は「最後まで画面の数字が1つも動かないブロック」。
+// 前とまとめると、まとめた側まで『数字が動いたのに続きがある』形になるので mergeBlocks で区別する
+function mkBlock(items, repeat, n, mag, tgt, form, visible) {
+  return { items: items, repeat: repeat, n: n, form: form,
+           visible: visible !== false, slack: blockSlack(mag, tgt, items),
+           after: mag.snapshot() };
+}
+const sameStats = (a, b) => MSTATS.every(s => a[s] === b[s]);
+
+// 1種類の餌を、超過の直前まで与える。
+// preferItem = 直前のブロックで与えていた餌。リスクが同じなら同じ餌を続ける
+// (ブロックは進化のたびに切れるので、続けられれば mergeBlocks で1行にまとまる)
+function singleBlock(mag, tgt, table, bank, budget, preferItem, floor) {
+  floor = floor || 0;
+  const short = {}; MSTATS.forEach(s => short[s] = tgt[s] - mag.stats[s]);
+  const cands = [];
+  for (const [item, v] of Object.entries(table)) {
+    let gain = 0;
+    MSTATS.forEach(s => { if (short[s] > 0 && v[MKEY[s]] > 0) gain += v[MKEY[s]]; });
+    if (gain <= 0) continue;
+    // もう足りているステを伸ばす量がリスク(超過は取り返せない)
+    let risk = 0;
+    MSTATS.forEach(s => { if (short[s] <= 0) risk += Math.max(0, v[MKEY[s]]); });
+    cands.push([risk, item === preferItem ? 0 : 1, -gain, item]);
+  }
+  cands.sort((a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2]
+                       || (a[3] < b[3] ? -1 : 1));
+  // **画面の数字が動く切り口を取れる餌を優先する**。床を上げると、その餌のままでは
+  // 数字が動く前に余裕が尽きることがあり、そこで妥協すると「数えるだけの手順」が増える
+  let fallback = null;
+  const formBefore = mag.form, start = mag.clone();
+  const restore = () => {
+    Object.assign(mag, start); mag.stats = Object.assign({}, start.stats);
+    mag.exp = Object.assign({}, start.exp); mag.pbs = start.pbs.slice();
+    mag.log = start.log.slice();
+  };
+  for (const [, , , item] of cands) {
+    const probe = mag.clone();
+    let n = 0, safeVisible = 0, safeAny = 0, seen = Object.assign({}, probe.stats);
+    while (n < budget) {
+      // 「次の1個で超過するか」は閉じた式で判定する(毎回クローンして試すと重い)。
+      // 超過 = もう目標に達しているステの端数が、その1個で100に届くこと
+      const g = FEED[probe.feedTable][item];
+      if (probe.level < 200 && MSTATS.some(s => probe.stats[s] >= tgt[s]
+          && probe.stats[s] < 200 && probe.exp[s] + g[MKEY[s]] >= 100)) break;
+      probe.feed(item, bank); n++;
+      // blockSlack と同じ計算をここに展開している(このループは数十万回まわる)
+      const g2 = FEED[probe.feedTable][item];
+      let slack = SLACK_CAP;
+      for (const s of MSTATS) {
+        if (probe.stats[s] >= tgt[s]) {
+          const v = g2[MKEY[s]];
+          if (v > 0) {
+            const q = Math.floor((100 - probe.exp[s]) / v);
+            if (q < slack) slack = q;
+          }
+        }
+      }
+      if (slack >= floor) {
+        safeAny = n;
+        if (!sameStats(probe.stats, seen)) safeVisible = n;  // 人間が確認できる区切り
+      } else if (probe.form === formBefore) {
+        // 単一の餌では余裕は**単調に減る**(効くのはロック中でプラスの餌だけ、
+        // ロック対象は増える一方)。一度床を割ったら戻らないので、ここで打ち切る
+        break;
+      }
+      if (!sameStats(probe.stats, seen)) seen = Object.assign({}, probe.stats);
+      if (MSTATS.every(s => probe.stats[s] >= tgt[s])) break;
+      if (probe.form !== formBefore) break;        // 進化でテーブルが変わったら切る
+    }
+    // **画面の数字が動いたところで切る**のが第一。そこから先は見た目が変わらず、
+    // 「◯◯が△△になったら止める」と言えなくなる
+    if (safeVisible) {
+      restore(); mag.feedMany(item, safeVisible, bank);
+      return mkBlock([[item, safeVisible]], 1, safeVisible, mag, tgt, formBefore, true);
+    }
+    if (safeAny && fallback === null) fallback = [item, safeAny];
+  }
+  // どの餌でも数字を動かせないときだけ、数えるだけのブロックを許す
+  if (fallback) {
+    restore(); mag.feedMany(fallback[0], fallback[1], bank);
+    return mkBlock([[fallback[0], fallback[1]]], 1, fallback[1], mag, tgt, formBefore, false);
+  }
+  return null;
+}
+
+// 2種類の餌を比率で組み、上げたくないステの収支をゼロにする
+function cycleBlock(mag, tgt, table, bank, budget, onlyOffset, floor) {
+  floor = floor || 0;
+  const short = {}; MSTATS.forEach(s => short[s] = tgt[s] - mag.stats[s]);
+  const need = MSTATS.filter(s => short[s] > 0), full = MSTATS.filter(s => short[s] <= 0);
+  let best = null;
+  for (const [bItem, bv] of Object.entries(table)) {
+    let g = 0; need.forEach(s => { if (bv[MKEY[s]] > 0) g += bv[MKEY[s]]; });
+    if (g <= 0) continue;
+    if (onlyOffset && !full.some(s => bv[MKEY[s]] > 0)) continue;
+    for (const [aItem, av] of Object.entries(table)) {
+      if (aItem === bItem) continue;
+      let k = 1, bad = false;
+      for (const s of full) {
+        if (bv[MKEY[s]] <= 0) continue;
+        if (av[MKEY[s]] >= 0) { bad = true; break; }
+        k = Math.max(k, Math.ceil(bv[MKEY[s]] / -av[MKEY[s]]));
+      }
+      if (bad || k > 12) continue;
+      if (full.some(s => bv[MKEY[s]] + k * av[MKEY[s]] > 0)) continue;
+      let gain = 0;
+      need.forEach(s => gain += Math.max(0, bv[MKEY[s]] + k * av[MKEY[s]]));
+      if (gain <= 0) continue;
+      const score = gain / (k + 1);
+      if (!best || score > best[0]) best = [score, aItem, k, bItem];
+    }
+  }
+  if (!best) return null;
+  const [, aItem, k, bItem] = best;
+  const formBefore = mag.form, start = mag.clone();
+  const probe = mag.clone();
+  const cyc = [[aItem, k], [bItem, 1]];
+  let n = 0, reps = 0, safeVisible = 0, safeAny = 0, seen = Object.assign({}, probe.stats);
+  while (n + k + 1 <= budget) {
+    const nxt = probe.clone(); nxt.feedMany(aItem, k, bank); nxt.feed(bItem, bank);
+    if (MSTATS.some(s => nxt.stats[s] > tgt[s])) break;
+    probe.feedMany(aItem, k, bank); probe.feed(bItem, bank);
+    n += k + 1; reps++;
+    if (blockSlack(probe, tgt, cyc) >= floor) {
+      safeAny = reps;
+      if (!sameStats(probe.stats, seen)) safeVisible = reps;  // 見える変化で区切る
+    }
+    if (!sameStats(probe.stats, seen)) seen = Object.assign({}, probe.stats);
+    if (MSTATS.every(s => probe.stats[s] >= tgt[s]) || probe.form !== formBefore) break;
+  }
+  const take = safeVisible || safeAny;
+  if (!take) return null;
+  Object.assign(mag, start); mag.stats = Object.assign({}, start.stats);
+  mag.exp = Object.assign({}, start.exp); mag.pbs = start.pbs.slice();
+  mag.log = start.log.slice();
+  for (let i = 0; i < take; i++) { mag.feedMany(aItem, k, bank); mag.feed(bItem, bank); }
+  return mkBlock(cyc, take, take * (k + 1), mag, tgt, formBefore, !!safeVisible);
+}
+
+// 隣り合う同じ内容のブロックをまとめる(形態が変わっても与える餌が同じなら操作は同じ)
+function mergeBlocks(blocks) {
+  const out = [];
+  const kinds = x => x.items.map(i => i[0]).join('|');
+  for (const b of blocks) {
+    const prev = out.length ? out[out.length - 1] : null;
+    // 数字が動かないブロックは独立させる。まとめると止める目印が消える
+    if (!prev || kinds(prev) !== kinds(b) || b.visible === false || prev.visible === false) {
+      out.push(Object.assign({}, b, { items: b.items.map(i => i.slice()) }));
+      continue;
+    }
+    if (b.items.length === 1) {
+      prev.items = [[b.items[0][0], prev.items[0][1] * prev.repeat + b.items[0][1] * b.repeat]];
+      prev.repeat = 1;
+    } else if (JSON.stringify(prev.items) === JSON.stringify(b.items)) {
+      prev.repeat += b.repeat;
+    } else {
+      out.push(Object.assign({}, b, { items: b.items.map(i => i.slice()) }));
+      continue;
+    }
+    prev.n += b.n; prev.after = b.after;
+    // まとめると途中の区切りは消えるが、そこを通ることは変わらない。
+    // 危険度は構成ブロックの最悪値を引き継ぐ(隠さない)
+    prev.slack = Math.min(prev.slack === undefined ? SLACK_CAP : prev.slack,
+                          b.slack === undefined ? SLACK_CAP : b.slack);
+  }
+  return out;
+}
+
+// foldCycles(A×n → B×m の繰り返しを畳む処理)は 2026-08-07 に廃止。
+// 畳むと停止目印が1ブロックぶん消えるうえ、条件が「個数まで完全一致」だったため
+// 11個/12個の1個差で畳めたり畳めなかったりして、同じ操作が別の見た目になっていた。
+// 交互の並びは素のまま残し、表示側(build_site.py の timeline)でまとめて見せる。
+// 詳細は mag_planner/tools/mag_planner.py の同名コメント
+
+// ============ 逆算ソルバ (mag_planner/tools/mag_solve.py の移植) ============
+// 「進化の瞬間のステータス(中間目標)を先に確定してから餌を選ぶ」方式。
+// ステータスは減らないので中間目標は最終目標以下でなければならず、候補は有限個に絞れる。
+const MSTART = { DEF: 5, POW: 0, DEX: 0, MIND: 0 };
+const CLASS_JP = { HU: 'ハンター', RA: 'レンジャー', FO: 'フォース' };
+const GENDER_JP = { M: '男性', F: '女性' };
+const ALL_CLASSES = ['HU', 'RA', 'FO'];
+
+function* compositions(level, lower, upper) {
+  for (let a = lower.DEF; a <= upper.DEF; a++) {
+    if (a > level) break;
+    for (let b = lower.POW; b <= upper.POW; b++) {
+      if (a + b > level) break;
+      for (let c = lower.DEX; c <= upper.DEX; c++) {
+        if (a + b + c > level) break;
+        const d = level - a - b - c;
+        if (d >= lower.MIND && d <= upper.MIND) yield { DEF: a, POW: b, DEX: c, MIND: d };
+      }
+    }
+  }
+}
+// 到達できる中間目標は「1つのステに偏った」ものに集中するので、偏りが大きい順に試す
+function ordered(level, lower, upper, limit, cond) {
+  const out = [];
+  for (const w of compositions(level, lower, upper)) {
+    if (cond && !cond(w)) continue;
+    let bias = -Infinity;
+    MSTATS.forEach(s => bias = Math.max(bias, w[s] - lower[s]));
+    out.push([w.DEF, -bias, MSTATS.map(s => w[s]), w]);
+  }
+  const cmpArr = (a, b) => {
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
+    return 0;
+  };
+  out.sort((x, y) => x[0] - y[0] || x[1] - y[1] || cmpArr(x[2], y[2]));
+  return [out.slice(0, limit).map(x => x[3]), out.length];
+}
+function handOver(mag, cls, gender, sid) {
+  if (cls) mag.cls = cls;
+  if (gender) mag.gender = gender;
+  if (sid) mag.sectionId = canonSid(sid);     // 取込みデータは大文字で来る
+  return mag;
+}
+// 各手順の終端で保証する余裕(あと何個まちがえても事故らないか)。
+// Python 側 mag_solve.FLOOR と同じ値にすること。実測で決めた値の根拠はそちらのコメント
+const MAG_FLOOR = 3;
+const TRACK_HAND = 10;   // 受け渡し1回ぶんの手間(預ける/持ち替える/取り出す/装備し直す)
+const TRACK_KIND = 2;    // 餌1種類ぶんの手間(買い揃えて持ち歩く)
+
+// その手順で人間が**追わなければならないものの数**。
+// 同じ餌を292個与えて数字を待つのは追跡1つ。34セット交互は追跡34。292個数えるのは追跡292。
+// 手間は餌の個数ではなく追跡の数に比例する、というのが唯一の原則
+function blockTracking(b) {
+  if (b.visible === false) return b.n;        // 目印が無い = 全部数えるしかない
+  if (b.items.length > 1) return b.repeat;    // 比率は繰り返し回数だけ追う
+  return 1;                                   // 単一の餌 + 目印 = 何個でも追跡1つ
+}
+function blocksCost(blocks) {
+  const kinds = new Set(); blocks.forEach(b => b.items.forEach(i => kinds.add(i[0])));
+  let t = 0; blocks.forEach(b => t += blockTracking(b));
+  return t + TRACK_KIND * kinds.size;
+}
+// この案の危険度 = 全手順の中で最も余裕の無いところ(単位: 餌の個数)
+function blocksRisk(blocks) {
+  let r = SLACK_CAP;
+  blocks.forEach(b => { const s = b.slack === undefined ? SLACK_CAP : b.slack;
+                        if (s < r) r = s; });
+  return r;
+}
+// ①事故らないこと(床を満たすか) → ②手間(追跡の数) → ③余裕は大きいほど良い
+function blocksEase(blocks) {
+  const risk = blocksRisk(blocks);
+  return [risk >= MAG_FLOOR ? 0 : 1, blocksCost(blocks), -risk];
+}
+const cmpEase = (a, b) => {
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return 0;
+};
+// 3通りの組み方を必ず全部試して、一番良いものを採る。
+// 「サイクルが要らなければそれが最良」という打ち切りをしていたが、比率給餌のほうが
+// 手順が7分の1で余裕も大きい実例がある(シャトの最終区間)。打ち切ると生成すらされない
+function runTo(mag, goal, bank, floor) {
+  floor = floor === undefined ? MAG_FLOOR : floor;
+  let best = null, blocks = [];
+  for (const [preferCycle, sticky] of [[false, true], [false, false], [true, false]]) {
+    const r = planBlocks(mag.clone(), goal, bank, preferCycle, sticky, 0, 0, floor);
+    if (!MSTATS.every(s => r[0].stats[s] === goal[s])) {
+      if (!blocks.length) blocks = r[1];
+      continue;
+    }
+    const e = blocksEase(r[1]);
+    if (!best || cmpEase(e, best[0]) < 0) best = [e, r[0], r[1]];
+  }
+  if (best) return [best[1], best[2]];
+  // 床を満たしたまま届かないなら床を1段ずつ下げる。届く中で最も安全な案を出し、表示側で警告する
+  if (floor > 0) return runTo(mag, goal, bank, floor - 1);
+  return [null, blocks];
+}
+function pbOk(pbs, want, avoid, done) {
+  if (avoid && avoid.length && pbs.some(p => avoid.includes(p))) return false;
+  if (want && want.length) {
+    const seq = pbs.filter(p => want.includes(p));
+    if (seq.join() !== want.slice(0, seq.length).join()) return false;
+    if (pbs.length >= 3 && seq.length < want.length) return false;
+    if (done && seq.length < want.length) return false;
+  }
+  return true;
+}
+function fourthOptions(chars) {
+  // 同じ (職業, 性別, ID) のキャラが複数いても選択肢としては1つ
+  // (誰が担当するかは alternatives() が案の中で列挙する)
+  const out = [], seen = new Set();
+  for (const ref of FOURTH_REF) {
+    if (chars && chars.length) {
+      chars.forEach(ch => {
+        const key = ref.class + '/' + ref.gender + '/' + ch.section_id + '/' + ref.mag;
+        if (ch.class === ref.class && ch.gender === ref.gender
+            && ref.section_ids.includes(ch.section_id) && !seen.has(key)) {
+          seen.add(key);
+          out.push([ref.class, ref.gender, ch.section_id, ref.mag, ref.equality]);
+        }
+      });
+    } else {
+      // IDが効くのは「第3進化の偶奇」と「第4進化のグループ所属」だけ。
+      // グループの偶数側・奇数側から1つずつ取れば、起きうる分岐を網羅できる
+      // (グループは偶奇が混ざっている。例: Viridia偶 / Bluefull奇 / Redria偶 / Whitill奇)
+      [0, 1].forEach(par => {
+        const pick = ref.section_ids.find(i => SIDS.indexOf(i) % 2 === par);
+        if (pick) out.push([ref.class, ref.gender, pick, ref.mag, ref.equality]);
+      });
+    }
+  }
+  return out;
+}
+const classesOf = chars => (chars && chars.length)
+  ? [...new Set(chars.map(c => c.class))].sort() : ALL_CLASSES;
+const charOf = (chars, cls, gender) => (chars || []).find(
+  c => c.class === cls && (!gender || c.gender === gender)) || null;
+
+// 工程がキャラに要求する条件。工程ごとに厳しさが違う。
+// 第1/第2進化は職業だけ(IDは不問)、第3進化は職業+Section IDの偶奇、
+// 第4進化は職業+性別+IDが完全一致でないと同じ結果にならない
+function reqOf(ph) {
+  const mode = (ph.idFree || !ph.sid) ? 'any' : (ph.parity ? 'parity' : 'exact');
+  return { cls: ph.cls, gender: ph.gender || null,
+           sid: mode === 'any' ? null : ph.sid, mode: mode };
+}
+// 2つの工程を同じキャラで担当できるなら合成した条件を返す。無理なら null
+function mergeReq(a, b) {
+  if (!a) return Object.assign({}, b);
+  if (a.cls !== b.cls) return null;
+  if (a.gender && b.gender && a.gender !== b.gender) return null;
+  const gender = a.gender || b.gender;
+  const rank = { any: 0, parity: 1, exact: 2 };
+  const lo = rank[a.mode] >= rank[b.mode] ? b : a;
+  const hi = rank[a.mode] >= rank[b.mode] ? a : b;
+  if (hi.mode === 'any') return { cls: a.cls, gender: gender, sid: null, mode: 'any' };
+  if (lo.mode === 'any') return { cls: a.cls, gender: gender, sid: hi.sid, mode: hi.mode };
+  const li = SIDS.indexOf(lo.sid), hj = SIDS.indexOf(hi.sid);
+  if (lo.mode === 'exact') { if (lo.sid !== hi.sid) return null; }
+  else if (li % 2 !== hj % 2) return null;
+  return { cls: a.cls, gender: gender, sid: hi.sid, mode: hi.mode };
+}
+// 工程を「同じキャラが担当できる区間」にまとめる。区間の境目が受け渡し
+function segmentsOf(phases) {
+  const segs = [];
+  for (const ph of phases) {
+    if (!ph.cls) {                    // 給餌だけの工程は直前の担当のまま
+      if (segs.length) segs[segs.length - 1].phases.push(ph);
+      else segs.push({ req: null, phases: [ph] });
+      continue;
+    }
+    const r = reqOf(ph);
+    const last = segs.length ? segs[segs.length - 1] : null;
+    const merged = last ? mergeReq(last.req, r) : null;
+    if (last && merged) { last.req = merged; last.phases.push(ph); }
+    else segs.push({ req: r, phases: [ph] });
+  }
+  return segs;
+}
+// 途中で「別のキャラに渡す」回数。渡さずに済むほど簡単
+const handOffs = phases =>
+  Math.max(0, segmentsOf(phases).filter(s => s.req).length - 1);
+
+// ---- 実際に使えるキャラの組み合わせ ----
+// 「第3進化は偶奇」「第4進化はIDグループ」と条件が入り組んでいて、しかも第4進化の
+// グループは偶奇が混ざっている(Viridia偶/Bluefull奇/Redria偶/Whitill奇)ため、条件式からは
+// 「グループ全部OK」とは言えない。**手順を再生して確かめたものだけ**を出す。
+const GENDERS = ['M', 'F'];
+// 実在する12職業。「ハンター男性」より「HUmar / HUcast」の方が伝わる
+const JOBS = [['HUmar', 'HU', 'M'], ['HUnewearl', 'HU', 'F'],
+              ['HUcast', 'HU', 'M'], ['HUcaseal', 'HU', 'F'],
+              ['RAmar', 'RA', 'M'], ['RAmarl', 'RA', 'F'],
+              ['RAcast', 'RA', 'M'], ['RAcaseal', 'RA', 'F'],
+              ['FOmar', 'FO', 'M'], ['FOmarl', 'FO', 'F'],
+              ['FOnewm', 'FO', 'M'], ['FOnewearl', 'FO', 'F']];
+const jobNames = (classes, genders) =>
+  JOBS.filter(j => classes.includes(j[1]) && genders.includes(j[2])).map(j => j[0]);
+
+// 区間ごとに (職業, 性別, ID) を割り当て直して再生し、記録された after
+// (形態・レベル・ステータス・PB)が全部一致するか。外れた時点で打ち切る
+function replayPlan(plan, assign) {
+  let m = null, si = -1;
+  for (const seg of segmentsOf(plan.phases)) {
+    if (seg.req) {
+      si++;
+      m = m === null ? new Mag(assign[si][0], assign[si][1], assign[si][2])
+                     : handOver(m, assign[si][0], assign[si][1], assign[si][2]);
+    } else if (m === null) return false;   // セル経由など、担当が決まらない手順は対象外
+    for (const p of seg.phases) {
+      for (const b of p.blocks) {
+        for (let r = 0; r < b.repeat; r++)
+          for (const [item, cnt] of b.items) m.feedMany(item, cnt);
+        const a = b.after;
+        if (m.form !== a.form || m.level !== a.level
+            || MSTATS.some(s => m.stats[s] !== a.stats[s])
+            || m.pbs.join() !== a.pbs.join()) return false;
+      }
+    }
+  }
+  return true;
+}
+const baseAssign = plan => segmentsOf(plan.phases).filter(s => s.req)
+  .map(s => [s.req.cls, s.req.gender || 'M', s.req.sid || 'Viridia']);
+
+function alternatives(plan) {
+  const base = baseAssign(plan);
+  return base.map((_, si) => {
+    const combos = [];
+    for (const cls of ALL_CLASSES) for (const gen of GENDERS) for (const sid of SIDS) {
+      const assign = base.map(x => x.slice());
+      assign[si] = [cls, gen, sid];
+      if (replayPlan(plan, assign)) combos.push([cls, gen, sid]);
+    }
+    return { classes: ALL_CLASSES.filter(c => combos.some(x => x[0] === c)),
+             genders: GENDERS.filter(g => combos.some(x => x[1] === g)),
+             section_ids: SIDS.filter(s => combos.some(x => x[2] === s)),
+             combos: combos };
+  });
+}
+// 案そのものの評価。①事故らないこと → ②手間(追跡の数 + 受け渡し) → ③余裕
+function planEase(p) {
+  const blocks = [];
+  p.phases.forEach(ph => ph.blocks.forEach(b => blocks.push(b)));
+  const risk = blocksRisk(blocks);
+  return [risk >= MAG_FLOOR ? 0 : 1,
+          blocksCost(blocks) + TRACK_HAND * handOffs(p.phases), -risk];
+}
+
+function prune(states, keep) {
+  const byForm = new Map();
+  states.forEach(st => {
+    if (!byForm.has(st.mag.form)) byForm.set(st.mag.form, []);
+    byForm.get(st.mag.form).push([planEase(st), st]);
+  });
+  const out = [];
+  byForm.forEach(lst => { lst.sort((a, b) => cmpEase(a[0], b[0]));
+    lst.slice(0, keep).forEach(x => out.push(x[1])); });
+  return out;
+}
+function pack(st, tail, mag) {
+  const phases = st.phases.concat(tail);
+  return { mag: mag, phases: phases,
+           items: phases.reduce((a, p) => a + p.blocks.reduce((x, b) => x + b.n, 0), 0) };
+}
+
+// Lv50以降。レアマグ(第4進化)はLv100で確定し以降変わらないので、早く確定させる方が制御しやすい
+function finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm) {
+  const out = [];
+  const final = MSTATS.reduce((a, s) => a + tgt[s], 0);
+  for (const [c4, g4, sid, form4, eq] of fourthOptions(chars)) {
+    if (wantForm && form4 !== wantForm) continue;
+    for (let lv = 100; lv <= final; lv += 10) {
+      const [hit] = ordered(lv, st.mag.stats, tgt, 3, w => evalEq(w, eq));
+      let best = null;
+      for (const w3 of hit) {
+        let m = st.mag.clone();
+        handOver(m, c4, g4, sid);
+        const r1 = runTo(m, w3, bank);
+        m = r1[0];
+        if (!m || m.form !== form4 || !pbOk(m.pbs, wantPbs, avoidPbs)) continue;
+        const tail = [{ cls: c4, gender: g4, sid: sid, rare: form4,
+                        blocks: r1[1], after: m.snapshot() }];
+        if (lv < final) {
+          const r2 = runTo(m, tgt, bank);
+          if (!r2[0]) continue;
+          m = r2[0];
+          tail.push({ blocks: r2[1], after: m.snapshot() });
+        }
+        if (!pbOk(m.pbs, wantPbs, avoidPbs, true)) continue;
+        if (wantForm && m.form !== wantForm) continue;
+        const p = pack(st, tail, m); p.rare = form4;
+        const e = planEase(p);      // 同じレベルで確定できる案のうち簡単な方を採る
+        if (!best || cmpEase(e, best[0]) < 0) best = [e, p];
+      }
+      if (best) { out.push(best[1]); break; }
+    }
+  }
+  const r = runTo(st.mag.clone(), tgt, bank);
+  if (r[0] && pbOk(r[0].pbs, wantPbs, avoidPbs, true)
+      && (!wantForm || r[0].form === wantForm)) {
+    const p = pack(st, [{ blocks: r[1], after: r[0].snapshot() }], r[0]);
+    p.rare = null;
+    out.push(p);
+  }
+  return out;
+}
+
+// **すでにレアマグになっているマグ**を目標まで伸ばす手順を作る。
+// 第4進化(とセルマグ)は stage>=4 なので _checkEvolution が即 return する。つまり
+// 形態も給餌テーブルも変わらず、PBも増えず、**キャラは誰でもよい**(判定が無い)。
+// したがって「目標まで餌をやるだけ」になり、runTo をそのまま使える。
+// returns [plan, note]。届かなければ [null, 理由]
+function planFromRare(form, startStats, target, bank) {
+  if (!ALLMAGS[form]) return [null, `「${form}」というマグはありません`];
+  if ((ALLMAGS[form].stage || 0) < 4)
+    return [null, `${magJp(form)} はレアマグ(第4進化)ではありません`];
+  const st = Array.isArray(startStats)
+    ? { DEF: startStats[0], POW: startStats[1], DEX: startStats[2], MIND: startStats[3] }
+    : Object.assign({}, startStats);
+  const tgt = Array.isArray(target)
+    ? { DEF: target[0], POW: target[1], DEX: target[2], MIND: target[3] }
+    : Object.assign({}, target);
+  const low = MSTATS.filter(s => tgt[s] < st[s]);
+  if (low.length)
+    return [null, 'ステータスは減らないので、出発点より低い目標にはできません('
+      + low.map(s => `${s} は ${st[s]} 以上`).join('、') + ')'];
+  const total = MSTATS.reduce((a, s) => a + tgt[s], 0);
+  if (total > 200)
+    return [null, `4ステの合計が ${total} です。マグのレベル上限は200です`];
+  if (MSTATS.every(s => tgt[s] === st[s]))
+    return [null, '出発点と同じ目標です。伸ばしたいステータスを上げてください'];
+  const r = runTo(new Mag('HU', 'M', 'Viridia', form, st), tgt, bank);
+  if (!r[0]) return [null, 'この餌のテーブルでは、ほかのステータスを超えずに'
+    + '目標へ届く組み合わせが作れませんでした'];
+  return [{ mag: r[0], phases: [{ blocks: r[1], after: r[0].snapshot() }],
+            items: r[1].reduce((a, b) => a + b.n, 0), rare: null,
+            continueFrom: { form: form, stats: st }, locked: true }, null];
+}
+
+// 案の同一性キー。replay の一致条件(レア/セル + 各ブロックの餌列と直後の状態)を
+// そのまま文字列にする。キーが同じ2案は alternatives() も同じになるので、
+// 代表1件に潰しても情報は失われない。Python正本(plan_key)と1文字も違えないこと
+function planKey(p) {
+  const parts = [p.rare || '', p.cell || ''];
+  for (const ph of p.phases) {
+    const bs = [];
+    for (const b of (ph.blocks || [])) {
+      const a = b.after;
+      bs.push(String(b.repeat) + 'x'
+        + b.items.map(ic => ic[0] + ':' + ic[1]).join('+')
+        + '>' + a.form + '/' + a.level
+        + '/' + MSTATS.map(s => a.stats[s]).join(',')
+        + '/' + a.pbs.join(','));
+    }
+    parts.push(bs.join(';'));
+  }
+  return parts.join('~');
+}
+
+function magSolve(target, opt) {
+  opt = opt || {};
+  const wantPbs = opt.wantPbs || null, avoidPbs = opt.avoidPbs || null;
+  const wantForm = opt.wantForm || null;
+  // 取込みデータのSection IDは大文字(WHITILL)で来る。ここで揃えないと
+  // 第3進化の偶奇も第4進化のグループ判定も黙って外れる
+  const chars = opt.characters
+    ? opt.characters.map(c => Object.assign({}, c, { section_id: canonSid(c.section_id) }))
+    : null;
+  const bank = !!opt.bank, useCells = opt.useCells !== false;
+  // stopAfter 指定時は上位N件だけ返す旧挙動(収集も N*4 で打ち切る)。
+  // 未指定なら見つかった案を全部返し、maxResults(安全弁)に当たったら truncated=true
+  const width = opt.width || 8000, keep = opt.keep || 3;
+  const stopAfter = opt.stopAfter || null, maxResults = opt.maxResults || 200;
+  const tgt = { DEF: target[0], POW: target[1], DEX: target[2], MIND: target[3] };
+  const notes = [];
+  const total = MSTATS.reduce((a, s) => a + tgt[s], 0);
+  if (MSTATS.some(s => tgt[s] < MSTART[s])) return [[], ['初期値(DEF5)を下回る目標は作れません'], false];
+  if (MSTATS.some(s => tgt[s] > 200)) return [[], ['1つのステータスの上限は200です'], false];
+  if (total > 200) return [[], [`4ステの合計が ${total} です。マグのレベル上限は200なのでこの目標には到達できません`], false];
+  if (total < 50) return [[], ['4ステの合計が50未満だとLv50の進化に届きません'], false];
+
+  // マグセル経由: 基本マグにセルを使うといきなりテーブル7に入れる
+  const cellResults = [];
+  if (useCells && !wantPbs) {
+    const cellNames = [...new Set(Object.values(MG_CELLMAGS).map(m => m.cell))].sort();
+    for (const cellName of cellNames) {
+      const c0 = classesOf(chars)[0], ch = charOf(chars, c0);
+      const base = new Mag(c0, ch ? ch.gender : 'M', ch ? ch.section_id : 'Viridia');
+      if (!base.useCell(cellName)) continue;
+      if (wantForm && base.form !== wantForm) continue;
+      const r = runTo(base, tgt, bank);
+      if (!r[0]) continue;
+      cellResults.push({ mag: r[0], items: r[1].reduce((a, b) => a + b.n, 0), rare: null,
+        cell: cellName, cellForm: r[0].form,
+        phases: [{ cellUse: cellName, blocks: [] },
+                 { blocks: r[1], after: r[0].snapshot() }] });
+    }
+  }
+
+  // Lv35時点で到達できる状態
+  let stage1 = []; const blocked1 = [];
+  for (const c1 of classesOf(chars)) {
+    const ch1 = charOf(chars, c1);
+    const base = new Mag(c1, ch1 ? ch1.gender : 'M', ch1 ? ch1.section_id : 'Viridia');
+    const [cands] = ordered(35, MSTART, tgt, width);
+    const hits = {};
+    for (const w1 of cands) {
+      const r = runTo(base.clone(), w1, bank);
+      if (!r[0]) continue;
+      if (!pbOk(r[0].pbs, wantPbs, avoidPbs)) { blocked1.push([r[0].form, r[0].pbs.slice()]); continue; }
+      hits[r[0].form] = (hits[r[0].form] || 0) + 1;
+      if (hits[r[0].form] > keep) continue;
+      stage1.push({ mag: r[0], c1: c1,
+        phases: [{ cls: c1,
+                   // 第1進化は職業のみ、第2進化はキャラ非依存。IDは問わない
+                   idFree: true, blocks: r[1], after: r[0].snapshot() }] });
+    }
+  }
+  stage1 = prune(stage1, keep);
+  if (!stage1.length) {
+    if (cellResults.length) {
+      notes.push('通常の育成では作れないため、マグセルを使う案を出しています');
+      return [stopAfter ? cellResults.slice(0, stopAfter) : cellResults, notes, false];
+    }
+    return [[], notes.concat([whyBlocked(35, blocked1, wantPbs, avoidPbs)]), false];
+  }
+
+  // Lv50時点で到達できる状態(必要ならキャラを渡す)
+  let stage2 = []; const blocked2 = [];
+  for (const st of stage1) {
+    for (const c3 of classesOf(chars)) {
+      const ch3 = charOf(chars, c3);
+      const [cands] = ordered(50, st.mag.stats, tgt, width);
+      const hits = {};
+      for (const w2 of cands) {
+        let m = st.mag.clone();
+        handOver(m, c3, ch3 ? ch3.gender : null, ch3 ? ch3.section_id : null);
+        const r = runTo(m, w2, bank);
+        if (!r[0]) continue;
+        if (!pbOk(r[0].pbs, wantPbs, avoidPbs)) { blocked2.push([r[0].form, r[0].pbs.slice()]); continue; }
+        hits[r[0].form] = (hits[r[0].form] || 0) + 1;
+        if (hits[r[0].form] > keep) continue;
+        stage2.push({ mag: r[0], c1: st.c1,
+          phases: st.phases.concat([{
+            // 第3進化は Section ID の偶奇でも分かれるので、計算に使ったIDを残す
+            cls: c3, sid: m.sectionId, parity: true,
+            blocks: r[1], after: r[0].snapshot() }]) });
+      }
+    }
+  }
+  stage2 = prune(stage2, keep);
+  if (!stage2.length) {
+    if (cellResults.length) {
+      notes.push('通常の育成では作れないため、マグセルを使う案を出しています');
+      return [stopAfter ? cellResults.slice(0, stopAfter) : cellResults, notes, false];
+    }
+    return [[], notes.concat([whyBlocked(50, blocked2, wantPbs, avoidPbs)]), false];
+  }
+
+  let results = [];
+  let truncated = false;
+  const cap = stopAfter ? stopAfter * 4 : maxResults;
+  for (const st of stage2) {
+    finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm).forEach(p => results.push(p));
+    if (results.length >= cap) { truncated = true; break; }
+  }
+  // 同じ案(レア/セル + 餌列 + 各ブロック後の状態が全て一致)は1つに潰す。
+  // 取込みキャラに同じ (職業, 性別, ID) が複数いると同一案が量産されるため
+  const seen = new Set();
+  results = results.filter(p => {
+    const k = planKey(p);
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+  // レアマグを先に出すのは、一度なれば形態が固定され以降は何も気にせず伸ばせるから。
+  // その中では簡単な順。餌の総数は最後の同点処理にだけ使い、300個単位でしか見ない
+  // (何個あげたかは手間にほぼ影響しないため)。
+  // 丸めは整数演算で行う: Math.round() と Python の round() は .5 で割れる(正本と同式にする)
+  results.sort((a, b) => (a.rare == null) - (b.rare == null)
+    || cmpEase(planEase(a), planEase(b))
+    || Math.floor((a.items + 150) / 300) - Math.floor((b.items + 150) / 300));
+  results = results.concat(cellResults);
+  if (opt.onlyCell) results = results.filter(p => p.cell === opt.onlyCell);
+  if (!results.length && wantForm) notes.push(explainForm(wantForm, tgt));
+  if (stopAfter) results = results.slice(0, stopAfter);
+  // 床を満たせない案しか作れなかったとき。**画面に余裕の数字は出さない**方針だが、
+  // 「手順どおりに与えても失敗しうる」ことまで黙るのは違う。
+  // 実測では返した817案すべてが床を満たしており、ここは発火しない
+  if (results.length) {
+    const bl = [];
+    results[0].phases.forEach(ph => ph.blocks.forEach(b => bl.push(b)));
+    if (blocksRisk(bl) < MAG_FLOOR)
+      notes.push('この目標は、端数のずれで手順どおりに与えても失敗することがあります。'
+                 + '目標を少し変えると余裕のある手順が組めます');
+  }
+  return [results, notes, truncated];
+}
+
+// ============ 和名と説明文 (mag_solve.py の同名関数の移植) ============
+const magJp = n => jpName(n);
+// 英語ページでは JPN.names が空。そのときはPBも英語名で出す
+const pbJp = p => (JPN.names ? (PB_JP[p] || p) : p);
+
+// そのPBを避ける方法を、進化のどこで決まるかから説明する
+function pbAdvice(pb) {
+  const src = [];
+  for (const [n, m] of Object.entries(MG)) if (m.pb === pb) src.push([m.stage, n]);
+  const first = src.filter(x => x[0] === 1).map(x => x[1]);
+  if (first.length) {
+    const conds = MG[first[0]].conditions || [];
+    const cls = (conds.find(c => c.class) || {}).class;
+    return `第1進化(${magJp(first[0])})で付きます。`
+         + `Lv10を${CLASS_JP[cls] || ''}以外のキャラで迎えれば避けられます`;
+  }
+  const stages = [...new Set(src.map(x => x[0]))].sort();
+  return `第${stages.join('・')}進化で付きます。`
+       + 'ステータスの大小関係で進化先が変わるため、目標次第では避けられません';
+}
+
+function whyBlocked(level, blocked, want, avoid) {
+  if (!blocked.length) {
+    return `Lv${level}まで、目標のどのステータスも超えずに育てる方法がありません。`
+         + '目標のどれかを引き上げる必要があります';
+  }
+  const forms = [...new Set(blocked.map(b => b[0]))].sort();
+  const pbs = [...new Set(blocked.flatMap(b => b[1]))].sort();
+  const head = `Lv${level}時点で到達できる形態は ${forms.map(magJp).join(', ')} だけで、`
+             + `そのPBは ${pbs.map(pbJp).join(', ')} です。`;
+  if (avoid && avoid.length && pbs.some(p => avoid.includes(p))) {
+    const ng = avoid.filter(p => pbs.includes(p));
+    return head + `目標ステータスがこの形態を通ることを強制するため、`
+         + `${ng.map(pbJp).join('、')} は避けられません(${pbAdvice(ng[0])})`;
+  }
+  if (want && want.length) return head + `指定したPB ${want.map(pbJp).join('、')} の順序と両立しません`;
+  return head + 'PB制約と両立しません';
+}
+
+// 指定した形態で終われない理由を、最終ステータスとの関係で説明する
+function explainForm(form, tgt) {
+  const m = ALLMAGS[form];
+  if (!m) return `「${form}」という形態はありません`;
+  const total = MSTATS.reduce((a, s) => a + tgt[s], 0);
+  const conds = (m.conditions || []).map(c => c.raw).join(' / ');
+  if (m.stage >= 4) {
+    if (total < 100) {
+      return `「${magJp(form)}」はレアマグ(第4進化)で、Lv100以降でないと進化しません。`
+           + `この目標は4ステの合計が${total}なのでLv100に届きません。`
+           + '合計が100以上になる目標にする必要があります';
+    }
+    return `「${magJp(form)}」はレアマグ(第4進化)で、Lv100以降に条件(${conds})を満たせば確定し、`
+         + '以降は形態が変わりません。ただしこの目標では、Lv100以降のどこかで目標を超えずに'
+         + 'その等式を成立させる組み合わせが作れませんでした';
+  }
+  const last = total - total % 5;
+  const ok = (m.conditions || []).some(c => c.stat_rules && statsMatch(tgt, c.stat_rules));
+  const head = `第3進化までの形態はLv50以降5レベルごとに再判定されます。`
+             + `この目標の最終Lvは${total}なので、最後の判定はLv${last}時点です。`;
+  if (ok) {
+    return head + `「${magJp(form)}」の条件(${conds})自体は最終ステータスで満たせますが、`
+         + 'そこへ至る途中で目標を超えずに育てる方法が見つかりませんでした';
+  }
+  return head + `最終ステータス ${MSTATS.map(s => tgt[s]).join('/')} は`
+       + `「${magJp(form)}」の条件(${conds})を満たさないため、この形態では終われません`
+       + '(途中で経由することは可能です)';
+}
+</script>
+<script type="text/plain" id="magWorkerSrc">// ============ マグ画面: ソルバを別スレッドで走らせる ============
+//
+// 計算はメインスレッドを塞ぐ(病的な目標で最大9秒)。その間ページが完全に無反応になるので、
+// 重い入口3つだけを Worker に出す。**表示に使う軽い関数(handOffs / segmentsOf /
+// new Mag / handOver)はメインスレッドに残す**ので、ソルバのバンドルは分割しない。
+// 同じ engine+plan+solve+msg を両方で評価する(ページのサイズは増えない。同じ文字列の使い回し)。
+//
+// Worker のソースは次の順で組み立てる。**並びが重要**:
+//   ① データ(MAGDATA など)  ② ソルバのバンドル  ③ このファイル(shim)
+// engine.js が評価時に MAGDATA.mags を読むので、①が先でないと動かない。
+//
+// Worker は**状態を持たない**。alts は案そのものを送るので、復元した保存プランにも同じ経路が
+// 使える。中止は terminate() で行う(密なループは協調フラグでは止められない)。
+
+self.onmessage = function (e) {
+  const { id, type } = e.data;
+  try {
+    let payload;
+    if (type === 'solve') {
+      const [results, notes, truncated] = magSolve(e.data.target, e.data.opts || {});
+      payload = { results: results, notes: notes, truncated: truncated };
+    } else if (type === 'fromRare') {
+      const [plan, note] = planFromRare(e.data.form, e.data.stats, e.data.target,
+                                        e.data.bank);
+      payload = { plan: plan, note: note };
+    } else if (type === 'alts') {
+      // 案ごとに「この工程は誰が担当できるか」を手順の再生で確かめる。
+      // 1案あたり数十msかかるので、まとめて頼まれたら1件ずつ返して画面を先に進ませる
+      (e.data.plans || []).forEach(function (p, i) {
+        self.postMessage({ id: id, ok: true, partial: true,
+                           index: e.data.indexes[i], payload: alternatives(p) });
+      });
+      payload = { done: true };
+    } else {
+      throw new Error('未知の依頼: ' + type);
+    }
+    self.postMessage({ id: id, ok: true, payload: payload });
+  } catch (err) {
+    self.postMessage({ id: id, ok: false, error: String(err && err.message || err) });
+  }
+};
 </script>
 </body>
 </html>
