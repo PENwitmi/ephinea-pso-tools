@@ -155,89 +155,132 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .cfchip.on .who { color: var(--accent); }
 .cfnote { font-size: 0.82rem; color: var(--sub); margin: 0 0 12px; }
 
-/* 読みもの共通の組版。build_site.py が全ての読みものページに差し込む。
-   theme.css はツール用(幅1200px・本文0.78〜0.85rem・全部パネル)なので、
-   **読み物としては行が長すぎ、字が小さく、枠が多すぎる**。ここで上書きする。
+/* 読みもの共通のレイアウト。build_site.py が全ての読みものページに差し込む。
 
-   方針は3つだけ:
-     1. 行長を詰める(全角40字前後)。読めるかどうかはまずここで決まる
-     2. 枠で囲まない。余白と見出しで区切る。枠は「注記」と「表」だけに使う
-     3. 本文を大きくして行間を空ける(1rem / 1.95)
+   **PCで読まれる前提**で組む。1本の細い列に流すのは電話向けの形で、
+   1440pxの画面では余白ばかりになって一覧できない(2026-08-11 にそうなった)。
+   逆に、全部を同じカードにして1200px幅に敷き詰めるのも読めない。
+
+   狙いは3つ:
+     1. 左に目次を固定して、長い記事のどこにいるか常に見えるようにする
+     2. 地の文は読める行長に収めるが、**表・並列項目は画面幅を使って一覧させる**
+     3. 見出しと余白で構造を出す。枠は意味のあるところにだけ使う
 */
 
-/* ---- 1. 行長 ---- */
-/* main の直下だけに measure を掛ける。表など横に広げたいものは .wide で外す。
-   **単位は rem。em にすると要素ごとのフォントサイズで基準が変わり、
-   h1 だけ1064px、本文644px、引用608px…と一切揃わなくなる**(2026-08-11 に実際にそうなった) */
-main { max-width: 100%; }
-main > * { max-width: 40rem; }
-main > .wide { max-width: 62rem; }
+/* ---- 全体の骨 ---- */
+.doc { display: block; }
+@media (min-width: 1060px) {
+  .doc { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 44px;
+         align-items: start; }
+}
 
-/* ---- 2. 見出しと本文 ---- */
-main h1 { font-size: 1.75rem; line-height: 1.45; margin-block: 6px 18px; letter-spacing: 0.01em; }
-main h2 { font-size: 1.3rem; line-height: 1.5; margin-block: 3em 0.9em;
-          padding-bottom: 0.35em; border-bottom: 1px solid var(--border); }
-main h2:first-of-type { margin-top: 2.2em; }
-main h3 { font-size: 1.04rem; line-height: 1.6; margin-block: 2.2em 0.6em; }
-main h3 + p, main h3 + .body { margin-top: 0; }
-main p, main .body p, main li { font-size: 1rem; line-height: 1.95; }
-main p { margin-block: 0 1.15em; }
-main ul, main ol { padding-left: 1.3em; margin-block: 0 1.3em; }
-main li { margin-bottom: 0.5em; }
-main b { font-weight: 700; }
-main code { font-size: 0.9em; }
+/* 目次。PCでは左に固定、狭い画面では記事の先頭にチップで畳む */
+.toc { font-size: 0.82rem; }
+.toc .tlabel { font-size: 0.72rem; color: var(--sub); font-weight: 700;
+               letter-spacing: 0.08em; margin-bottom: 8px; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0; }
+.toc a { display: block; padding: 5px 10px; border-left: 2px solid var(--border);
+         color: var(--sub); text-decoration: none; line-height: 1.5; }
+.toc a:hover { color: var(--accent); border-left-color: var(--accent);
+               background: var(--accent-soft); }
+@media (min-width: 1060px) {
+  .toc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+}
+@media (max-width: 1059px) {
+  .toc { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+         margin-bottom: 28px; background: var(--card); }
+  .toc ol { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+  .toc a { border: 1px solid var(--border); border-radius: 99px; padding: 3px 12px; }
+}
 
-/* リード文。本文よりわずかに大きく、色は落とさない(読ませる文なので) */
-main .lead { font-size: 1.06rem; line-height: 1.95; color: var(--text);
+/* ---- 見出しと本文 ---- */
+.doc h1 { font-size: 2rem; line-height: 1.35; margin: 0 0 14px; letter-spacing: 0.01em; }
+.doc h2 { font-size: 1.45rem; line-height: 1.45; margin: 2.4em 0 0.9em;
+          padding-bottom: 0.35em; border-bottom: 2px solid var(--border); }
+.doc h2:first-of-type { margin-top: 1.8em; }
+.doc h3 { font-size: 1.06rem; line-height: 1.6; margin: 1.8em 0 0.5em; }
+.doc h3:first-child { margin-top: 0; }
+.doc p { font-size: 0.98rem; line-height: 1.85; margin: 0 0 1em; }
+.doc ul, .doc ol { padding-left: 1.3em; margin: 0 0 1.2em; }
+.doc li { font-size: 0.98rem; line-height: 1.8; margin-bottom: 0.35em; }
+.doc code { font-size: 0.9em; }
+/* 地の文だけ行長を抑える。表・グリッドは画面幅を使う */
+.doc > article > p, .doc > article > ul, .doc > article > ol { max-width: 46rem; }
+.doc .lead { font-size: 1.1rem; line-height: 1.8; color: var(--text); max-width: 52rem;
              border-left: 3px solid var(--accent); border-image: none;
-             padding: 2px 0 2px 16px; margin-block: 0 2.2em;
-             /* theme.css の .lead は margin ショートハンドを持つので、
-                最後の `main > *` の auto に勝ってしまう。ここで打ち返す */
-             margin-inline: auto; }
+             padding: 4px 0 4px 16px; margin: 0 0 24px; }
 
-/* ---- 3. 注記だけ枠を使う ---- */
-.callout { border: 1px solid var(--gold); border-radius: 10px; padding: 14px 16px;
-           background: var(--card); margin-block: 0 2.4em; }
-.callout .clabel { font-size: 0.74rem; color: var(--sub); margin-bottom: 6px; }
-.callout p:last-child { margin-bottom: 0; }
-.callout p { font-size: 0.94rem; line-height: 1.85; }
+/* ---- 要点(記事の頭に置く早見) ---- */
+.keyfacts { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border);
+            border-radius: 10px; overflow: hidden; margin: 0 0 32px;
+            grid-template-columns: 1fr; }
+@media (min-width: 700px) { .keyfacts { grid-template-columns: repeat(3, 1fr); } }
+.keyfacts > div { background: var(--card); padding: 12px 16px; }
+.keyfacts .k { font-size: 0.72rem; color: var(--sub); margin-bottom: 4px; }
+.keyfacts .v { font-size: 0.95rem; line-height: 1.6; font-weight: 700; }
+.keyfacts .v .sub { display: block; font-weight: normal; font-size: 0.8rem;
+                    color: var(--sub); margin-top: 3px; }
 
-/* ---- 出典 ---- */
-/* 本文の流れを切らないよう、チップではなく小さな1行にする */
-.srcline { font-size: 0.78rem; color: var(--sub); margin-block: -0.5em 1.6em; }
-.srcline a { color: var(--sub); }
-.srcline a:hover { color: var(--accent); }
-.srcline .sep { opacity: 0.5; margin: 0 0.4em; }
+/* ---- 並列に読ませる項目は2列に敷く ---- */
+.cols2 { display: grid; gap: 14px; grid-template-columns: 1fr; margin: 0 0 1.6em; }
+@media (min-width: 900px) { .cols2 { grid-template-columns: 1fr 1fr; } }
+.item { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+        background: var(--card); }
+.item.fixed { border-color: var(--accent); }
+.item h3 { margin: 0 0 8px; font-size: 1rem; }
+.item p { font-size: 0.9rem; line-height: 1.8; margin-bottom: 0.7em; }
+.item p:last-child { margin-bottom: 0; }
 
-/* ---- 状態のラベル(確定 / 予告 など) ---- */
+/* ---- 注記 ---- */
+.callout { border: 1px solid var(--gold); border-radius: 10px; padding: 14px 18px;
+           background: var(--card); margin: 0 0 28px; max-width: 52rem; }
+.callout .clabel { font-size: 0.72rem; color: var(--sub); margin-bottom: 5px; }
+.callout p { font-size: 0.94rem; margin-bottom: 0; }
+
+/* ---- 状態ラベル ---- */
 .tag { font-size: 0.7rem; border-radius: 99px; padding: 1px 9px; white-space: nowrap;
        border: 1px solid var(--border); color: var(--sub); vertical-align: 0.15em;
-       margin-left: 0.5em; font-weight: normal; }
+       margin-left: 0.4em; font-weight: normal; }
 .tag.fixed { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .tag.plan { border-color: var(--gold); color: var(--gold); }
 .tag.gone { border-style: dashed; }
 
-/* ---- 表 ---- */
+/* ---- 表。**画面幅を使う** ---- */
+.tblwrap { overflow-x: auto; margin: 0 0 0.7em; }
 .tbl { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-.tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 7px 10px; text-align: left; }
-.tbl thead th { font-size: 0.76rem; color: var(--sub); font-weight: 600; white-space: nowrap;
+.tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 8px 12px;
+                   text-align: left; vertical-align: top; }
+.tbl thead th { font-size: 0.74rem; color: var(--sub); font-weight: 700; white-space: nowrap;
                 border-bottom-width: 2px; }
-.tblwrap { overflow-x: auto; margin-block: 0 0.8em; }
-.tblnote { font-size: 0.8rem; color: var(--sub); margin-block: 0 2em; }
+.tbl tbody tr:hover { background: var(--accent-soft); }
+.tblnote { font-size: 0.8rem; color: var(--sub); margin: 0 0 2em; }
+/* 年表。年を左に固定して、右に何が変わったかを流す */
+.tbl.years td.y { white-space: nowrap; font-weight: 700; width: 1%; }
+.tbl.years td.y span { display: block; font-size: 0.74rem; color: var(--sub);
+                       font-weight: normal; margin-top: 2px; }
+.tbl.years tr.key td { background: var(--accent-soft); }
+.tbl.years tr.key td.y { box-shadow: inset 3px 0 0 var(--accent); }
+.tbl.years p { font-size: 0.9rem; line-height: 1.8; margin: 0; }
 
 /* ---- 引用 ---- */
-blockquote { margin-block: 0 1.4em; padding: 2px 0 2px 16px;
-             border-left: 3px solid var(--border); }
-blockquote p { font-size: 0.96rem; margin-bottom: 0.4em; }
-blockquote .who { font-size: 0.76rem; color: var(--sub); }
+.quotes { display: grid; gap: 12px; grid-template-columns: 1fr; margin: 0 0 1.6em; }
+@media (min-width: 900px) { .quotes { grid-template-columns: 1fr 1fr; } }
+.quotes blockquote { margin: 0; padding: 8px 0 8px 14px;
+                     border-left: 3px solid var(--border); }
+.quotes p { font-size: 0.9rem; line-height: 1.8; margin-bottom: 4px; }
+.quotes .who { font-size: 0.74rem; color: var(--sub); }
 
-/* ツール側のパネル見出しの飾り棒は、読み物では邪魔なので消す */
-main .panel > h2::before, main h2.sec::before { content: none; }
+/* ---- 出典 ---- */
+.srcline { font-size: 0.78rem; color: var(--sub); margin: -0.3em 0 2em; max-width: 52rem; }
+.srcline a { color: var(--sub); }
+.srcline a:hover { color: var(--accent); }
+.srcline .sep { opacity: 0.5; margin: 0 0.35em; }
+.srclist { font-size: 0.85rem; max-width: 52rem; }
+.srclist li { margin-bottom: 4px; }
 
-/* ---- 中央寄せは最後に掛ける ---- */
-/* 上の各要素は margin-block で縦だけ指定している。横の auto をここで一括で当てないと、
-   margin ショートハンドに打ち消されて左に寄る(2026-08-11 に実際にそうなった) */
-main > * { margin-inline: auto; }
+/* ツール側のパネル見出しの飾り棒は読み物では邪魔なので消す */
+.doc .panel > h2::before, .doc h2.sec::before { content: none; }
 
 /* IDカラーのページ。build_site.py が __SECID_CSS__ に差し込む。
    ページの主役は「職種→色」「色→職」の2方向の順位。表とカードの見た目を

@@ -155,99 +155,144 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .cfchip.on .who { color: var(--accent); }
 .cfnote { font-size: 0.82rem; color: var(--sub); margin: 0 0 12px; }
 
-/* 読みもの共通の組版。build_site.py が全ての読みものページに差し込む。
-   theme.css はツール用(幅1200px・本文0.78〜0.85rem・全部パネル)なので、
-   **読み物としては行が長すぎ、字が小さく、枠が多すぎる**。ここで上書きする。
+/* 読みもの共通のレイアウト。build_site.py が全ての読みものページに差し込む。
 
-   方針は3つだけ:
-     1. 行長を詰める(全角40字前後)。読めるかどうかはまずここで決まる
-     2. 枠で囲まない。余白と見出しで区切る。枠は「注記」と「表」だけに使う
-     3. 本文を大きくして行間を空ける(1rem / 1.95)
+   **PCで読まれる前提**で組む。1本の細い列に流すのは電話向けの形で、
+   1440pxの画面では余白ばかりになって一覧できない(2026-08-11 にそうなった)。
+   逆に、全部を同じカードにして1200px幅に敷き詰めるのも読めない。
+
+   狙いは3つ:
+     1. 左に目次を固定して、長い記事のどこにいるか常に見えるようにする
+     2. 地の文は読める行長に収めるが、**表・並列項目は画面幅を使って一覧させる**
+     3. 見出しと余白で構造を出す。枠は意味のあるところにだけ使う
 */
 
-/* ---- 1. 行長 ---- */
-/* main の直下だけに measure を掛ける。表など横に広げたいものは .wide で外す。
-   **単位は rem。em にすると要素ごとのフォントサイズで基準が変わり、
-   h1 だけ1064px、本文644px、引用608px…と一切揃わなくなる**(2026-08-11 に実際にそうなった) */
-main { max-width: 100%; }
-main > * { max-width: 40rem; }
-main > .wide { max-width: 62rem; }
+/* ---- 全体の骨 ---- */
+.doc { display: block; }
+@media (min-width: 1060px) {
+  .doc { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 44px;
+         align-items: start; }
+}
 
-/* ---- 2. 見出しと本文 ---- */
-main h1 { font-size: 1.75rem; line-height: 1.45; margin-block: 6px 18px; letter-spacing: 0.01em; }
-main h2 { font-size: 1.3rem; line-height: 1.5; margin-block: 3em 0.9em;
-          padding-bottom: 0.35em; border-bottom: 1px solid var(--border); }
-main h2:first-of-type { margin-top: 2.2em; }
-main h3 { font-size: 1.04rem; line-height: 1.6; margin-block: 2.2em 0.6em; }
-main h3 + p, main h3 + .body { margin-top: 0; }
-main p, main .body p, main li { font-size: 1rem; line-height: 1.95; }
-main p { margin-block: 0 1.15em; }
-main ul, main ol { padding-left: 1.3em; margin-block: 0 1.3em; }
-main li { margin-bottom: 0.5em; }
-main b { font-weight: 700; }
-main code { font-size: 0.9em; }
+/* 目次。PCでは左に固定、狭い画面では記事の先頭にチップで畳む */
+.toc { font-size: 0.82rem; }
+.toc .tlabel { font-size: 0.72rem; color: var(--sub); font-weight: 700;
+               letter-spacing: 0.08em; margin-bottom: 8px; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+.toc li { margin: 0; }
+.toc a { display: block; padding: 5px 10px; border-left: 2px solid var(--border);
+         color: var(--sub); text-decoration: none; line-height: 1.5; }
+.toc a:hover { color: var(--accent); border-left-color: var(--accent);
+               background: var(--accent-soft); }
+@media (min-width: 1060px) {
+  .toc { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+}
+@media (max-width: 1059px) {
+  .toc { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px;
+         margin-bottom: 28px; background: var(--card); }
+  .toc ol { display: flex; flex-wrap: wrap; gap: 4px 6px; }
+  .toc a { border: 1px solid var(--border); border-radius: 99px; padding: 3px 12px; }
+}
 
-/* リード文。本文よりわずかに大きく、色は落とさない(読ませる文なので) */
-main .lead { font-size: 1.06rem; line-height: 1.95; color: var(--text);
+/* ---- 見出しと本文 ---- */
+.doc h1 { font-size: 2rem; line-height: 1.35; margin: 0 0 14px; letter-spacing: 0.01em; }
+.doc h2 { font-size: 1.45rem; line-height: 1.45; margin: 2.4em 0 0.9em;
+          padding-bottom: 0.35em; border-bottom: 2px solid var(--border); }
+.doc h2:first-of-type { margin-top: 1.8em; }
+.doc h3 { font-size: 1.06rem; line-height: 1.6; margin: 1.8em 0 0.5em; }
+.doc h3:first-child { margin-top: 0; }
+.doc p { font-size: 0.98rem; line-height: 1.85; margin: 0 0 1em; }
+.doc ul, .doc ol { padding-left: 1.3em; margin: 0 0 1.2em; }
+.doc li { font-size: 0.98rem; line-height: 1.8; margin-bottom: 0.35em; }
+.doc code { font-size: 0.9em; }
+/* 地の文だけ行長を抑える。表・グリッドは画面幅を使う */
+.doc > article > p, .doc > article > ul, .doc > article > ol { max-width: 46rem; }
+.doc .lead { font-size: 1.1rem; line-height: 1.8; color: var(--text); max-width: 52rem;
              border-left: 3px solid var(--accent); border-image: none;
-             padding: 2px 0 2px 16px; margin-block: 0 2.2em;
-             /* theme.css の .lead は margin ショートハンドを持つので、
-                最後の `main > *` の auto に勝ってしまう。ここで打ち返す */
-             margin-inline: auto; }
+             padding: 4px 0 4px 16px; margin: 0 0 24px; }
 
-/* ---- 3. 注記だけ枠を使う ---- */
-.callout { border: 1px solid var(--gold); border-radius: 10px; padding: 14px 16px;
-           background: var(--card); margin-block: 0 2.4em; }
-.callout .clabel { font-size: 0.74rem; color: var(--sub); margin-bottom: 6px; }
-.callout p:last-child { margin-bottom: 0; }
-.callout p { font-size: 0.94rem; line-height: 1.85; }
+/* ---- 要点(記事の頭に置く早見) ---- */
+.keyfacts { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border);
+            border-radius: 10px; overflow: hidden; margin: 0 0 32px;
+            grid-template-columns: 1fr; }
+@media (min-width: 700px) { .keyfacts { grid-template-columns: repeat(3, 1fr); } }
+.keyfacts > div { background: var(--card); padding: 12px 16px; }
+.keyfacts .k { font-size: 0.72rem; color: var(--sub); margin-bottom: 4px; }
+.keyfacts .v { font-size: 0.95rem; line-height: 1.6; font-weight: 700; }
+.keyfacts .v .sub { display: block; font-weight: normal; font-size: 0.8rem;
+                    color: var(--sub); margin-top: 3px; }
 
-/* ---- 出典 ---- */
-/* 本文の流れを切らないよう、チップではなく小さな1行にする */
-.srcline { font-size: 0.78rem; color: var(--sub); margin-block: -0.5em 1.6em; }
-.srcline a { color: var(--sub); }
-.srcline a:hover { color: var(--accent); }
-.srcline .sep { opacity: 0.5; margin: 0 0.4em; }
+/* ---- 並列に読ませる項目は2列に敷く ---- */
+.cols2 { display: grid; gap: 14px; grid-template-columns: 1fr; margin: 0 0 1.6em; }
+@media (min-width: 900px) { .cols2 { grid-template-columns: 1fr 1fr; } }
+.item { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+        background: var(--card); }
+.item.fixed { border-color: var(--accent); }
+.item h3 { margin: 0 0 8px; font-size: 1rem; }
+.item p { font-size: 0.9rem; line-height: 1.8; margin-bottom: 0.7em; }
+.item p:last-child { margin-bottom: 0; }
 
-/* ---- 状態のラベル(確定 / 予告 など) ---- */
+/* ---- 注記 ---- */
+.callout { border: 1px solid var(--gold); border-radius: 10px; padding: 14px 18px;
+           background: var(--card); margin: 0 0 28px; max-width: 52rem; }
+.callout .clabel { font-size: 0.72rem; color: var(--sub); margin-bottom: 5px; }
+.callout p { font-size: 0.94rem; margin-bottom: 0; }
+
+/* ---- 状態ラベル ---- */
 .tag { font-size: 0.7rem; border-radius: 99px; padding: 1px 9px; white-space: nowrap;
        border: 1px solid var(--border); color: var(--sub); vertical-align: 0.15em;
-       margin-left: 0.5em; font-weight: normal; }
+       margin-left: 0.4em; font-weight: normal; }
 .tag.fixed { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
 .tag.plan { border-color: var(--gold); color: var(--gold); }
 .tag.gone { border-style: dashed; }
 
-/* ---- 表 ---- */
+/* ---- 表。**画面幅を使う** ---- */
+.tblwrap { overflow-x: auto; margin: 0 0 0.7em; }
 .tbl { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-.tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 7px 10px; text-align: left; }
-.tbl thead th { font-size: 0.76rem; color: var(--sub); font-weight: 600; white-space: nowrap;
+.tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 8px 12px;
+                   text-align: left; vertical-align: top; }
+.tbl thead th { font-size: 0.74rem; color: var(--sub); font-weight: 700; white-space: nowrap;
                 border-bottom-width: 2px; }
-.tblwrap { overflow-x: auto; margin-block: 0 0.8em; }
-.tblnote { font-size: 0.8rem; color: var(--sub); margin-block: 0 2em; }
+.tbl tbody tr:hover { background: var(--accent-soft); }
+.tblnote { font-size: 0.8rem; color: var(--sub); margin: 0 0 2em; }
+/* 年表。年を左に固定して、右に何が変わったかを流す */
+.tbl.years td.y { white-space: nowrap; font-weight: 700; width: 1%; }
+.tbl.years td.y span { display: block; font-size: 0.74rem; color: var(--sub);
+                       font-weight: normal; margin-top: 2px; }
+.tbl.years tr.key td { background: var(--accent-soft); }
+.tbl.years tr.key td.y { box-shadow: inset 3px 0 0 var(--accent); }
+.tbl.years p { font-size: 0.9rem; line-height: 1.8; margin: 0; }
 
 /* ---- 引用 ---- */
-blockquote { margin-block: 0 1.4em; padding: 2px 0 2px 16px;
-             border-left: 3px solid var(--border); }
-blockquote p { font-size: 0.96rem; margin-bottom: 0.4em; }
-blockquote .who { font-size: 0.76rem; color: var(--sub); }
+.quotes { display: grid; gap: 12px; grid-template-columns: 1fr; margin: 0 0 1.6em; }
+@media (min-width: 900px) { .quotes { grid-template-columns: 1fr 1fr; } }
+.quotes blockquote { margin: 0; padding: 8px 0 8px 14px;
+                     border-left: 3px solid var(--border); }
+.quotes p { font-size: 0.9rem; line-height: 1.8; margin-bottom: 4px; }
+.quotes .who { font-size: 0.74rem; color: var(--sub); }
 
-/* ツール側のパネル見出しの飾り棒は、読み物では邪魔なので消す */
-main .panel > h2::before, main h2.sec::before { content: none; }
+/* ---- 出典 ---- */
+.srcline { font-size: 0.78rem; color: var(--sub); margin: -0.3em 0 2em; max-width: 52rem; }
+.srcline a { color: var(--sub); }
+.srcline a:hover { color: var(--accent); }
+.srcline .sep { opacity: 0.5; margin: 0 0.35em; }
+.srclist { font-size: 0.85rem; max-width: 52rem; }
+.srclist li { margin-bottom: 4px; }
 
-/* ---- 中央寄せは最後に掛ける ---- */
-/* 上の各要素は margin-block で縦だけ指定している。横の auto をここで一括で当てないと、
-   margin ショートハンドに打ち消されて左に寄る(2026-08-11 に実際にそうなった) */
-main > * { margin-inline: auto; }
+/* ツール側のパネル見出しの飾り棒は読み物では邪魔なので消す */
+.doc .panel > h2::before, .doc h2.sec::before { content: none; }
 
-/* このページ固有のぶんだけ。組版は reading.css が持つ */
+/* このページ固有のぶんだけ。レイアウトは reading.css が持つ */
 
 /* クリア数の表。数字だけだと差が伝わらないので棒を添える */
-.tbl td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.tbl td.bc { width: 55%; padding-left: 14px; }
+.tbl td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
+            width: 1%; font-weight: 600; }
+.tbl td.bc { width: 45%; padding-left: 14px; padding-right: 14px; }
+.tbl td.rm { font-size: 0.84rem; color: var(--sub); white-space: nowrap; }
 .tbl .bar { display: block; height: 10px; border-radius: 99px; background: var(--accent); }
 .tbl tr.top .bar { background: var(--gold); }
 .tbl tr.min .bar { background: var(--sub); }
-@media (max-width: 640px) { .tbl td.bc { display: none; } }
+@media (max-width: 760px) { .tbl td.bc, .tbl td.rm { display: none; } }
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%230b7fc2%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2331c7e8%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20x%3D%279%27%20y%3D%274%27%20width%3D%2714%27%20height%3D%2724%27%20rx%3D%276%27%20fill%3D%27url(%23g)%27%2F%3E%3C%2Fsvg%3E">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7fa">
@@ -283,193 +328,173 @@ main > * { margin-inline: auto; }
   <button class="theme-btn" id="themeToggle" aria-label="配色テーマ切替">🌙 ダーク</button>
 </nav>
 <main>
+<div class="doc">
+
+<nav class="toc" aria-label="目次">
+  <div class="tlabel">目次</div>
+  <ol>
+    <li><a href="#changes">予告された変更</a></li>
+    <li><a href="#why">なぜ変えるのか</a></li>
+    <li><a href="#how">元々の仕組み</a></li>
+    <li><a href="#history">これまでの10年</a></li>
+    <li><a href="#voices">スレッドでの反応</a></li>
+    <li><a href="#actual">実際どうだったか</a></li>
+    <li><a href="#src">出典</a></li>
+  </ol>
+</nav>
+
+<article>
+
 <h1>アニバーサリーイベントが変わります</h1>
 
 <p class="lead">Ephinea のアニバーサリーイベントは、2026年から作り直されます。2025年9月20日に運営から予告が出ました。ここではその予告の中身と、そもそも今までどういうイベントだったのかをまとめます。</p>
 
+<div class="keyfacts">
+  <div><div class="k">確定していること</div><div class="v">2件<span class="sub">Maximum Attack E の削除／アニバーサリーバッジの廃止</span></div></div>
+  <div><div class="k">まだ予告の段階</div><div class="v">4件<span class="sub">新クエスト・トークン制・プラチナ相当・マイルストーン</span></div></div>
+  <div><div class="k">11周年（2026年）</div><div class="v">未発表<span class="sub">2026年8月11日時点。例年は8月開始・4週間</span></div></div>
+</div>
+
 <div class="callout">
-  <div class="clabel">2026年8月11日時点</div>
-  <p>このページの中心は<b>予告</b>です。アナウンスは2025年9月のもので、確定した仕様ではありません。11周年（2026年）のイベントは<b>まだ発表されていません</b>。実際に始まったら、予告との違いを含めてここに書き足します。</p>
+  <div class="clabel">読むときの前提</div>
+  <p>このページの中心は<b>予告</b>です。アナウンスは2025年9月のもので、確定した仕様ではありません。実際にイベントが始まったら、予告との違いを含めてここに書き足します。</p>
 </div>
 
 <h2 id="changes">予告された変更</h2>
 
-<p>アナウンスは末尾でこう書いています。「内容は変更される可能性がありますが、<b>Maximum Attack E の削除およびアニバーサリーバッジの廃止については変更する予定はありません</b>」。つまり確定しているのは次の2つだけで、あとは予告です。</p>
+<p>アナウンスは末尾でこう書いています。「内容は変更される可能性がありますが、<b>Maximum Attack E の削除およびアニバーサリーバッジの廃止については変更する予定はありません</b>」。確定はこの2つだけで、あとは予告です。</p>
 
-<h3>Maximum Attack E のイベント版クエストは削除される <span class="tag fixed">確定</span></h3>
-
-<p>9年間イベントの中心だったクエストシリーズが無くなります。ただし<b>通年で遊べる版の Maximum Attack E は残ります</b>。スレッドでも「通年版は名作なので、残してくれてありがたい」という声が複数ありました。「August Atrocity」もイベント期間中は引き続き遊べます。</p>
-
-<h3>アニバーサリーバッジは入手できなくなる <span class="tag fixed">確定</span></h3>
-
-<p>いま持っているバッジが最後の在庫になります。ただし<b>交換所のクエストは次回イベントの後も残る</b>ので、慌てて使い切る必要はありません。</p>
-
-<p>これが重みを持つのは、2021年にバッジが恒久化しているからです。それ以前は年号付きで毎年失効していました（後述）。</p>
-
-<h3>新しいクエストシリーズを作る <span class="tag plan">予告</span></h3>
-
-<p>「Maximum Attack E は長くスポットライトを浴びすぎた。9年を経て新しいものへ移る時期だ」として、アニバーサリー専用のクエストシリーズを新設するとしています。</p>
-
-<p>特徴として挙げられているのは、<b>すべて同程度の難易度にする</b>こと。「ゲーム内で最も簡単なエリアだけを回して報酬を得る形はなくなる」「完全に森だけで構成されるクエストは存在しない」と、はっきり書かれています。この一文の意味は、次の節の数字を見ると分かります。</p>
-
-<h3>バッジに代わってトークンを導入する <span class="tag plan">予告</span></h3>
-
-<p>ブロンズ・シルバー・ゴールドという<b>上下のあるランク制をやめます</b>。代わりに、クエストごとに色の違うトークンが出るようになります。あるクエストは赤、別のクエストは青、という具合です。</p>
-
-<p>ショップで買うには<b>複数の色を揃える必要があり</b>、結果としてすべてのクエストを回ることになります。例として「アイテムチケットは赤2枚＋青2枚」「アドスロットは緑1枚」「フォトンスフィアは全色70枚ずつ」が挙げられています。</p>
-
-<p>ただし<b>トークンは取引可能</b>です。全部のクエストを自分で回らなくても、好きなクエストで稼いだぶんを他の色と交換すれば済みます。名称も必要数も、まだ仮の例だと明記されています。</p>
-
-<h3>プラチナバッジに相当するものは残る <span class="tag plan">予告</span></h3>
-
-<p>「アニバーサリープラチナバッジに相当する要素は引き続き存在します」とだけ書かれていて、名前も入手方法も未定です。スレッドでは「機能が同じなら名前もプラチナバッジのままでいいのでは。歴史的に愛着があるし、旧イベントの一部が残ることになる」という意見が複数のプレイヤーから出ていました。</p>
-
-<h3>マイルストーンと追加ブーストはそのまま <span class="tag plan">予告</span></h3>
-
-<p>「マイルストーンシステムや追加ブーストなど、既存の要素は今後も引き続き提供されます」とされています。</p>
+<div class="cols2">
+  <div class="item fixed">
+    <h3>Maximum Attack E のイベント版は削除 <span class="tag fixed">確定</span></h3>
+    <p>9年間イベントの中心だったクエストシリーズが無くなります。ただし<b>通年で遊べる版は残ります</b>。スレッドでも「通年版は名作なので残してくれてありがたい」という声が複数ありました。「August Atrocity」もイベント期間中は引き続き遊べます。</p>
+  </div>
+  <div class="item fixed">
+    <h3>アニバーサリーバッジは入手不可に <span class="tag fixed">確定</span></h3>
+    <p>いま持っているバッジが最後の在庫になります。ただし<b>交換所のクエストは次回イベントの後も残る</b>ので、慌てて使い切る必要はありません。</p>
+    <p>これが重みを持つのは、2021年にバッジが恒久化しているからです。それ以前は年号付きで毎年失効していました。</p>
+  </div>
+  <div class="item">
+    <h3>新しいクエストシリーズを作る <span class="tag plan">予告</span></h3>
+    <p>「Maximum Attack E は長くスポットライトを浴びすぎた。9年を経て新しいものへ移る時期だ」として、アニバーサリー専用のシリーズを新設するとしています。</p>
+    <p>特徴は<b>すべて同程度の難易度にする</b>こと。「最も簡単なエリアだけを回して報酬を得る形はなくなる」「完全に森だけで構成されるクエストは存在しない」と明記されています。</p>
+  </div>
+  <div class="item">
+    <h3>バッジに代わってトークン <span class="tag plan">予告</span></h3>
+    <p>ブロンズ・シルバー・ゴールドという<b>上下のあるランク制をやめ</b>、クエストごとに色の違うトークンが出る形になります。ショップで買うには<b>複数の色を揃える必要があり</b>、結果として全部のクエストを回ることになります。</p>
+    <p>例として「アイテムチケットは赤2＋青2」「アドスロットは緑1」「フォトンスフィアは全色70枚ずつ」。ただし<b>トークンは取引可能</b>なので、好きなクエストで稼いで交換しても構いません。名称も必要数もまだ仮です。</p>
+  </div>
+  <div class="item">
+    <h3>プラチナバッジ相当は残る <span class="tag plan">予告</span></h3>
+    <p>「相当する要素は引き続き存在します」とだけ書かれていて、名前も入手方法も未定です。スレッドでは「機能が同じなら名前もプラチナバッジのままでいい。歴史的に愛着があるし、旧イベントの一部が残ることになる」という意見が複数ありました。</p>
+  </div>
+  <div class="item">
+    <h3>マイルストーンとブーストは維持 <span class="tag plan">予告</span></h3>
+    <p>「マイルストーンシステムや追加ブーストなど、既存の要素は今後も引き続き提供されます」とされています。</p>
+  </div>
+</div>
 
 <p class="srcline">出典: <a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea公式アナウンス「今後のアニバーサリーイベントについて」（2025-09-20）</a></p>
 
 <h2 id="why">なぜ変えるのか</h2>
 
-<p>「簡単なエリアだけ回っていれば済む」状態には、運営も2年かけて手を打っていました。2024年には集計方式を変え、2025年にはクエストの人気に応じてバッジ率を上下させる補正まで入れています。</p>
+<p>「簡単なエリアだけ回っていれば済む」状態には、運営も2年かけて手を打っていました。2024年に集計方式を変え、2025年にはクエストの人気に応じてバッジ率を上下させる補正まで入れています。それでも解消しなかったことが、10周年の最終クリア数に出ています。</p>
 
-<p>それでも解消しなかったことが、10周年の最終クリア数にそのまま出ています。</p>
-
-<div class="wide tblwrap">
+<div class="tblwrap">
 <table class="tbl">
-  <thead><tr><th>クエスト</th><th class="n">クリア数</th><th class="bc"></th></tr></thead>
+  <thead><tr><th>クエスト</th><th class="n">クリア数</th><th class="bc"></th><th>備考</th></tr></thead>
   <tbody>
-    <tr class="top"><td>森</td><td class="n">142,197</td><td class="bc"><span class="bar" style="width:100%"></span></td></tr>
-    <tr><td>地下砂漠</td><td class="n">89,351</td><td class="bc"><span class="bar" style="width:62.8%"></span></td></tr>
-    <tr><td>中央管理区</td><td class="n">41,240</td><td class="bc"><span class="bar" style="width:29.0%"></span></td></tr>
-    <tr><td>坑道</td><td class="n">35,608</td><td class="bc"><span class="bar" style="width:25.0%"></span></td></tr>
-    <tr><td>洞窟</td><td class="n">29,007</td><td class="bc"><span class="bar" style="width:20.4%"></span></td></tr>
-    <tr><td>クレーター周辺</td><td class="n">28,286</td><td class="bc"><span class="bar" style="width:19.9%"></span></td></tr>
-    <tr><td>遺跡</td><td class="n">26,521</td><td class="bc"><span class="bar" style="width:18.7%"></span></td></tr>
-    <tr><td>宇宙船</td><td class="n">25,755</td><td class="bc"><span class="bar" style="width:18.1%"></span></td></tr>
-    <tr><td>神殿</td><td class="n">25,699</td><td class="bc"><span class="bar" style="width:18.1%"></span></td></tr>
-    <tr><td>制御塔</td><td class="n">25,438</td><td class="bc"><span class="bar" style="width:17.9%"></span></td></tr>
-    <tr class="min"><td>プラント</td><td class="n">25,417</td><td class="bc"><span class="bar" style="width:17.9%"></span></td></tr>
+    <tr class="top"><td>森</td><td class="n">142,197</td><td class="bc"><span class="bar" style="width:100%"></span></td><td class="rm">最多。最下位の5.6倍</td></tr>
+    <tr><td>地下砂漠</td><td class="n">89,351</td><td class="bc"><span class="bar" style="width:62.8%"></span></td><td class="rm"></td></tr>
+    <tr><td>中央管理区</td><td class="n">41,240</td><td class="bc"><span class="bar" style="width:29.0%"></span></td><td class="rm"></td></tr>
+    <tr><td>坑道</td><td class="n">35,608</td><td class="bc"><span class="bar" style="width:25.0%"></span></td><td class="rm"></td></tr>
+    <tr><td>洞窟</td><td class="n">29,007</td><td class="bc"><span class="bar" style="width:20.4%"></span></td><td class="rm"></td></tr>
+    <tr><td>クレーター周辺</td><td class="n">28,286</td><td class="bc"><span class="bar" style="width:19.9%"></span></td><td class="rm"></td></tr>
+    <tr><td>遺跡</td><td class="n">26,521</td><td class="bc"><span class="bar" style="width:18.7%"></span></td><td class="rm"></td></tr>
+    <tr><td>宇宙船</td><td class="n">25,755</td><td class="bc"><span class="bar" style="width:18.1%"></span></td><td class="rm"></td></tr>
+    <tr><td>神殿</td><td class="n">25,699</td><td class="bc"><span class="bar" style="width:18.1%"></span></td><td class="rm"></td></tr>
+    <tr><td>制御塔</td><td class="n">25,438</td><td class="bc"><span class="bar" style="width:17.9%"></span></td><td class="rm"></td></tr>
+    <tr class="min"><td>プラント</td><td class="n">25,417</td><td class="bc"><span class="bar" style="width:17.9%"></span></td><td class="rm"><b>ここが全体の進行を決めていた</b></td></tr>
   </tbody>
 </table>
 </div>
-<p class="wide tblnote">2025年イベントの最終クリア数（公式サイトの掲示より）。</p>
+<p class="tblnote">2025年イベントの最終クリア数（<a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">公式サイトの掲示</a>より）。</p>
 
-<p>森は最下位のプラントの<b>5.6倍</b>回されています。ところがマイルストーンは<b>最もクリアされていないクエストの回数</b>で進む仕組みなので、この差は報酬に一切繋がっていません。進行を決めていたのは25,417回のプラントのほうでした。</p>
+<p>マイルストーンは<b>最もクリアされていないクエストの回数</b>で進む仕組みです。つまり森を142,197回回しても、進行を決めていたのは25,417回のプラントのほう。この差は報酬に一切繋がっていません。アナウンスの「完全に森だけのクエストは存在しない」は、この数字への回答だと読めます。</p>
 
-<p>アナウンスの「最も簡単なエリアだけを回して報酬を得る形はなくなる」「完全に森だけのクエストは存在しない」は、この数字への回答だと読めます。</p>
+<h2 id="how">元々の仕組み</h2>
 
-<p class="srcline">出典: <a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">Ephinea公式「Anniversary Event 2025!」</a></p>
+<p>2017年から2025年まで続いた形です。毎年<b>8月</b>に始まり<b>4週間</b>続きます。このうち2026年から入れ替わるのは、クエストと通貨の2つです。</p>
 
-<h2 id="how">元々どういうイベントだったのか</h2>
-
-<p>2017年から2025年まで続いた形です。毎年<b>8月</b>に始まり、<b>4週間</b>続きます。このうち、2026年から入れ替わるのはクエストと通貨の2つです。</p>
-
-<h3>バッジ4種 <span class="tag gone">2026年から無くなる</span></h3>
-
-<p>おびえたラッピーを除く<b>すべての敵</b>が落とします。箱からは出ません。難易度で種類が決まり、ブロンズはノーマル以上、シルバーはベリーハード以上、ゴールドとプラチナはアルティメット限定です。</p>
-
-<p>特徴として、<b>ドロップ率ブーストの影響を受けません</b>。効くのはアニバーサリー由来のブーストだけです。最大99個まで重ねられます。</p>
-
-<h3>Maximum Attack E — 13本 <span class="tag gone">2026年から無くなる</span></h3>
-
-<p>1周5〜10分で、<b>失敗できません</b>。クリアするとバッジがもらえ、数と種類は難易度で決まります。</p>
-
-<p>Ep1が森・洞窟・坑道・遺跡、Ep2が神殿・宇宙船・中央管理区・プラント・制御塔、Ep4がクレーター周辺・地下砂漠。これに、<b>全エリアの敵が出る</b>「August Atrocity 1／2」が加わります。</p>
-
-<h3>交換所</h3>
-
-<p>Ep1の「Anniversary Badge Shop」で交換します。<b>このクエストは通年で選べます。</b>ブロンズは音楽ディスクやアドスロット、シルバーはマテリアルやアイテムチケットやペイント、ゴールドはフォトンスフィア（95枚）やマグセルなど。</p>
-
-<p>バッジは<b>10枚で1段上に両替</b>できます（ブロンズ10→シルバー1、シルバー10→ゴールド1）。ただし<b>プラチナへの両替はできません</b>。そのプラチナ1枚は「The Guide」で、封印の刀・サイコウォンド・ヘブンパニッシャー・ハンドガン「ガルド」・モタブの預言書・ソニックドールから1つと交換できます。</p>
-
-<h3>マイルストーン</h3>
-
-<p>サーバー全体の共通カウンターで、達成するとブーストが<b>全員に</b>開放されます。2025年は11段階あり、+50%経験値（2,500ポイント）から始まって、レア敵率・レアドロップ率・フォトンドロップ率・メセタ・バッジ率と続き、最後が<b>+1%ヒット（20,000ポイント）</b>でした。</p>
-
-<p>このブーストはイベントクエストの外でも効きます。</p>
-
-<h3>週替わりブーストが全部同時に乗る</h3>
-
-<p>通常は週ごとに入れ替わる4種類のブーストが、アニバーサリー期間中は同時に全部有効になります。</p>
+<div class="cols2">
+  <div class="item">
+    <h3>バッジ4種 <span class="tag gone">2026年から無くなる</span></h3>
+    <p>おびえたラッピーを除く<b>すべての敵</b>が落とします。箱からは出ません。ブロンズはノーマル以上、シルバーはベリーハード以上、ゴールドとプラチナはアルティメット限定。</p>
+    <p><b>ドロップ率ブーストの影響を受けません</b>。効くのはアニバーサリー由来のブーストだけです。最大99個まで重ねられます。</p>
+  </div>
+  <div class="item">
+    <h3>Maximum Attack E — 13本 <span class="tag gone">2026年から無くなる</span></h3>
+    <p>1周5〜10分で、<b>失敗できません</b>。クリアでバッジがもらえ、数と種類は難易度で決まります。</p>
+    <p>Ep1が森・洞窟・坑道・遺跡、Ep2が神殿・宇宙船・中央管理区・プラント・制御塔、Ep4がクレーター周辺・地下砂漠。これに<b>全エリアの敵が出る</b>「August Atrocity 1／2」が加わります。</p>
+  </div>
+  <div class="item">
+    <h3>交換所</h3>
+    <p>Ep1の「Anniversary Badge Shop」で交換します。<b>このクエストは通年で選べます。</b>ブロンズは音楽ディスクやアドスロット、シルバーはマテリアルやアイテムチケット、ゴールドはフォトンスフィア（95枚）やマグセルなど。</p>
+    <p>バッジは<b>10枚で1段上に両替</b>できますが、<b>プラチナへの両替はできません</b>。そのプラチナ1枚で、封印の刀・サイコウォンド・ヘブンパニッシャー・ハンドガン「ガルド」・モタブの預言書・ソニックドールから1つと交換できます。</p>
+  </div>
+  <div class="item">
+    <h3>マイルストーンと週替わりブースト</h3>
+    <p>サーバー全体の共通カウンターで、達成するとブーストが<b>全員に</b>開放されます。2025年は11段階。+50%経験値（2,500ポイント）に始まり、レア敵率・レアドロップ率・フォトンドロップ率・メセタ・バッジ率と続いて、最後が<b>+1%ヒット（20,000ポイント）</b>でした。</p>
+    <p>加えて、通常は週ごとに入れ替わる4種類のブーストが、期間中は同時に全部有効になります。</p>
+  </div>
+</div>
 
 <p class="srcline">出典: <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki「Anniversary event」</a><span class="sep">/</span><a href="https://wiki.pioneer2.net/w/Anniversary_Badge_Shop" target="_blank" rel="noopener">同「Anniversary Badge Shop」</a></p>
 
-<h2 id="history">これまでのアニバーサリー</h2>
+<h2 id="history">これまでの10年</h2>
 
-<p>Ephinea のサーバー稼働は2015年で、1回目は2016年でした。各年の告知スレッドを読むと、大きな転換点が2つあります。<b>2017年に今の形ができたこと</b>と、<b>2021年にバッジが恒久化したこと</b>です。</p>
+<p>Ephinea のサーバー稼働は2015年で、1回目は2016年でした。各年の告知スレッドを読むと、転換点は2つあります。<b>2017年に今の形ができたこと</b>と、<b>2021年にバッジが恒久化したこと</b>です。</p>
 
-<h3>2016年 — 1回目（8/11〜10/1）</h3>
-
-<p>「Ephinea Summer Event」という名前でした。バッジは<b>ブロンズ・シルバー・ゴールドの3種</b>で、対象クエストは <b>Maximum Attack 4</b>（9本）。マイルストーンはまだありません。会期は途中で延長され、歴代で唯一の7週間になりました。</p>
-
-<h3>2017年 — 2回目（8/13〜9/10）<span class="tag fixed">転換点</span></h3>
-
-<p><b>この年に今の形ができました。</b>Maximum Attack E シリーズが登場し、プラチナバッジが追加されて4種になり、マイルストーンが導入されます。当時の集計対象は「Maximum Attack E と Christmas Fiasco での撃破数」でした。ここから9年、この骨格が続きます。</p>
-
-<h3>2018年 — 3回目（8/6〜9/3）</h3>
-
-<p><b>バッジは年号付きで、毎年入れ替わっていました。</b>この年は「2周年バッジが3周年バッジに置き換わり、1周年バッジは無効」。旧バッジは3枚→1枚という目減りで交換できました。フォトンスフィアがゴールド50→70枚に値上げ。敵のパーツをバッジに換える「The Chef」と、バッジを上位に両替する「The Badger」が登場します。</p>
-
-<h3>2019年 — 4回目（8/2〜9/6）</h3>
-
-<p>バッジは引き続き年号付き（3周年→4周年、2周年以前は無効）。マイルストーンの集計が「イベント期間中のアルティメットの撃破のみ」に整理されました。週替わりブーストは止まり、最初から全部有効になります。「The Hunter」の品揃えがネタ武器だけになり、代わりに黄色特殊の武器を出す「The Scavenger」が登場。ステルスキットからマグセル「ステルス」が入手可能になりました。</p>
-
-<h3>2020年 — 5回目（8/17〜9/14）</h3>
-
-<p>年号付きバッジの最後の年になります（4周年→5周年、3周年以前は無効、旧バッジは3→1）。構成は前年とほぼ同じで、全ブースト最初から有効・アルティメットの撃破のみ集計も踏襲しています。</p>
-
-<h3>2021年 — 6回目（8/7〜9/4）<span class="tag fixed">転換点</span></h3>
-
-<p><b>ここでバッジが恒久化します。</b>「5周年バッジは汎用の『アニバーサリーバッジ』に変換され、過去年のバッジは今後両替できない」。以後、持っているバッジは翌年以降も使えるようになりました。フォトンスフィアはゴールド99枚に。プラチナ交換の品目には、当時ラヴィスカノンも並んでいました。</p>
-
-<h3>2022年 — 7回目（8/6〜9/6）</h3>
-
-<p>週替わりブーストが通常どおりの入れ替わりに戻ります（前年までの「最初から全部有効」をやめる）。マイルストーンは「バランスのために見直して間隔を広げた」とされ、最低撃破数やHBRの条件は無くなりました。Maximum Attack E のメセタ報酬が半分に。「The Scavenger」は削除され、「The Chef」はこの年が最後だと予告されました。</p>
-
-<h3>2023年 — 8回目（8/5〜9/5）</h3>
-
-<p>マイルストーンの集計が<b>アルティメットの全撃破数</b>に変わりました。イベントクエストの外で狩っても進むようになります。</p>
-
-<h3>2024年 — 9回目（8/12〜9/9）</h3>
-
-<p>集計が<b>撃破数からクエストのクリア数</b>に変わり、しかも「いちばんクリアされていないクエスト」の回数でマイルストーンが解放される方式になりました。特定のクエストばかり回しても進まない仕組みです。</p>
-
-<h3>2025年 — 10回目（8/11〜9/8）</h3>
-
-<p>上に加えて、人気に応じてバッジ率を上下させる補正が入りました。クリア数が中央値より500回以上多い上位3クエストはバッジ率 −25%、下位3クエストは +25%、August Atrocity は常に +25%。ゲーム内で <code>/badge</code> と打つと現在の補正を確認できました。</p>
-
-<p class="srcline">出典: 各年の告知スレッド（<a href="https://www.pioneer2.net/community/threads/3083" target="_blank" rel="noopener">2016</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/7734" target="_blank" rel="noopener">2017</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11345" target="_blank" rel="noopener">2018</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/15276" target="_blank" rel="noopener">2019</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/18985" target="_blank" rel="noopener">2020</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/21021" target="_blank" rel="noopener">2021</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/23826" target="_blank" rel="noopener">2022</a>）と <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki</a></p>
+<div class="tblwrap">
+<table class="tbl years">
+  <thead><tr><th>年</th><th>会期</th><th>その年に変わったこと</th></tr></thead>
+  <tbody>
+    <tr><td class="y">2016<span>1回目</span></td><td class="sp">8/11 – 10/1</td><td>
+      <p>「Ephinea Summer Event」という名前。バッジは<b>ブロンズ・シルバー・ゴールドの3種</b>で、対象クエストは <b>Maximum Attack 4</b>（9本）。マイルストーンはまだ無い。会期は途中で延長され、歴代で唯一の7週間になった。</p></td></tr>
+    <tr class="key"><td class="y">2017<span>2回目</span></td><td class="sp">8/13 – 9/10</td><td>
+      <p><b>この年に今の形ができた。</b>Maximum Attack E シリーズが登場、プラチナバッジが追加されて4種に、マイルストーンが導入。当時の集計対象は「Maximum Attack E と Christmas Fiasco での撃破数」。ここから9年、この骨格が続く。</p></td></tr>
+    <tr><td class="y">2018<span>3回目</span></td><td class="sp">8/6 – 9/3</td><td>
+      <p><b>バッジは年号付きで毎年入れ替わっていた。</b>「2周年バッジが3周年バッジに置き換わり、1周年バッジは無効」。旧バッジは3枚→1枚の目減りで交換。フォトンスフィアがゴールド50→70枚に値上げ。「The Chef」「The Badger」が登場。</p></td></tr>
+    <tr><td class="y">2019<span>4回目</span></td><td class="sp">8/2 – 9/6</td><td>
+      <p>バッジは引き続き年号付き。集計が「イベント期間中のアルティメットの撃破のみ」に整理される。週替わりブーストは止まり、最初から全部有効に。「The Hunter」がネタ武器だけになり、代わりに「The Scavenger」が登場。</p></td></tr>
+    <tr><td class="y">2020<span>5回目</span></td><td class="sp">8/17 – 9/14</td><td>
+      <p>年号付きバッジの最後の年。構成は前年とほぼ同じで、全ブースト最初から有効・アルティメットの撃破のみ集計も踏襲。</p></td></tr>
+    <tr class="key"><td class="y">2021<span>6回目</span></td><td class="sp">8/7 – 9/4</td><td>
+      <p><b>ここでバッジが恒久化した。</b>「5周年バッジは汎用の『アニバーサリーバッジ』に変換され、過去年のバッジは今後両替できない」。以後、持っているバッジは翌年以降も使える。フォトンスフィアはゴールド99枚に。</p></td></tr>
+    <tr><td class="y">2022<span>7回目</span></td><td class="sp">8/6 – 9/6</td><td>
+      <p>週替わりブーストが通常の入れ替わりに戻る。マイルストーンは「バランスのために見直して間隔を広げた」。Maximum Attack E のメセタ報酬が半分に。「The Scavenger」削除、「The Chef」はこの年が最後と予告。</p></td></tr>
+    <tr><td class="y">2023<span>8回目</span></td><td class="sp">8/5 – 9/5</td><td>
+      <p>集計が<b>アルティメットの全撃破数</b>に変わる。イベントクエストの外で狩っても進むようになった。</p></td></tr>
+    <tr><td class="y">2024<span>9回目</span></td><td class="sp">8/12 – 9/9</td><td>
+      <p>集計が<b>撃破数からクエストのクリア数</b>に変わり、しかも「いちばんクリアされていないクエスト」の回数で解放される方式に。特定のクエストばかり回しても進まない。</p></td></tr>
+    <tr><td class="y">2025<span>10回目</span></td><td class="sp">8/11 – 9/8</td><td>
+      <p>人気に応じてバッジ率を上下させる補正が入る。中央値より500回以上多い上位3クエストは −25%、下位3クエストは +25%、August Atrocity は常に +25%。<code>/badge</code> で現在の補正を確認できた。</p></td></tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">出典: 各年の告知スレッド（<a href="https://www.pioneer2.net/community/threads/3083" target="_blank" rel="noopener">2016</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/7734" target="_blank" rel="noopener">2017</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11345" target="_blank" rel="noopener">2018</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/15276" target="_blank" rel="noopener">2019</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/18985" target="_blank" rel="noopener">2020</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/21021" target="_blank" rel="noopener">2021</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/23826" target="_blank" rel="noopener">2022</a>）と <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki</a></p>
 
 <h2 id="voices">スレッドでの反応</h2>
 
-<p>おおむね歓迎されています。目立った声をいくつか。</p>
+<p>おおむね歓迎されています。目立った声を挙げると。</p>
 
-<blockquote>
-  <p>「プラチナバッジに相当するもの」は、機能が同じなら名前もプラチナバッジのままでいい。歴史的に愛着があるし、旧イベントの一部が残ることになる。</p>
-  <span class="who">Ade / HeLLzGooN / Reswob</span>
-</blockquote>
-
-<blockquote>
-  <p>通年で遊べる長い版の Maximum Attack E を残してくれたのはありがたい。あれは名作。</p>
-  <span class="who">Ade / Reswob</span>
-</blockquote>
-
-<blockquote>
-  <p>全部を同じ難易度に揃えることを意識しすぎて、つまらないクエストにならないかが心配。</p>
-  <span class="who">yuki3</span>
-</blockquote>
-
-<blockquote>
-  <p>新クエストもソロや少人数で回せるようにしてほしい。</p>
-  <span class="who">Zoke2142</span>
-</blockquote>
-
-<blockquote>
-  <p>トークンの名前は、PSシリーズの惑星や星系（アルゴル、パルマ、モタビア、デゾリス…）から採ってはどうか。</p>
-  <span class="who">King Broken</span>
-</blockquote>
+<div class="quotes">
+  <blockquote><p>「プラチナバッジに相当するもの」は、機能が同じなら名前もプラチナバッジのままでいい。歴史的に愛着があるし、旧イベントの一部が残ることになる。</p><span class="who">Ade / HeLLzGooN / Reswob</span></blockquote>
+  <blockquote><p>通年で遊べる長い版の Maximum Attack E を残してくれたのはありがたい。あれは名作。</p><span class="who">Ade / Reswob</span></blockquote>
+  <blockquote><p>全部を同じ難易度に揃えることを意識しすぎて、つまらないクエストにならないかが心配。</p><span class="who">yuki3</span></blockquote>
+  <blockquote><p>新クエストもソロや少人数で回せるようにしてほしい。</p><span class="who">Zoke2142</span></blockquote>
+  <blockquote><p>トークンの名前は、PSシリーズの惑星や星系（アルゴル、パルマ、モタビア、デゾリス…）から採ってはどうか。</p><span class="who">King Broken</span></blockquote>
+</div>
 
 <h2 id="actual">実際どうだったか</h2>
 
@@ -488,7 +513,7 @@ main > * { margin-inline: auto; }
   <li>「同程度の難易度」は実際に成立していたか</li>
 </ul>
 
-<h2>出典</h2>
+<h2 id="src">出典</h2>
 
 <ul class="srclist">
   <li><a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea公式アナウンス「今後のアニバーサリーイベントについて」（2025-09-20）</a></li>
@@ -499,6 +524,9 @@ main > * { margin-inline: auto; }
 </ul>
 
 <p class="srcline">このページは Ephinea の公式・wiki とは無関係の個人的なまとめです。予告の内容は変更されることがあるので、最終確認は公式の告知でお願いします。</p>
+
+</article>
+</div>
 
 </main>
 <footer class="footer">
