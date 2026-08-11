@@ -242,7 +242,7 @@ tr.zero td { color: var(--sub); }
 <p>評価額の単位 <b>PD (Photon Drop)</b> はEphineaで実質的な取引通貨として使われるアイテムです。価格は<a href="https://wiki.pioneer2.net/w/Price_guide" target="_blank">Price guide</a>(コミュニティ相場表、マスタ生成: 2026-08-06 08:11)準拠の目安で、実売はhit%・属性・需要で変動します。</p></div>
 <div class="cards">
   <div class="card gold"><div class="label">総資産(推定)</div><div class="val" id="cTotal">-</div><div class="sub" id="cMeseta"></div></div>
-  <div class="card"><div class="label">アイテム数</div><div class="val" id="cItems">-</div><div class="sub">同種スタックは1行で集計</div></div>
+  <div class="card"><div class="label">アイテム数</div><div class="val" id="cItems">-</div><div class="sub">同じ内容は1行にまとめた行数</div></div>
   <div class="card"><div class="label">所持メセタ合計</div><div class="val" id="cMesetaTotal">-</div><div class="sub">全キャラ+倉庫合算</div></div>
   <div class="card"><div class="label">最高額アイテム</div><div class="val" id="cTopVal">-</div><div class="sub" id="cTopName"></div></div>
 </div>
@@ -285,7 +285,7 @@ tr.zero td { color: var(--sub); }
 <ul class="footnote">
   <li>hit%依存の武器は該当hit列の価格を適用。防具はスタッツからMin/Med/High/Max段階を自動判定。</li>
   <li>「個別判断」表記は相場表に直接記載がないアイテムの推定値。0PD表示は市場価値がほぼ無いという意味で、実用価値が無いという意味ではない。</li>
-  <li>テクニックディスクは同名・同保管場所を1行に集約(×N表示)。</li>
+  <li>表示が完全に同じアイテムは、保管場所ごとに1行へまとめて ×N と表示(グラインド値・特殊・%・スロット数まで一致するものだけ)。</li>
   <li>メセタ⇔PDレート: 400,000-500,000 メセタ = 1PD。</li>
 </ul>
 </div>
@@ -813,21 +813,27 @@ function valuateAll(rawItems) {
       pd_lo: Math.round(lo * 10000) / 10000, pd_hi: Math.round(hi * 10000) / 10000,
       sub_lo: Math.round(lo * q * 100) / 100, sub_hi: Math.round(hi * q * 100) / 100, note });
   });
-  // テクニックディスクの同名・同所集約
-  const merged = [], groups = {};
+  // 表示が完全に同一の行を同じ保管場所ごとに1行へ集約する(×N表示)。
+  // **キーは name ではなく raw。** name は属性を落とした基底名なので、
+  // Raygun +14 [Charge] [0/0/0/0|50] と Raygun +5 [...] が同じ Raygun に潰れる。
+  // raw ならグラインド値・特殊・%・スロット数・マグのステータスまで含むので、
+  // キーが一致する = 画面上の表示が1文字も違わない、が保証される。
+  // 末尾の " xN" を落とすのは、スタック品(Monomate x4 と x2)の数量を合算するため
+  const baseRaw = r => r.replace(/ x\d+$/, '');
+  const merged = [], groups = {}, bases = {};
   items.forEach(it => {
-    if (it.cat === 'テクニック') {
-      const key = it.name + '|' + it.slot;
-      if (groups[key]) {
-        const g = groups[key];
-        g.qty += it.qty;
-        g.sub_lo = Math.round(g.pd_lo * g.qty * 100) / 100;
-        g.sub_hi = Math.round(g.pd_hi * g.qty * 100) / 100;
-        g.raw = `${g.name} ×${g.qty}`;
-        return;
-      }
-      groups[key] = it; merged.push(it);
-    } else merged.push(it);
+    const base = baseRaw(it.raw);
+    const key = base + '|' + it.slot;
+    const g = groups[key];
+    if (g) {
+      g.qty += it.qty;
+      g.sub_lo = Math.round(g.pd_lo * g.qty * 100) / 100;
+      g.sub_hi = Math.round(g.pd_hi * g.qty * 100) / 100;
+      // 集約済みの raw から基底を取り直すと " ×3 ×4" と重なるので、初回の基底を使う
+      g.raw = `${bases[key]} ×${g.qty}`;
+      return;
+    }
+    groups[key] = it; bases[key] = base; merged.push(it);
   });
   return merged;
 }
@@ -855,7 +861,7 @@ if (!inv || !inv.items || !inv.items.length) {
   document.getElementById('cItems').textContent = DATA.length;
   document.getElementById('cMesetaTotal').textContent = mesetaTotal.toLocaleString();
   document.getElementById('catHeadTotal').textContent = `計 ${rangeStr(totalLo, totalHi)} PD`;
-  document.getElementById('charHeadTotal').textContent = `計 ${inv.items.length}件`;
+  document.getElementById('charHeadTotal').textContent = `計 ${DATA.length}件`;
   document.getElementById('cTopVal').textContent = top.sub_lo === top.sub_hi ? `${fmt(top.sub_hi)} PD` : `${fmt(top.sub_lo)}〜${fmt(top.sub_hi)} PD`;
   document.getElementById('cTopName').textContent = top.disp.slice(0, 40);
 

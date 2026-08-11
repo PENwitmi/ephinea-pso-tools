@@ -242,7 +242,7 @@ tr.zero td { color: var(--sub); }
 <p>Values are shown in <b>PD (Photon Drop)</b> , the item used as Ephinea's de-facto trading currency. Prices follow the<a href="https://wiki.pioneer2.net/w/Price_guide" target="_blank">Price guide</a> (community price list, master generated: 2026-08-06 08:11) and are estimates — actual sales vary with hit%, attributes and demand.</p></div>
 <div class="cards">
   <div class="card gold"><div class="label">Total value (est.)</div><div class="val" id="cTotal">-</div><div class="sub" id="cMeseta"></div></div>
-  <div class="card"><div class="label">Items</div><div class="val" id="cItems">-</div><div class="sub">stacks counted as one row</div></div>
+  <div class="card"><div class="label">Items</div><div class="val" id="cItems">-</div><div class="sub">rows, identical items merged</div></div>
   <div class="card"><div class="label">Total meseta</div><div class="val" id="cMesetaTotal">-</div><div class="sub">all characters + banks</div></div>
   <div class="card"><div class="label">Top item</div><div class="val" id="cTopVal">-</div><div class="sub" id="cTopName"></div></div>
 </div>
@@ -285,7 +285,7 @@ tr.zero td { color: var(--sub); }
 <ul class="footnote">
   <li>Hit%-dependent weapons use the matching hit column; armor tiers (Min/Med/High/Max) are judged automatically from stats.</li>
   <li>"Manual estimate" marks items not listed in the price guide. 0 PD means negligible market value, not that the item is useless.</li>
-  <li>Identical technique disks in the same location are merged into one row (×N).</li>
+  <li>Items that display identically are merged into one row per location and shown as ×N (only when grind, special, percentages and slot count all match).</li>
   <li>Meseta⇔PD rate: 400,000-500,000 meseta = 1 PD.</li>
 </ul>
 </div>
@@ -813,21 +813,27 @@ function valuateAll(rawItems) {
       pd_lo: Math.round(lo * 10000) / 10000, pd_hi: Math.round(hi * 10000) / 10000,
       sub_lo: Math.round(lo * q * 100) / 100, sub_hi: Math.round(hi * q * 100) / 100, note });
   });
-  // Tech diskディスクの同名・同所集約
-  const merged = [], groups = {};
+  // 表示が完全に同一の行を同じ保管場所ごとに1行へ集約する(×N表示)。
+  // **キーは name ではなく raw。** name は属性を落とした基底名なので、
+  // Raygun +14 [Charge] [0/0/0/0|50] と Raygun +5 [...] が同じ Raygun に潰れる。
+  // raw ならグラインド値・特殊・%・Slot 数・MagのStatsまで含むので、
+  // キーが一致する = 画面上の表示が1文字も違わない、が保証される。
+  // 末尾の " xN" を落とすのは、スタック品(Monomate x4 と x2)の数量を合算するため
+  const baseRaw = r => r.replace(/ x\d+$/, '');
+  const merged = [], groups = {}, bases = {};
   items.forEach(it => {
-    if (it.cat === 'Tech disk') {
-      const key = it.name + '|' + it.slot;
-      if (groups[key]) {
-        const g = groups[key];
-        g.qty += it.qty;
-        g.sub_lo = Math.round(g.pd_lo * g.qty * 100) / 100;
-        g.sub_hi = Math.round(g.pd_hi * g.qty * 100) / 100;
-        g.raw = `${g.name} ×${g.qty}`;
-        return;
-      }
-      groups[key] = it; merged.push(it);
-    } else merged.push(it);
+    const base = baseRaw(it.raw);
+    const key = base + '|' + it.slot;
+    const g = groups[key];
+    if (g) {
+      g.qty += it.qty;
+      g.sub_lo = Math.round(g.pd_lo * g.qty * 100) / 100;
+      g.sub_hi = Math.round(g.pd_hi * g.qty * 100) / 100;
+      // 集約済みの raw から基底を取り直すと " ×3 ×4" と重なるので、初回の基底を使う
+      g.raw = `${bases[key]} ×${g.qty}`;
+      return;
+    }
+    groups[key] = it; bases[key] = base; merged.push(it);
   });
   return merged;
 }
@@ -855,7 +861,7 @@ if (!inv || !inv.items || !inv.items.length) {
   document.getElementById('cItems').textContent = DATA.length;
   document.getElementById('cMesetaTotal').textContent = mesetaTotal.toLocaleString();
   document.getElementById('catHeadTotal').textContent = `Total ${rangeStr(totalLo, totalHi)} PD`;
-  document.getElementById('charHeadTotal').textContent = `${inv.items.length} items total`;
+  document.getElementById('charHeadTotal').textContent = `${DATA.length} items total`;
   document.getElementById('cTopVal').textContent = top.sub_lo === top.sub_hi ? `${fmt(top.sub_hi)} PD` : `${fmt(top.sub_lo)}–${fmt(top.sub_hi)} PD`;
   document.getElementById('cTopName').textContent = top.disp.slice(0, 40);
 
