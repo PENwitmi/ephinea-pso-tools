@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ephinea Reading</title>
+<style>/* Ephinea Tools 共通テーマ (単一ソース)
+   全4ページ+Simulatorのローカル版に埋め込まれる。
+   パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
+   ダークはフォトン寄りの濃紺トーン。chip系はゲーム準拠の意味色。 */
+
+:root {
+  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
+  --photon: #31c7e8;
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
+    --border: #24313f; --accent: #3db4f2; --accent-soft: #10293c;
+    --photon: #31c7e8;
+    --gold: #e0a94f; --gold-soft: #2f2510; --red: #f97066; --green: #3ccb95;
+    --strike: #5d6f82;
+    --chip-weapon: #132a3e; --chip-weapon-t: #6cb8f7;
+    --chip-frame: #102b20; --chip-frame-t: #3ccb95;
+    --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
+    --chip-unit: #241a3d; --chip-unit-t: #b18aff;
+    --chip-set: #391b1b; --chip-set-t: #f97066; }
+}
+:root[data-theme="dark"] { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
+  --border: #24313f; --accent: #3db4f2; --accent-soft: #10293c;
+  --photon: #31c7e8;
+  --gold: #e0a94f; --gold-soft: #2f2510; --red: #f97066; --green: #3ccb95;
+  --strike: #5d6f82;
+  --chip-weapon: #132a3e; --chip-weapon-t: #6cb8f7;
+  --chip-frame: #102b20; --chip-frame-t: #3ccb95;
+  --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f;
+  --chip-unit: #241a3d; --chip-unit-t: #b18aff;
+  --chip-set: #391b1b; --chip-set-t: #f97066; }
+:root[data-theme="light"] { --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
+  --photon: #31c7e8;
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --strike: #64748b;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-frame: #e8f8ef; --chip-frame-t: #0d6a4d;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-set: #feecec; --chip-set-t: #c0221a; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px 14px 80px; }
+.wrap { max-width: 1200px; margin: 0 auto; }
+a { color: var(--accent); }
+
+/* ナビ (全ページ共通) */
+.nav { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 18px; font-size: 0.88rem; }
+.nav .brand { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 1.05rem; color: var(--text); text-decoration: none; }
+.nav .brand::before { content: ''; width: 9px; height: 20px; border-radius: 4px; background: linear-gradient(160deg, var(--accent), var(--photon)); }
+.nav a.tab { text-decoration: none; padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border); background: var(--card); color: var(--text); }
+.nav a.tab:hover { border-color: var(--accent); }
+.nav a.tab.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.nav .spacer { flex: 1; }
+.nav .inv-chip { font-size: 0.75rem; color: var(--sub); }
+.theme-btn { border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 99px; padding: 4px 12px; font-size: 0.78rem; cursor: pointer; white-space: nowrap; }
+
+/* 見出し */
+h1.page { display: flex; align-items: center; gap: 10px; font-size: 1.3rem; margin-bottom: 4px; }
+h2.sec { display: flex; align-items: center; gap: 8px; font-size: 1.05rem; margin: 22px 0 10px; }
+h2.sec::before, .panel > h2::before { content: ''; flex: 0 0 3px; height: 1em; border-radius: 2px; background: linear-gradient(180deg, var(--accent), var(--photon)); }
+
+/* パネル(カード) */
+.panel { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px 18px; margin-bottom: 14px; }
+.panel > h2 { display: flex; align-items: center; gap: 8px; font-size: 1rem; margin-bottom: 10px; }
+.panel > h2 .grow { flex: 1; }
+
+/* ボタン階層: .btn=主要アクション(塗り) / .reset=補助(枠線) */
+.btn { border: 1px solid var(--accent); background: var(--accent); color: #ffffff; border-radius: 8px; padding: 6px 14px; font-size: 0.85rem; cursor: pointer; font-weight: 600; }
+.btn:hover { filter: brightness(1.08); }
+.reset { border: 1px solid var(--border); background: var(--card); color: var(--sub); border-radius: 8px; padding: 3px 10px; font-size: 0.75rem; cursor: pointer; }
+.reset:hover { color: var(--accent); border-color: var(--accent); }
+
+/* クリック可能カードのホバー手応え (全ページ統一) */
+.toolcard, .catrow, .wcard, .card { transition: border-color 0.12s, box-shadow 0.12s, transform 0.12s; }
+.toolcard:hover, .catrow:hover, .wcard:hover { border-color: var(--accent); box-shadow: 0 2px 10px rgba(11, 127, 194, 0.12); transform: translateY(-1px); }
+
+/* フォーカスリング (キーボード操作時の共通表現) */
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+
+
+/* 導入文の器 (h1直下の説明ブロック) */
+.lead { border-left: 3px solid var(--accent); border-image: linear-gradient(180deg, var(--accent), var(--photon)) 1; padding: 2px 0 2px 12px; margin: 4px 0 16px; color: var(--sub); font-size: 0.85rem; }
+.lead p + p { margin-top: 4px; }
+
+/* スクリーンリーダー専用テキスト */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* モーション低減設定の尊重 */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
+}
+
+/* 汎用テキスト */
+.note { font-size: 0.78rem; color: var(--sub); }
+.warn { color: var(--red); }
+.ok { color: var(--green); font-weight: 700; }
+.empty-note { color: var(--sub); font-size: 0.78rem; }
+.footer { margin-top: 30px; font-size: 0.72rem; color: var(--sub); }
+.footer a { color: var(--sub); }
+
+/* 保存一覧 (Simulatorのビルド / Magのプラン)。
+   両方のページで同じ表示にするため、ここに集約している */
+.preset-list { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
+.preset-row { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+.preset-row .pname { flex: 1; min-width: 0; cursor: pointer; color: var(--accent);
+                     overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.preset-row .pname:hover { text-decoration: underline; }
+.preset-row .pdel, .preset-row .pren { cursor: pointer; color: var(--strike); border: none;
+                                       background: none; font-size: 0.8rem; padding: 0 2px; }
+.preset-row .pdel:hover { color: var(--red); }
+.preset-row .pren:hover { color: var(--accent); }
+
+/* Section ID の色。公式ドロップチャート準拠(背景色・文字色とも)。
+   色は変数で持ち、タグ・カードの識別帯など複数の見せ方で使い回す */
+.sid-0 { --sid: #00A562; --sid-fg: #FFFFFF; }  /* Viridia */
+.sid-1 { --sid: #76FE43; --sid-fg: #000000; }  /* Greenill */
+.sid-2 { --sid: #59F9F9; --sid-fg: #000000; }  /* Skyly */
+.sid-3 { --sid: #4488FF; --sid-fg: #FFFFFF; }  /* Bluefull */
+.sid-4 { --sid: #CC00FF; --sid-fg: #FFFFFF; }  /* Purplenum */
+.sid-5 { --sid: #FF87CB; --sid-fg: #000000; }  /* Pinkal */
+.sid-6 { --sid: #F70F0F; --sid-fg: #FFFFFF; }  /* Redria */
+.sid-7 { --sid: #F7830F; --sid-fg: #000000; }  /* Oran */
+.sid-8 { --sid: #F7F715; --sid-fg: #000000; }  /* Yellowboze */
+.sid-9 { --sid: #FFFFFF; --sid-fg: #000000; }  /* Whitill */
+.idtag { display: inline-block; padding: 0 8px; border-radius: 99px; font-size: 0.7rem;
+         font-weight: 600; background: var(--sid, var(--accent-soft));
+         color: var(--sid-fg, var(--accent)); border: 1px solid rgba(0,0,0,0.18); }
+
+/* Char 絞り込みチップ(欲しいものリスト・Magで共用) */
+.charfilter { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 8px; }
+.cfchip { display: inline-flex; align-items: center; gap: 6px; cursor: pointer;
+          border: 1px solid var(--border); background: var(--card); color: var(--text);
+          border-radius: 99px; padding: 4px 12px; font-size: 0.8rem; font-weight: 600; }
+.cfchip:hover { border-color: var(--accent); }
+.cfchip.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.cfchip .who { font-weight: normal; color: var(--sub); font-size: 0.76rem; }
+.cfchip.on .who { color: var(--accent); }
+.cfnote { font-size: 0.82rem; color: var(--sub); margin: 0 0 12px; }
+
+/* 読みものの索引。build_site.py が __GUIDES_CSS__ に差し込む */
+.glist { display: grid; gap: 12px; grid-template-columns: 1fr; margin-bottom: 20px; }
+@media (min-width: 820px) { .glist { grid-template-columns: 1fr 1fr; } }
+.gcard { display: block; border: 1px solid var(--border); border-radius: 12px;
+         background: var(--card); padding: 16px 18px; text-decoration: none; color: inherit; }
+.gcard:hover { border-color: var(--accent); }
+.gcard .gt { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
+.gcard .gd { font-size: 0.84rem; color: var(--sub); }
+.gtools .gt2 { font-weight: 700; margin-bottom: 4px; }
+/* 読みもの側のヘッダー。ツールと取り違えないよう、ツールへ戻る導線だけ色を変える */
+.gnav .tab.tools { border-color: var(--accent); color: var(--accent); }
+</style>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%230b7fc2%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2331c7e8%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20x%3D%279%27%20y%3D%274%27%20width%3D%2714%27%20height%3D%2724%27%20rx%3D%276%27%20fill%3D%27url(%23g)%27%2F%3E%3C%2Fsvg%3E">
+<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7fa">
+<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e141c">
+<link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/">
+<link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/">
+<link rel="alternate" hreflang="en" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/">
+<link rel="alternate" hreflang="x-default" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/">
+<meta name="description" content="Reading pages for PSOBB Ephinea: the questions the tools cannot answer, such as which Section ID to pick and what is changing about the anniversary event.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Ephinea Tools">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/">
+<meta property="og:title" content="Ephinea Reading">
+<meta property="og:description" content="Reading pages for PSOBB Ephinea: the questions the tools cannot answer, such as which Section ID to pick and what is changing about the anniversary event.">
+<meta property="og:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ephinea Reading">
+<meta name="twitter:description" content="Reading pages for PSOBB Ephinea: the questions the tools cannot answer, such as which Section ID to pick and what is changing about the anniversary event.">
+<meta name="twitter:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og.png">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Ephinea Reading","description":"Reading pages for PSOBB Ephinea: the questions the tools cannot answer, such as which Section ID to pick and what is changing about the anniversary event.","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/","applicationCategory":"GameApplication","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript","inLanguage":"en","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"},"isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ephinea Tools","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"},{"@type":"ListItem","position":2,"name":"Ephinea Reading","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/"}]}</script>
+</head>
+<body>
+<div class="wrap">
+<nav class="nav gnav" aria-label="Reading menu">
+  <a class="brand" href="../guides/">Ephinea Reading</a>
+  <a class="tab " href="../guides/section-id/">Picking a Section ID</a><a class="tab " href="../guides/anniversary/">The anniversary event</a>
+  <a class="tab" href="/guides/" hreflang="ja">日本語</a><span class="spacer"></span>
+  <a class="tab tools" href="../">Go to the tools →</a>
+  <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">🌙 Dark</button>
+</nav>
+<main>
+<h1>📖 Reading</h1>
+<p class="lead">Personal write-ups on the parts of Ephinea <b>the tools cannot cover — how to choose, and what is going on</b>. Wherever the numbers can be checked, they are generated from sources like the official drop charts.</p>
+
+<div class="glist">
+  <a class="gcard" href="section-id/">
+    <div class="gt">🎨 Picking a Section ID</div>
+    <div class="gd">The answer differs for a first character and an extra one. Ranked per class, with a source on every claim. What only one ID drops, and whether Red Ring is on the table, are generated from the official drop charts.</div>
+  </a>
+  <a class="gcard" href="anniversary/">
+    <div class="gt">🎂 The anniversary event is changing</div>
+    <div class="gd">The event is being rebuilt from 2026. What the staff announced, and what the event has actually been until now. To be updated once the real thing starts.</div>
+  </a>
+</div>
+
+<div class="panel gtools">
+  <div class="gt2">Looking for the tools?</div>
+  <p class="note">The things you load your characters and items into live in a separate set of pages: the mag planner, the stat simulator, the item list, the wishlist and so on.</p>
+  <p><a class="btn" href="../">Go to the tools →</a></p>
+</div>
+
+</main>
+<footer class="footer">
+<p>Data sources: <a href="https://wiki.pioneer2.net" target="_blank">Ephinea PSO Wiki</a>
+ (equipment, prices, technique mechanics) / character growth data follows vanilla PSOBB /
+ Inspired by <a href="http://pso.ffsky.cn/tools/status_simulator/jp.htm" target="_blank">the classic status simulator</a></p>
+<p>Imported inventory data is stored only in your browser (localStorage) and never sent to any server.</p>
+<p>Developer: <a href="https://dev.nishimoto-learning.jp" target="_blank" rel="noopener">NISHIMOTO DEV</a>
+ / <a href="https://buy.stripe.com/7sY6oG6351Xs3Z068V3Je03" target="_blank" rel="noopener">Buy me a coffee (Stripe)</a>
+ / <a href="https://dev.nishimoto-learning.jp/tokushoho" target="_blank" rel="noopener">Commercial disclosure (Japanese law)</a></p>
+</footer>
+</div>
+<script>
+
+// ---- Python と共有する定数 (tools/constants.py が単一ソース) ----
+const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["Normal", "Hard", "Very Hard", "Ultimate"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "theme": "pso_theme"}};
+const SKEYS = CONST.STORAGE_KEYS;
+
+// ---- テーマ ----
+function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  const b = document.getElementById('themeToggle');
+  if (b) b.textContent = t === 'dark' ? '☀️ Light' : '🌙 Dark';
+}
+let __theme = localStorage.getItem(SKEYS.theme)
+  || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+applyTheme(__theme);
+document.getElementById('themeToggle').addEventListener('click', () => {
+  __theme = __theme === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(SKEYS.theme, __theme);
+  applyTheme(__theme);
+});
+
+// ---- Section ID (複数ページで使う。色は theme.css の .idtag.sid-N) ----
+// ドロップ表は**この並びの添字**でデータを埋め込む。並べ替えは constants.py 側だけで行う
+const SIDS = CONST.SECTION_IDS;
+// importedみデータ側は大文字(PINKAL)なので、大小を無視して番号を引く
+const sidIndex = sid => SIDS.findIndex(x => x.toLowerCase() === String(sid || '').toLowerCase());
+
+// ---- importedみ済みChar を Section ID ごとにまとめる ----
+// 返り値: [{sid: 番号, name: 'Whitill', chars: ['まるちbyPEN', '倉庫byPEN']}, ...]
+function charsBySid() {
+  const inv = loadInventory();
+  const all = (inv && inv.chars) ? Object.values(inv.chars) : [];
+  const by = new Map();
+  all.forEach(c => {
+    const i = sidIndex(c.sectionId);
+    if (i < 0) return;
+    if (!by.has(i)) by.set(i, []);
+    by.get(i).push(c.name);
+  });
+  return [...by.entries()].sort((a, b) => a[0] - b[0])
+    .map(([sid, chars]) => ({ sid, name: SIDS[sid], chars }));
+}
+
+// ---- HTMLエスケープ (複数ページで使う) ----
+// **" も必ずエスケープする**。data-n / data-del などの属性値に入れているので、
+// エスケープしないと `Parasitic Gene "Flow"` や `Gods Shield "Byakko"` のような
+// 引用符入りの名前で属性が途中で切れ、削除ボタンや折りたたみ保存が動かなくなる
+// (Presets名のようなユーザー入力も同じ経路を通る)
+function esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+}
+
+// ---- インベントリストレージ ----
+// ---- 日本語表示辞書 (内部キーは常に英語名。英語ページでは空オブジェクト) ----
+const JPN = {};
+const JPN_CF = {};
+// 記号のゆれ(引用符・コロン・ハイフン)を吸収して辞書を引く。
+// ただし「+」はアイテム名の一部(マザーガーブ+)なので落とさない
+const jpKey = s => s.toLowerCase().replace(/[^a-z0-9+]+/g, '');
+if (JPN.names) Object.entries(JPN.names).forEach(([en, jp]) => { JPN_CF[jpKey(en)] = jp; });
+function jpName(name) {
+  if (!JPN.names || !name) return name;
+  const hit = JPN_CF[jpKey(name)];
+  if (hit) return hit;
+  let m = name.match(/^([A-Za-z]+) LV(\d+) Disk$/i);
+  if (m) {
+    const t = JPN.tech_jp[m[1][0].toUpperCase() + m[1].slice(1).toLowerCase()];
+    if (t) return `${t} Lv${m[2]} Disk`;
+  }
+  m = name.match(/^(.+) LV(\d+)$/i);
+  if (m) {
+    const b = JPN_CF[jpKey(m[1])];
+    if (b) return `${b} Lv${m[2]}`;
+  }
+  m = name.match(/^(\d+) MESETA$/i);
+  if (m) return `${Number(m[1]).toLocaleString()} meseta`;
+  return name;
+}
+function jpRaw(raw, name) {
+  const jp = jpName(name);
+  if (jp === name) return raw;
+  return raw.toLowerCase().startsWith(name.toLowerCase()) ? jp + raw.slice(name.length) : jp;
+}
+
+const INV_KEY = SKEYS.inventory;
+function loadInventory() {
+  try { return JSON.parse(localStorage.getItem(INV_KEY)); } catch (e) { return null; }
+}
+function updateInvChip() {
+  const inv = loadInventory();
+  const el = document.getElementById('invChip');
+  if (!el) return;
+  el.textContent = inv && inv.items && inv.items.length
+    ? `📦 ${inv.items.length} items imported (${(inv.imported || '').slice(0, 10)})`
+    : '📦 No data imported';
+}
+updateInvChip();
+
+// ---- インベントリテキストのパーサ (AllItems_with_slot.txt形式) ----
+const PSO_SPECIALS = new Set(['Hell','Chaos','Spirit','Shadow','Panic','Charge','Blizzard','Arrest','Hold',
+  'Berserk',"Demon's",'Havoc','Fill','Dark','Thunder','Dim','Bind',"Devil's",'Draw','Heart','Mind','Soul',
+  'Geist',"King's",'Lord','Master','Gush','Heat','Fire','Flame','Burning','Frost','Freeze','Ice','Seize',
+  'Riot','Storm','Tempest']);
+
+function parseInventoryText(text) {
+  const items = [];
+  text.split(/\r?\n/).forEach(ln => {
+    const m = ln.match(/^(.*?), Slot: (.+)$/);
+    if (!m) return;
+    const it = { raw: m[1].trim(), slot: m[2].trim(), name: null, grind: 0,
+                 special: null, stats: null, hit: null, qty: 1, extra: [] };
+    let s = it.raw;
+    let mm = s.match(/ x(\d+)$/);
+    if (mm) { it.qty = +mm[1]; s = s.slice(0, mm.index); }
+    mm = s.match(/\[(-?\d+)\/(-?\d+)\/(-?\d+)\/(-?\d+)\|(-?\d+)\]/);
+    if (mm) { it.stats = [+mm[1], +mm[2], +mm[3], +mm[4]]; it.hit = +mm[5]; s = s.replace(mm[0], ''); }
+    mm = s.match(/ \+(\d+)/);
+    if (mm) { it.grind = +mm[1]; s = s.replace(mm[0], ''); }
+    for (const br of [...s.matchAll(/\[([^\]]*)\]/g)].map(x => x[1])) {
+      if (PSO_SPECIALS.has(br) && it.special === null) it.special = br;
+      else it.extra.push(br);
+      s = s.replace('[' + br + ']', '');
+    }
+    it.name = s.replace(/\s+/g, ' ').trim();
+    if (it.name) { it.id = items.length + 1; items.push(it); }
+  });
+  return items;
+}
+
+
+</script>
+</body>
+</html>
