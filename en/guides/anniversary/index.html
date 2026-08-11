@@ -195,10 +195,15 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 }
 
 /* ---- 見出しと本文 ---- */
-.doc h1 { font-size: 2rem; line-height: 1.35; margin: 0 0 14px; letter-spacing: 0.01em; }
-.doc h2 { font-size: 1.45rem; line-height: 1.45; margin: 2.4em 0 0.9em;
-          padding-bottom: 0.35em; border-bottom: 2px solid var(--border); }
-.doc h2:first-of-type { margin-top: 1.8em; }
+.doc h1 { font-size: 2.05rem; line-height: 1.35; margin: 0 0 16px; letter-spacing: 0.01em; }
+
+/* セクションの切れ目。**表の罫線やカードの枠と同じ太さの線を見出しに引くと、
+   どこがセクションの頭なのか分からなくなる**(2026-08-11 にそうなった)。
+   線ではなく「大きな余白 + 見出しの左の太い棒」で切る。 */
+.doc h2 { font-size: 1.5rem; line-height: 1.45; margin: 3.6em 0 1.1em;
+          padding: 2px 0 2px 15px; border-left: 5px solid var(--accent);
+          scroll-margin-top: 18px; }
+.doc h2:first-of-type { margin-top: 2.6em; }
 .doc h3 { font-size: 1.06rem; line-height: 1.6; margin: 1.8em 0 0.5em; }
 .doc h3:first-child { margin-top: 0; }
 .doc p { font-size: 0.98rem; line-height: 1.85; margin: 0 0 1em; }
@@ -207,9 +212,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .doc code { font-size: 0.9em; }
 /* 地の文だけ行長を抑える。表・グリッドは画面幅を使う */
 .doc > article > p, .doc > article > ul, .doc > article > ol { max-width: 46rem; }
-.doc .lead { font-size: 1.1rem; line-height: 1.8; color: var(--text); max-width: 52rem;
-             border-left: 3px solid var(--accent); border-image: none;
-             padding: 4px 0 4px 16px; margin: 0 0 24px; }
+/* 導入文。h2 が左に棒を持つので、こちらは棒を使わず地を敷いて区別する */
+.doc .lead { font-size: 1.1rem; line-height: 1.85; color: var(--text); max-width: 52rem;
+             border: none; border-image: none; background: var(--accent-soft);
+             border-radius: 12px; padding: 16px 20px; margin: 0 0 30px; }
 
 /* ---- 要点(記事の頭に置く早見) ---- */
 .keyfacts { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border);
@@ -223,11 +229,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
                     color: var(--sub); margin-top: 3px; }
 
 /* ---- 並列に読ませる項目は2列に敷く ---- */
-.cols2 { display: grid; gap: 14px; grid-template-columns: 1fr; margin: 0 0 1.6em; }
+.cols2 { display: grid; gap: 18px; grid-template-columns: 1fr; margin: 0 0 2em; }
 @media (min-width: 900px) { .cols2 { grid-template-columns: 1fr 1fr; } }
-.item { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+.item { border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
         background: var(--card); }
-.item.fixed { border-color: var(--accent); }
+.item.fixed { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 .item h3 { margin: 0 0 8px; font-size: 1rem; }
 .item p { font-size: 0.9rem; line-height: 1.8; margin-bottom: 0.7em; }
 .item p:last-child { margin-bottom: 0; }
@@ -247,12 +253,16 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tag.gone { border-style: dashed; }
 
 /* ---- 表。**画面幅を使う** ---- */
-.tblwrap { overflow-x: auto; margin: 0 0 0.7em; }
+/* **表は必ずカード面(--card)に載せる。** 地(--bg)のまま罫線だけ引くと、
+   ページの背景と同じ色の上に線が浮くだけで、表として見えない(2026-08-11) */
+.tblwrap { overflow-x: auto; margin: 0 0 0.8em; background: var(--card);
+           border: 1px solid var(--border); border-radius: 12px; }
 .tbl { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-.tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 8px 12px;
+.tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 10px 14px;
                    text-align: left; vertical-align: top; }
 .tbl thead th { font-size: 0.74rem; color: var(--sub); font-weight: 700; white-space: nowrap;
-                border-bottom-width: 2px; }
+                background: var(--bg); }
+.tbl tbody tr:last-child > th, .tbl tbody tr:last-child > td { border-bottom: none; }
 .tbl tbody tr:hover { background: var(--accent-soft); }
 .tblnote { font-size: 0.8rem; color: var(--sub); margin: 0 0 2em; }
 /* 年表。年を左に固定して、右に何が変わったかを流す */
@@ -284,7 +294,37 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 /* このページ固有のぶんだけ。レイアウトは reading.css が持つ */
 
-/* クリア数の表。数字だけだと差が伝わらないので棒を添える */
+/* 表のセル内の補足。1行目が主、2行目が但し書き */
+.tbl .sub { display: block; font-size: 0.82rem; color: var(--sub); margin-top: 3px;
+            line-height: 1.6; }
+
+/* ---- 新旧の対比表。左に項目名、右2列が「いままで / これから」 ---- */
+.tbl.cmp th { font-weight: 700; }
+.tbl.cmp tbody th { font-size: 0.84rem; color: var(--sub); white-space: nowrap;
+                    width: 1%; padding-right: 18px; }
+.tbl.cmp td { width: 42%; }
+/* 変わる先が主役なので、そちらだけ地を敷いて左に線を入れる */
+.tbl.cmp .now { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.tbl.cmp thead .now { color: var(--accent); }
+.tbl.cmp .was { color: var(--sub); }
+.tbl.cmp .was b, .tbl.cmp .was .sub { color: inherit; }
+.tbl.cmp tbody tr:hover { background: none; }
+.tbl.cmp tbody tr:hover .now { background: var(--accent-soft); }
+@media (max-width: 700px) { .tbl.cmp { min-width: 520px; } }
+
+/* ---- 交換Rate 。左右を矢印で結ぶだけの表なので見出しは持たない ---- */
+.tbl.rate td { border-bottom: none; padding: 9px 0; }
+.tbl.rate tr > td:first-child { padding-left: 18px; }
+.tbl.rate tr > td:last-child { padding-right: 18px; }
+.tbl.rate tr:first-child > td { padding-top: 14px; }
+.tbl.rate tr:last-child > td { padding-bottom: 14px; }
+.tbl.rate .from { white-space: nowrap; font-weight: 700; width: 1%; }
+.tbl.rate .ar { color: var(--sub); width: 1%; padding-left: 14px; padding-right: 14px; }
+.tbl.rate tr.ng .from, .tbl.rate tr.ng .to { color: var(--sub); }
+.tbl.rate tr.ng .ar { color: var(--gold); }
+.tbl.rate tbody tr:hover { background: none; }
+
+/* ---- クリア数の表。数字だけだと差が伝わらないので棒を添える ---- */
 .tbl td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
             width: 1%; font-weight: 600; }
 .tbl td.bc { width: 45%; padding-left: 14px; padding-right: 14px; }
@@ -334,10 +374,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   <div class="tlabel">CONTENTS</div>
   <ol>
     <li><a href="#fixed">What is settled</a></li>
-    <li><a href="#why">Why it is ending</a></li>
-    <li><a href="#next">What replaces it</a></li>
-    <li><a href="#badges">Your badges</a></li>
-    <li><a href="#history">Nine years of patching</a></li>
+    <li><a href="#diff">Before and after</a></li>
+    <li><a href="#why">Why it is changing</a></li>
+    <li><a href="#badges">Badges you already have</a></li>
+    <li><a href="#history">Nine years of changes</a></li>
     <li><a href="#unknown">Still unknown</a></li>
     <li><a href="#src">Sources</a></li>
   </ol>
@@ -345,141 +385,182 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 <article>
 
-<h1>The anniversary event is changing</h1>
+<h1>The anniversary event is being rebuilt</h1>
 
-<p class="lead">Ephinea's anniversary event has had the same shape for nine years, and from 2026 it is being rebuilt. The reason is not subtle: <b>the staff spent three years trying to fix a structure where grinding the easiest quest was always the right answer, and it did not work</b>.</p>
+<p class="lead">Ephinea's anniversary event has kept the same shape for nine years, and it is being rebuilt from 2026. The reason: <b>farming Forest over and over was always the best move</b>, and three years of adjustments failed to change that.</p>
+
+<div class="keyfacts">
+  <div><div class="k">ANNOUNCED</div><div class="v">20 Sep 2025<span class="sub">Advance notice. Details can still change</span></div></div>
+  <div><div class="k">NEXT EVENT</div><div class="v">Not announced<span class="sub">Usually starts in August, runs 4 weeks</span></div></div>
+  <div><div class="k">CONFIRMED CHANGES</div><div class="v">Only two<span class="sub">The quest and the badges are going</span></div></div>
+</div>
 
 <h2 id="fixed">What is settled</h2>
 
-<p>Of everything in the 20 September 2025 announcement, only two things were marked as not subject to change.</p>
+<p>Only these two were stated outright as "no plans to change".</p>
 
 <div class="cols2">
   <div class="item fixed">
-    <h3>The Maximum Attack E event quests are going away</h3>
-    <p>The series that has been the centrepiece for nine years disappears. The <b>year-round versions stay</b>, though, and August Atrocity remains available during the event.</p>
+    <h3>The event version of Maximum Attack E is going</h3>
+    <p>It was the centre of the event for nine years. <b>The year-round version stays.</b> "August Atrocity" also remains playable during the event.</p>
   </div>
   <div class="item fixed">
-    <h3>Anniversary Badges become unobtainable</h3>
-    <p>What you hold now is the last stock there will be. The <b>exchange shop stays open</b>, so there is no need to rush to spend them.</p>
+    <h3>Anniversary Badges will no longer drop</h3>
+    <p>The next event is the last chance to earn them. <b>The shop stays</b>, so there is no hurry to spend what you have left.</p>
   </div>
 </div>
 
-<p>Everything else is a plan and may change. The 11th anniversary event itself <b>has not been announced at all</b> as of 11 August 2026, when this was written. If it follows the usual pattern it will start some time in August and run four weeks. Once it does, the differences from the announcement will be added here.</p>
+<p>Everything else is advance notice. The 11th anniversary event itself has <b>not been announced as of 11 August 2026</b>, when this was written. Once it starts, the differences from the notice will be added here.</p>
 
-<h2 id="why">Why it is ending</h2>
+<h2 id="diff">Before and after</h2>
 
-<p>Badges are awarded <b>every time you clear a quest</b>. That means the faster and safer a run is, the more you earn per hour. And Forest is the easiest area in the game.</p>
+<div class="tblwrap">
+<table class="tbl cmp">
+  <thead><tr><th></th><th class="was">2017 – 2025</th><th class="now">From 2026</th></tr></thead>
+  <tbody>
+    <tr>
+      <th>Quest</th>
+      <td class="was">The event version of Maximum Attack E</td>
+      <td class="now">A new series, <b>all of roughly equal difficulty</b></td>
+    </tr>
+    <tr>
+      <th>Forest-only runs</th>
+      <td class="was">Possible, and the most efficient option</td>
+      <td class="now"><b>No quest will be Forest-only</b></td>
+    </tr>
+    <tr>
+      <th>What drops</th>
+      <td class="was">Anniversary Badges<br><span class="sub">Bronze → Silver → Gold → Platinum</span></td>
+      <td class="now"><b>A differently coloured token per quest</b><br><span class="sub">No ranks above or below</span></td>
+    </tr>
+    <tr>
+      <th>Buying things</th>
+      <td class="was">Trade ten at a time for the rank above</td>
+      <td class="now"><b>Combine several colours</b><br><span class="sub">e.g. Item Ticket = 2 red + 2 blue</span></td>
+    </tr>
+    <tr>
+      <th>Running one quest only</th>
+      <td class="was">Still got you all the way to Gold</td>
+      <td class="now"><b>Missing colours, so nothing to buy</b><br><span class="sub">Though tokens are said to be tradeable</span></td>
+    </tr>
+    <tr>
+      <th>Milestones</th>
+      <td class="was" colspan="2">Continue as they are, along with the extra boosts during the event</td>
+    </tr>
+    <tr>
+      <th>Platinum Badge</th>
+      <td class="was">Your pick of six weapons</td>
+      <td class="now">An equivalent stays<br><span class="sub">Name and source undecided</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">Token names and costs are placeholders for now.</p>
 
-<p>Put those two facts together and the answer falls out: <b>run Forest, over and over</b>. It has been that way since the format was created nine years ago.</p>
+<p>The response in the thread was mostly positive, with several posts thanking the staff for keeping the year-round Maximum Attack E. What several players asked for was that the name Platinum Badge be kept if the item works the same way. The worry raised was that levelling the difficulty might be taken far enough to make the quests dull, and there were requests to keep them runnable solo or in a small party.</p>
 
-<p>The staff spent three years trying to break it. In 2023 the milestone counter changed to all Ultimate kills. In 2024 it changed again, to <b>the number of clears of the least-cleared quest</b>, so grinding Forest alone stopped advancing anything server-wide. In 2025 they added rate modifiers on top: −25% badges for the three most-cleared quests, +25% for the three least-cleared.</p>
+<p class="srcline">Source: <a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea announcement, "Regarding Future Anniversary Events" (2025-09-20)</a></p>
 
-<p>Here is how the 10th anniversary finished.</p>
+<h2 id="why">Why it is changing</h2>
+
+<p>Badges drop <b>per quest clear</b>. A faster lap therefore pays better, and Forest is the easiest area in the game. Staff pushed back against this three times over three years (see <a href="#history">Nine years of changes</a>). The 10th anniversary still ended like this.</p>
 
 <div class="tblwrap">
 <table class="tbl">
   <thead><tr><th>Quest</th><th class="n">Clears</th><th class="bc"></th><th>Note</th></tr></thead>
   <tbody>
-    <tr class="top"><td>Forest</td><td class="n">142,197</td><td class="bc"><span class="bar" style="width:100%"></span></td><td class="rm">Easiest area in the game</td></tr>
-    <tr><td>Desert</td><td class="n">89,351</td><td class="bc"><span class="bar" style="width:62.8%"></span></td><td class="rm"></td></tr>
-    <tr><td>CCA</td><td class="n">41,240</td><td class="bc"><span class="bar" style="width:29.0%"></span></td><td class="rm"></td></tr>
+    <tr class="top"><td>Forest</td><td class="n">142,197</td><td class="bc"><span class="bar" style="width:100%"></span></td><td class="rm">easiest area</td></tr>
+    <tr><td>Subterranean Desert</td><td class="n">89,351</td><td class="bc"><span class="bar" style="width:62.8%"></span></td><td class="rm"></td></tr>
+    <tr><td>Central Control Area</td><td class="n">41,240</td><td class="bc"><span class="bar" style="width:29.0%"></span></td><td class="rm"></td></tr>
     <tr><td>Mine</td><td class="n">35,608</td><td class="bc"><span class="bar" style="width:25.0%"></span></td><td class="rm"></td></tr>
     <tr><td>Cave</td><td class="n">29,007</td><td class="bc"><span class="bar" style="width:20.4%"></span></td><td class="rm"></td></tr>
     <tr><td>Crater</td><td class="n">28,286</td><td class="bc"><span class="bar" style="width:19.9%"></span></td><td class="rm"></td></tr>
     <tr><td>Ruins</td><td class="n">26,521</td><td class="bc"><span class="bar" style="width:18.7%"></span></td><td class="rm"></td></tr>
     <tr><td>Spaceship</td><td class="n">25,755</td><td class="bc"><span class="bar" style="width:18.1%"></span></td><td class="rm"></td></tr>
     <tr><td>Temple</td><td class="n">25,699</td><td class="bc"><span class="bar" style="width:18.1%"></span></td><td class="rm"></td></tr>
-    <tr><td>Tower</td><td class="n">25,438</td><td class="bc"><span class="bar" style="width:17.9%"></span></td><td class="rm"></td></tr>
-    <tr class="min"><td>Seabed</td><td class="n">25,417</td><td class="bc"><span class="bar" style="width:17.9%"></span></td><td class="rm">Least played</td></tr>
+    <tr><td>Control Tower</td><td class="n">25,438</td><td class="bc"><span class="bar" style="width:17.9%"></span></td><td class="rm"></td></tr>
+    <tr class="min"><td>Seabed</td><td class="n">25,417</td><td class="bc"><span class="bar" style="width:17.9%"></span></td><td class="rm">fewest</td></tr>
   </tbody>
 </table>
 </div>
-<p class="tblnote">Final clear counts for the 2025 event (from the <a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">official site</a>).</p>
+<p class="tblnote">Final clear counts for the 2025 event, from the <a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">official event page</a>.</p>
 
-<p>Forest to Seabed is a <b>5.6× gap</b>. The bottom eight bunching between 25,000 and 36,000 looks like exactly what it is: people running each of those the minimum needed for the milestones. <b>Adjusting how the rewards were handed out did not stop players converging on the most efficient quest.</b></p>
+<p>Forest ran <b>5.6 times</b> as often as Seabed, the lowest. The bottom eight bunching up between 25,000 and 36,000 looks like people running each just far enough for the milestones and stopping. <b>Adjusting the payouts never broke the pull of the efficient quest.</b> So 2026 replaces the quests and the currency themselves.</p>
 
-<p>So for 2026, instead of adjusting the payout, they are <b>removing the thing everyone converges on</b>.</p>
+<h2 id="badges">Badges you already have</h2>
 
-<h2 id="next">What replaces it</h2>
+<p>The shop quest, "Anniversary Badge Shop", <b>can be selected year-round, event or not</b>. Its rules are unchanged.</p>
 
-<p>The new quest series is to be of <b>uniform difficulty</b>. "There will not be an option to simply play the easiest area in the game for full event rewards," and, explicitly, "there will not be a quest entirely in Forest." In other words: <b>do not build the optimal quest in the first place</b>.</p>
-
-<p>The currency points the same way. The bronze/silver/gold ranking goes away, replaced by <b>a different colour of token per quest</b>. Buying from the shop needs several colours, so repeating one quest buys you nothing. The examples given are an item ticket for 2 red plus 2 blue, and a photon sphere for 70 of every colour. Names and numbers are placeholders.</p>
-
-<p><b>Tokens will be tradeable</b>, though. You do not have to run everything yourself: farm what you are good at and trade for the other colours. The "play everything" requirement is softened right there.</p>
-
-<p>Something equivalent to the Platinum Badge remains, but its name and how you get it are undecided. Several posters argued that if it does the same job it should simply keep the name, since it is historically endearing and would let a piece of the old event live on. Milestones and the extra boosts carry over unchanged.</p>
-
-<p>The reception was broadly positive. Plenty of posts thanked the staff for keeping the year-round Maximum Attack E quests, alongside two recurring worries: that chasing uniform difficulty might make the quests dull, and that they should still be runnable solo or in small groups.</p>
-
-<p class="srcline">Source: <a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea — "Regarding Future Anniversary Events" (20 Sep 2025)</a></p>
-
-<h2 id="badges">What to do with the badges you have</h2>
-
-<p>The coming event is the last chance to earn badges. The exchange quest, "Anniversary Badge Shop", <b>remains afterwards</b>, and since it can be selected year-round, whatever you have left can be spent whenever you like.</p>
-
-<p>The trade-up rules are unchanged: ten badges buy one of the next rank, except that nothing trades up into platinum. A single platinum still buys your pick of Sealed J-Sword, Psycho Wand, Heaven Punisher, Handgun: Guld, Prophets of Motav or Sonic Doll.</p>
+<div class="tblwrap">
+<table class="tbl rate">
+  <tbody>
+    <tr><td class="from">10 Bronze</td><td class="ar">→</td><td class="to">1 Silver</td></tr>
+    <tr><td class="from">10 Silver</td><td class="ar">→</td><td class="to">1 Gold</td></tr>
+    <tr class="ng"><td class="from">Gold</td><td class="ar">✕</td><td class="to">cannot be traded up into Platinum</td></tr>
+    <tr><td class="from">1 Platinum</td><td class="ar">→</td><td class="to">your pick of Sealed J-Sword / Psycho Wand / Heaven Punisher / Handgun: Guld / Prophets of Motav / Sonic Doll</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">The Bronze, Silver and Gold shops are unchanged as well.</p>
 
 <p class="srcline">Source: <a href="https://wiki.pioneer2.net/w/Anniversary_Badge_Shop" target="_blank" rel="noopener">Ephinea PSO Wiki — Anniversary Badge Shop</a></p>
 
-<h2 id="history">Nine years of patching</h2>
+<h2 id="history">Nine years of changes</h2>
 
-<p>The skeleton was built in 2017: Maximum Attack E, the Platinum Badge and the milestone system all arrived at once, and those three then went unchanged through nine events. What did move was <b>how milestones were counted, and how long badges lasted</b>. Laid out year by year, you can see what the staff kept trying to fix.</p>
+<p>The shape it has now was set in 2017. After that, the only things touched were <b>how milestones counted, and whether badges carried over</b>.</p>
 
 <div class="tblwrap">
 <table class="tbl years">
-  <thead><tr><th>Year</th><th>Dates</th><th>What changed</th></tr></thead>
+  <thead><tr><th>Year</th><th>Dates</th><th>What changed that year</th></tr></thead>
   <tbody>
     <tr><td class="y">2016<span>1st</span></td><td class="sp">11 Aug – 1 Oct</td><td>
-      <p>The "Ephinea Summer Event". Three badge types, and the featured quests were Maximum Attack 4. No milestones yet. Extended mid-event into the only seven-week edition.</p></td></tr>
+      <p>Called "Ephinea Summer Event". Three badge types, run on Maximum Attack 4, no milestones yet. It was extended partway through, making it the only seven-week event.</p></td></tr>
     <tr class="key"><td class="y">2017<span>2nd</span></td><td class="sp">13 Aug – 10 Sep</td><td>
-      <p><b>The skeleton is built.</b> Maximum Attack E debuts, the Platinum Badge makes four types, and milestones arrive. <b>This shape lasts nine years.</b></p></td></tr>
+      <p><b>The current shape starts here.</b> Maximum Attack E arrives, the Platinum Badge brings the count to four, and milestones are introduced. <b>This held for nine years.</b></p></td></tr>
     <tr><td class="y">2018<span>3rd</span></td><td class="sp">6 Aug – 3 Sep</td><td>
-      <p>Badges are <b>year-numbered and replaced annually</b>; old ones convert three-to-one, anything older is dead. Photon Sphere goes 50 → 70 gold.</p></td></tr>
+      <p>Badges were <b>year-numbered and replaced annually</b>. Last year's could only be traded three-for-one, and anything older was dead. Photon Sphere went from 50 badges to 70.</p></td></tr>
     <tr><td class="y">2019<span>4th</span></td><td class="sp">2 Aug – 6 Sep</td><td>
-      <p>The counter is tightened to Ultimate kills during the event only. The weekly rotation stops; all boosts run from the start.</p></td></tr>
+      <p>Counting was tidied to Ultimate kills during the event only. Weekly rotating boosts were dropped in favour of running everything from the start.</p></td></tr>
     <tr><td class="y">2020<span>5th</span></td><td class="sp">17 Aug – 14 Sep</td><td>
-      <p>The last year of year-numbered badges. Otherwise a repeat of the year before.</p></td></tr>
+      <p>The last year of year-numbered badges. Otherwise much the same as 2019.</p></td></tr>
     <tr class="key"><td class="y">2021<span>6th</span></td><td class="sp">7 Aug – 4 Sep</td><td>
-      <p><b>Badges become permanent.</b> "5th Anniversary Badges have been converted to generic 'Anniversary Badges', and previous year badges can no longer be traded up." From here they carry over.</p></td></tr>
+      <p><b>Badges become permanent.</b> The 5th Anniversary Badge was converted into the generic Anniversary Badge, and older year badges could no longer be traded. From here they carry over.</p></td></tr>
     <tr><td class="y">2022<span>7th</span></td><td class="sp">6 Aug – 6 Sep</td><td>
-      <p>The weekly boosts go back to rotating normally. Milestones are "reviewed and stretched out for balance purposes".</p></td></tr>
+      <p>Weekly boosts went back to rotating. Milestones were "rebalanced and spaced out further".</p></td></tr>
     <tr><td class="y">2023<span>8th</span></td><td class="sp">5 Aug – 5 Sep</td><td>
-      <p><b>Fix attempt one.</b> The counter moves to all Ultimate kills, so progress can come from outside the event quests.</p></td></tr>
+      <p><b>First push-back.</b> Counting moved to all Ultimate kills, so hunting outside the event quests also made progress.</p></td></tr>
     <tr><td class="y">2024<span>9th</span></td><td class="sp">12 Aug – 9 Sep</td><td>
-      <p><b>Fix attempt two.</b> The counter moves to clears of the least-cleared quest. Grinding a single quest stops helping.</p></td></tr>
+      <p><b>Second push-back.</b> Counting moved to the clear count of the <i>least</i>-cleared quest, so running one quest alone stopped helping.</p></td></tr>
     <tr><td class="y">2025<span>10th</span></td><td class="sp">11 Aug – 8 Sep</td><td>
-      <p><b>Fix attempt three.</b> −25% badges for the three most-cleared quests, +25% for the three least. Forest still finished 5.6× ahead.</p></td></tr>
+      <p><b>Third push-back.</b> The three most-cleared quests took a −25% badge rate, the three least-cleared got +25%. Forest still finished 5.6× ahead.</p></td></tr>
   </tbody>
 </table>
 </div>
-<p class="tblnote">Sources: the announcement threads for <a href="https://www.pioneer2.net/community/threads/3083" target="_blank" rel="noopener">2016</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/7734" target="_blank" rel="noopener">2017</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11345" target="_blank" rel="noopener">2018</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/15276" target="_blank" rel="noopener">2019</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/18985" target="_blank" rel="noopener">2020</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/21021" target="_blank" rel="noopener">2021</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/23826" target="_blank" rel="noopener">2022</a>, and the <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki</a></p>
-
-<p>Three consecutive years of corrections, and the distribution barely moved. <b>Only after that does replacing the quests and the currency outright start to look like the obvious step</b> — which is the order the announcement comes in.</p>
+<p class="tblnote">Sources: the announcement thread for each year (<a href="https://www.pioneer2.net/community/threads/3083" target="_blank" rel="noopener">2016</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/7734" target="_blank" rel="noopener">2017</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11345" target="_blank" rel="noopener">2018</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/15276" target="_blank" rel="noopener">2019</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/18985" target="_blank" rel="noopener">2020</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/21021" target="_blank" rel="noopener">2021</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/23826" target="_blank" rel="noopener">2022</a>) and the <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki</a></p>
 
 <h2 id="unknown">Still unknown</h2>
 
-<p>More is missing from the announcement than is in it. Once the event starts, these are the things to check, and they will be written up here.</p>
+<p>Once the event starts, these five will be checked and added here.</p>
 
 <ul>
-  <li>How many new quests, and which areas. <b>Whether "uniform difficulty" actually holds up</b></li>
-  <li>How many token colours, and what they are called</li>
-  <li>How the real shop prices compare with the examples (item ticket = 2 red + 2 blue, and so on)</li>
-  <li>What the platinum equivalent is called, and how it is obtained</li>
-  <li>Whether the milestone tiers and thresholds changed</li>
+  <li>How many new quests there are and which areas they use, and <b>whether "roughly equal difficulty" actually holds</b></li>
+  <li>How many token colours there are, and what they are called</li>
+  <li>How shop costs compare with the example given (Item Ticket = 2 red + 2 blue)</li>
+  <li>The name and source of whatever replaces the Platinum Badge</li>
+  <li>Whether milestone tiers and their point requirements changed</li>
 </ul>
 
 <h2 id="src">Sources</h2>
 
 <ul class="srclist">
-  <li><a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea — "Regarding Future Anniversary Events" (20 Sep 2025)</a></li>
-  <li><a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">Ephinea — "Anniversary Event 2025!" (final figures for the 10th)</a></li>
+  <li><a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea announcement, "Regarding Future Anniversary Events" (2025-09-20)</a></li>
+  <li><a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">Ephinea, "Anniversary Event 2025!" (10th anniversary results)</a></li>
   <li><a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki — Anniversary event</a></li>
   <li><a href="https://wiki.pioneer2.net/w/Anniversary_Badge_Shop" target="_blank" rel="noopener">Ephinea PSO Wiki — Anniversary Badge Shop</a></li>
-  <li><a href="https://www.pioneer2.net/community/forums/news.30/?order=post_date" target="_blank" rel="noopener">Ephinea news index</a></li>
+  <li><a href="https://www.pioneer2.net/community/forums/news.30/?order=post_date" target="_blank" rel="noopener">Ephinea news archive</a></li>
 </ul>
 
-<p class="srcline">This page is a personal summary and is not affiliated with Ephinea or its wiki. The announcement is subject to change, so please confirm against the official posts.</p>
+<p class="srcline">This page is a personal summary, not affiliated with Ephinea or its wiki. Advance notices can change, so check the official announcements for the final word.</p>
 
 </article>
 </div>

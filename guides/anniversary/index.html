@@ -195,10 +195,15 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 }
 
 /* ---- 見出しと本文 ---- */
-.doc h1 { font-size: 2rem; line-height: 1.35; margin: 0 0 14px; letter-spacing: 0.01em; }
-.doc h2 { font-size: 1.45rem; line-height: 1.45; margin: 2.4em 0 0.9em;
-          padding-bottom: 0.35em; border-bottom: 2px solid var(--border); }
-.doc h2:first-of-type { margin-top: 1.8em; }
+.doc h1 { font-size: 2.05rem; line-height: 1.35; margin: 0 0 16px; letter-spacing: 0.01em; }
+
+/* セクションの切れ目。**表の罫線やカードの枠と同じ太さの線を見出しに引くと、
+   どこがセクションの頭なのか分からなくなる**(2026-08-11 にそうなった)。
+   線ではなく「大きな余白 + 見出しの左の太い棒」で切る。 */
+.doc h2 { font-size: 1.5rem; line-height: 1.45; margin: 3.6em 0 1.1em;
+          padding: 2px 0 2px 15px; border-left: 5px solid var(--accent);
+          scroll-margin-top: 18px; }
+.doc h2:first-of-type { margin-top: 2.6em; }
 .doc h3 { font-size: 1.06rem; line-height: 1.6; margin: 1.8em 0 0.5em; }
 .doc h3:first-child { margin-top: 0; }
 .doc p { font-size: 0.98rem; line-height: 1.85; margin: 0 0 1em; }
@@ -207,9 +212,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .doc code { font-size: 0.9em; }
 /* 地の文だけ行長を抑える。表・グリッドは画面幅を使う */
 .doc > article > p, .doc > article > ul, .doc > article > ol { max-width: 46rem; }
-.doc .lead { font-size: 1.1rem; line-height: 1.8; color: var(--text); max-width: 52rem;
-             border-left: 3px solid var(--accent); border-image: none;
-             padding: 4px 0 4px 16px; margin: 0 0 24px; }
+/* 導入文。h2 が左に棒を持つので、こちらは棒を使わず地を敷いて区別する */
+.doc .lead { font-size: 1.1rem; line-height: 1.85; color: var(--text); max-width: 52rem;
+             border: none; border-image: none; background: var(--accent-soft);
+             border-radius: 12px; padding: 16px 20px; margin: 0 0 30px; }
 
 /* ---- 要点(記事の頭に置く早見) ---- */
 .keyfacts { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border);
@@ -223,11 +229,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
                     color: var(--sub); margin-top: 3px; }
 
 /* ---- 並列に読ませる項目は2列に敷く ---- */
-.cols2 { display: grid; gap: 14px; grid-template-columns: 1fr; margin: 0 0 1.6em; }
+.cols2 { display: grid; gap: 18px; grid-template-columns: 1fr; margin: 0 0 2em; }
 @media (min-width: 900px) { .cols2 { grid-template-columns: 1fr 1fr; } }
-.item { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px;
+.item { border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px;
         background: var(--card); }
-.item.fixed { border-color: var(--accent); }
+.item.fixed { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
 .item h3 { margin: 0 0 8px; font-size: 1rem; }
 .item p { font-size: 0.9rem; line-height: 1.8; margin-bottom: 0.7em; }
 .item p:last-child { margin-bottom: 0; }
@@ -247,12 +253,16 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tag.gone { border-style: dashed; }
 
 /* ---- 表。**画面幅を使う** ---- */
-.tblwrap { overflow-x: auto; margin: 0 0 0.7em; }
+/* **表は必ずカード面(--card)に載せる。** 地(--bg)のまま罫線だけ引くと、
+   ページの背景と同じ色の上に線が浮くだけで、表として見えない(2026-08-11) */
+.tblwrap { overflow-x: auto; margin: 0 0 0.8em; background: var(--card);
+           border: 1px solid var(--border); border-radius: 12px; }
 .tbl { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-.tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 8px 12px;
+.tbl th, .tbl td { border-bottom: 1px solid var(--border); padding: 10px 14px;
                    text-align: left; vertical-align: top; }
 .tbl thead th { font-size: 0.74rem; color: var(--sub); font-weight: 700; white-space: nowrap;
-                border-bottom-width: 2px; }
+                background: var(--bg); }
+.tbl tbody tr:last-child > th, .tbl tbody tr:last-child > td { border-bottom: none; }
 .tbl tbody tr:hover { background: var(--accent-soft); }
 .tblnote { font-size: 0.8rem; color: var(--sub); margin: 0 0 2em; }
 /* 年表。年を左に固定して、右に何が変わったかを流す */
@@ -284,7 +294,37 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 /* このページ固有のぶんだけ。レイアウトは reading.css が持つ */
 
-/* クリア数の表。数字だけだと差が伝わらないので棒を添える */
+/* 表のセル内の補足。1行目が主、2行目が但し書き */
+.tbl .sub { display: block; font-size: 0.82rem; color: var(--sub); margin-top: 3px;
+            line-height: 1.6; }
+
+/* ---- 新旧の対比表。左に項目名、右2列が「いままで / これから」 ---- */
+.tbl.cmp th { font-weight: 700; }
+.tbl.cmp tbody th { font-size: 0.84rem; color: var(--sub); white-space: nowrap;
+                    width: 1%; padding-right: 18px; }
+.tbl.cmp td { width: 42%; }
+/* 変わる先が主役なので、そちらだけ地を敷いて左に線を入れる */
+.tbl.cmp .now { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.tbl.cmp thead .now { color: var(--accent); }
+.tbl.cmp .was { color: var(--sub); }
+.tbl.cmp .was b, .tbl.cmp .was .sub { color: inherit; }
+.tbl.cmp tbody tr:hover { background: none; }
+.tbl.cmp tbody tr:hover .now { background: var(--accent-soft); }
+@media (max-width: 700px) { .tbl.cmp { min-width: 520px; } }
+
+/* ---- 交換レート。左右を矢印で結ぶだけの表なので見出しは持たない ---- */
+.tbl.rate td { border-bottom: none; padding: 9px 0; }
+.tbl.rate tr > td:first-child { padding-left: 18px; }
+.tbl.rate tr > td:last-child { padding-right: 18px; }
+.tbl.rate tr:first-child > td { padding-top: 14px; }
+.tbl.rate tr:last-child > td { padding-bottom: 14px; }
+.tbl.rate .from { white-space: nowrap; font-weight: 700; width: 1%; }
+.tbl.rate .ar { color: var(--sub); width: 1%; padding-left: 14px; padding-right: 14px; }
+.tbl.rate tr.ng .from, .tbl.rate tr.ng .to { color: var(--sub); }
+.tbl.rate tr.ng .ar { color: var(--gold); }
+.tbl.rate tbody tr:hover { background: none; }
+
+/* ---- クリア数の表。数字だけだと差が伝わらないので棒を添える ---- */
 .tbl td.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap;
             width: 1%; font-weight: 600; }
 .tbl td.bc { width: 45%; padding-left: 14px; padding-right: 14px; }
@@ -334,8 +374,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   <div class="tlabel">目次</div>
   <ol>
     <li><a href="#fixed">決まっていること</a></li>
-    <li><a href="#why">なぜ終わるのか</a></li>
-    <li><a href="#next">何に変わるのか</a></li>
+    <li><a href="#diff">いままでと2026年から</a></li>
+    <li><a href="#why">なぜ変えるのか</a></li>
     <li><a href="#badges">手持ちのバッジ</a></li>
     <li><a href="#history">9年間の変遷</a></li>
     <li><a href="#unknown">まだ分からないこと</a></li>
@@ -347,34 +387,83 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 <h1>アニバーサリーイベントが変わります</h1>
 
-<p class="lead">9年間ずっと同じ形だった Ephinea のアニバーサリーイベントが、2026年から作り直されます。理由ははっきりしています。<b>いちばん簡単なクエストを回し続けるのがいちばん得、という状態を、運営が3年かけても崩せなかった</b>からです。</p>
+<p class="lead">9年間ずっと同じ形だった Ephinea のアニバーサリーイベントが、2026年から作り直されます。<b>森を回り続けるのがいちばん得</b>という偏りを、運営が3年かけても直せなかったためです。</p>
+
+<div class="keyfacts">
+  <div><div class="k">告知</div><div class="v">2025年9月20日<span class="sub">予告の段階。中身は変わるかもしれません</span></div></div>
+  <div><div class="k">次のイベント</div><div class="v">未発表<span class="sub">例年なら8月に始まり4週間</span></div></div>
+  <div><div class="k">確定している変更</div><div class="v">2件だけ<span class="sub">クエストとバッジの廃止</span></div></div>
+</div>
 
 <h2 id="fixed">決まっていること</h2>
 
-<p>2025年9月20日のアナウンスのうち、「変更する予定はありません」と明記されたのは次の2つだけです。</p>
+<p>告知の中で「変更する予定はない」とはっきり書かれたのは、この2つだけです。</p>
 
 <div class="cols2">
   <div class="item fixed">
-    <h3>Maximum Attack E のイベント版クエストがなくなる</h3>
-    <p>9年間イベントの中心だったクエストシリーズが消えます。ただし<b>通年で遊べる版は残ります</b>。「August Atrocity」もイベント期間中は引き続き遊べます。</p>
+    <h3>Maximum Attack E のイベント版がなくなる</h3>
+    <p>9年間イベントの中心だったクエストです。<b>通年で遊べる版は残ります。</b>「August Atrocity」もイベント中は引き続き遊べます。</p>
   </div>
   <div class="item fixed">
     <h3>アニバーサリーバッジが手に入らなくなる</h3>
-    <p>いま持っているぶんが最後になります。ただし<b>交換所は残る</b>ので、急いで使い切る必要はありません。</p>
+    <p>次のイベントが最後の入手機会です。<b>交換所は残る</b>ので、余ったぶんは急いで使わなくてかまいません。</p>
   </div>
 </div>
 
-<p>これ以外はすべて予告の段階なので、今後変わる可能性があります。そもそも11周年（2026年）のイベント自体、この記事を書いている<b>2026年8月11日の時点でまだ発表されていません</b>。例年どおりなら8月中に始まり、4週間続きます。実際に始まったら、予告との違いをこのページに書き足します。</p>
+<p>残りはすべて予告です。11周年イベントそのものが、この記事を書いている<b>2026年8月11日の時点でまだ発表されていません</b>。始まったら、予告との違いをこのページに書き足します。</p>
 
-<h2 id="why">なぜ終わるのか</h2>
+<h2 id="diff">いままでと2026年から</h2>
 
-<p>バッジは<b>クエストをクリアするたび</b>にもらえます。つまり、1周が速くて安全なクエストほど、同じ時間で多くのバッジを稼げます。そして森は、ゲーム内でいちばん簡単なエリアでした。</p>
+<div class="tblwrap">
+<table class="tbl cmp">
+  <thead><tr><th></th><th class="was">いままで（2017〜2025）</th><th class="now">2026年から</th></tr></thead>
+  <tbody>
+    <tr>
+      <th>クエスト</th>
+      <td class="was">Maximum Attack E のイベント版</td>
+      <td class="now">新シリーズ。<b>全部を同じくらいの難しさに揃える</b></td>
+    </tr>
+    <tr>
+      <th>森だけで回れるか</th>
+      <td class="was">回れた。それがいちばん効率が良かった</td>
+      <td class="now"><b>森だけのクエストは作らない</b></td>
+    </tr>
+    <tr>
+      <th>もらえるもの</th>
+      <td class="was">アニバーサリーバッジ<br><span class="sub">ブロンズ→シルバー→ゴールド→プラチナの4段階</span></td>
+      <td class="now">クエストごとに<b>色の違うトークン</b><br><span class="sub">上下のランクなし</span></td>
+    </tr>
+    <tr>
+      <th>買い方</th>
+      <td class="was">10枚ずつ両替して上のランクを狙う</td>
+      <td class="now"><b>複数の色を組み合わせる</b><br><span class="sub">例: アイテムチケット＝赤2＋青2</span></td>
+    </tr>
+    <tr>
+      <th>1本だけ回した場合</th>
+      <td class="was">それでゴールドまで貯まった</td>
+      <td class="now"><b>色が足りず何も買えない</b><br><span class="sub">ただしトークンは取引できるとのこと</span></td>
+    </tr>
+    <tr>
+      <th>マイルストーン</th>
+      <td class="was" colspan="2">そのまま続きます。期間中の追加ブーストも同じ</td>
+    </tr>
+    <tr>
+      <th>プラチナバッジ</th>
+      <td class="was">6種の武器から1つと交換</td>
+      <td class="now">相当するものは残る<br><span class="sub">名前も入手方法も未定</span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">トークンの名前も必要枚数も、まだ仮のものです。</p>
 
-<p>この2つが揃えば、答えは決まります。<b>森を回り続けるのがいちばん得</b>です。9年前に今の形ができてから、この結論は一度も変わりませんでした。</p>
+<p>スレッドでの反応はおおむね好意的で、通年版の Maximum Attack E が残ることへの感謝が目立ちました。複数のプレイヤーが求めていたのは、機能が同じなら名前はプラチナバッジのまま残してほしい、ということです。不安として挙がっていたのは、難易度を揃えることを意識しすぎてつまらないクエストにならないか、という点でした。ソロや少人数でも回せるようにしてほしい、という要望も出ています。</p>
 
-<p>運営はこの偏りを3年かけて崩そうとしました。2023年にはマイルストーンの集計をアルティメットの全撃破数に変え、2024年には「<b>いちばんクリアされていないクエストの回数</b>」に変えて、森だけを回してもサーバー全体の進行が進まないようにしました。2025年にはさらに、クリア数の多い上位3クエストのバッジ率を−25%、少ない下位3クエストを+25%とする補正まで加えました。</p>
+<p class="srcline">出典: <a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea公式アナウンス「今後のアニバーサリーイベントについて」（2025-09-20）</a></p>
 
-<p>その結果は、10周年イベントの最終クリア数にはっきり出ています。</p>
+<h2 id="why">なぜ変えるのか</h2>
+
+<p>バッジは<b>クエストをクリアするたび</b>にもらえます。だから1周が速いクエストほど得で、いちばん簡単な森に人が集まりました。運営は3年かけて3回てこ入れしています（<a href="#history">9年間の変遷</a>）。それでも10周年の結果はこうでした。</p>
 
 <div class="tblwrap">
 <table class="tbl">
@@ -396,76 +485,68 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 </div>
 <p class="tblnote">2025年イベントの最終クリア数（<a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">公式サイトの掲示</a>より）。</p>
 
-<p>森のクリア数は、いちばん少なかったプラントの<b>5.6倍</b>でした。下位8本が25,000〜36,000回に固まっているのは、マイルストーンに必要なぶんだけ回して終わりにした結果でしょう。<b>報酬の配り方を調整しても、効率の良いクエストに人が集まる流れは止まりませんでした。</b></p>
+<p>森はいちばん少ないプラントの<b>5.6倍</b>。下位8本が25,000〜36,000回に固まっているのは、マイルストーンに必要なぶんだけ回して、そこで手を止めたからです。<b>報酬の配り方をいじっても、効率の良いクエストに人が集まる流れは止まりませんでした。</b>だから2026年は、クエストと通貨そのものを作り直します。</p>
 
-<p>だから2026年は、配り方の調整ではなく、<b>人が集まる先そのもの（クエストと通貨）を取り替えます</b>。</p>
+<h2 id="badges">手持ちのバッジ</h2>
 
-<h2 id="next">何に変わるのか</h2>
+<p>交換所のクエスト「Anniversary Badge Shop」は<b>イベントが終わったあとも通年で遊べます</b>。ルールも変わりません。</p>
 
-<p>新しいクエストシリーズは<b>すべて同程度の難易度</b>にすると明記されています。「ゲーム内で最も簡単なエリアだけを回して報酬を得る形はなくなる」「完全に森だけで構成されるクエストは存在しない」とも書かれています。<b>いちばん得なクエストを、そもそも作らない</b>ということです。</p>
-
-<p>通貨の変更も狙いは同じです。ブロンズ・シルバー・ゴールドという上下のランク分けをやめ、<b>クエストごとに色の違うトークン</b>を配ります。ショップで買うには複数の色が必要になるので、1つのクエストを繰り返すだけでは何も買えません。例として挙がっているのは「アイテムチケットは赤2枚＋青2枚」「フォトンスフィアは全色70枚ずつ」ですが、名称も必要数もまだ仮のものです。</p>
-
-<p>ただし、<b>トークンは取引できる</b>とされています。全部のクエストを自分で回る必要はなく、得意なところで稼いだぶんを他の色と交換すれば足ります。全クエスト必須に見えて、そこだけは緩められています。</p>
-
-<p>マイルストーンと追加ブーストはそのまま続きます。プラチナバッジに相当するものも残るとされていますが、名前も入手方法もまだ決まっていません。スレッドでは複数のプレイヤーから、「機能が同じなら名前もプラチナバッジのままでいい。歴史的に愛着があるし、旧イベントの一部が残ることになる」という声が出ていました。</p>
-
-<p>反応はおおむね好意的で、通年で遊べる Maximum Attack E が残ることに感謝する投稿が目立ちました。一方で、「同じ難易度に揃えることを意識しすぎて、つまらないクエストにならないか」という不安や、「ソロや少人数でも回せるようにしてほしい」という要望も出ていました。</p>
-
-<p class="srcline">出典: <a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea公式アナウンス「今後のアニバーサリーイベントについて」（2025-09-20）</a></p>
-
-<h2 id="badges">手持ちのバッジはどうなるか</h2>
-
-<p>バッジが手に入るのは次回のイベントが最後です。ただし、交換所のクエスト「Anniversary Badge Shop」は<b>そのあとも残ります</b>。これは通年で選べるクエストなので、余ったバッジは好きなときに使えます。</p>
-
-<p>両替のルールも変わりません。バッジ10枚で1つ上のランクに交換できます（ただしプラチナへの両替だけはできません）。プラチナ1枚では、封印の刀・サイコウォンド・ヘブンパニッシャー・ハンドガン「ガルド」・モタブの預言書・ソニックドールのなかから1つを選べます。</p>
+<div class="tblwrap">
+<table class="tbl rate">
+  <tbody>
+    <tr><td class="from">ブロンズ 10枚</td><td class="ar">→</td><td class="to">シルバー 1枚</td></tr>
+    <tr><td class="from">シルバー 10枚</td><td class="ar">→</td><td class="to">ゴールド 1枚</td></tr>
+    <tr class="ng"><td class="from">ゴールド</td><td class="ar">✕</td><td class="to">プラチナへの両替はできません</td></tr>
+    <tr><td class="from">プラチナ 1枚</td><td class="ar">→</td><td class="to">封印の刀 ／ サイコウォンド ／ ヘブンパニッシャー ／ ハンドガン「ガルド」 ／ モタブの預言書 ／ ソニックドール から1つ</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">ブロンズ・シルバー・ゴールドの各ショップも、これまでどおりです。</p>
 
 <p class="srcline">出典: <a href="https://wiki.pioneer2.net/w/Anniversary_Badge_Shop" target="_blank" rel="noopener">Ephinea PSO Wiki「Anniversary Badge Shop」</a></p>
 
 <h2 id="history">9年間の変遷</h2>
 
-<p>骨格ができたのは2017年です。Maximum Attack E とプラチナバッジとマイルストーンが同時に入り、その後9回のイベントを通して、この3つにはほとんど手が加えられませんでした。変わったのは<b>マイルストーンの集計方法と、バッジを持ち越せるかどうか</b>だけです。年表にすると、運営が何を直そうとし続けたのかが見えてきます。</p>
+<p>いまの形ができたのは2017年です。以後、手が入ったのは<b>マイルストーンの集計方法と、バッジを持ち越せるかどうか</b>だけでした。</p>
 
 <div class="tblwrap">
 <table class="tbl years">
   <thead><tr><th>年</th><th>会期</th><th>その年に変わったこと</th></tr></thead>
   <tbody>
     <tr><td class="y">2016<span>1回目</span></td><td class="sp">8/11 – 10/1</td><td>
-      <p>名称は「Ephinea Summer Event」。バッジは3種類、対象クエストは Maximum Attack 4 で、マイルストーンはまだありませんでした。途中で会期が延長され、歴代唯一の7週間開催になりました。</p></td></tr>
+      <p>名称は「Ephinea Summer Event」。バッジは3種類、対象は Maximum Attack 4 で、マイルストーンはまだありません。途中で会期が延び、歴代唯一の7週間開催になりました。</p></td></tr>
     <tr class="key"><td class="y">2017<span>2回目</span></td><td class="sp">8/13 – 9/10</td><td>
-      <p><b>ここで骨格ができました。</b>Maximum Attack E が登場し、プラチナバッジが加わってバッジは4種類に、さらにマイルストーンが導入されました。<b>この形が、以後9年続きます。</b></p></td></tr>
+      <p><b>ここで今の形ができます。</b>Maximum Attack E が登場し、プラチナバッジが加わって4種類に、マイルストーンも導入。<b>この形が9年続きます。</b></p></td></tr>
     <tr><td class="y">2018<span>3回目</span></td><td class="sp">8/6 – 9/3</td><td>
-      <p>バッジは<b>年号付きで、毎年入れ替わる</b>方式でした。前年のバッジは3枚を1枚に交換するしかなく、それより古いものは無効です。フォトンスフィアの必要枚数が50枚から70枚になりました。</p></td></tr>
+      <p>バッジは<b>年号付きで、毎年入れ替わる</b>方式。前年ぶんは3枚を1枚に交換するしかなく、それより古いものは使えません。フォトンスフィアの必要枚数が50枚から70枚に。</p></td></tr>
     <tr><td class="y">2019<span>4回目</span></td><td class="sp">8/2 – 9/6</td><td>
-      <p>集計を「イベント期間中のアルティメットでの撃破のみ」に整理しました。週替わりのブーストをやめ、最初から全部を有効にしました。</p></td></tr>
+      <p>集計の対象を「期間中のアルティメットでの撃破のみ」に絞りました。週替わりのブーストはやめ、最初から全部を有効にしました。</p></td></tr>
     <tr><td class="y">2020<span>5回目</span></td><td class="sp">8/17 – 9/14</td><td>
-      <p>年号付きバッジはこの年が最後になりました。構成はほぼ前年どおりです。</p></td></tr>
+      <p>年号付きバッジはこの年が最後。中身はほぼ前年どおりです。</p></td></tr>
     <tr class="key"><td class="y">2021<span>6回目</span></td><td class="sp">8/7 – 9/4</td><td>
-      <p><b>バッジが恒久化されました。</b>告知には「5周年バッジは汎用のアニバーサリーバッジに変換され、過去年のバッジは今後両替できない」とあります。以後、翌年に持ち越せるようになりました。</p></td></tr>
+      <p><b>バッジが恒久化されます。</b>5周年バッジは汎用のアニバーサリーバッジに変換、それより前の年のバッジは以後両替できません。ここから翌年に持ち越せるようになりました。</p></td></tr>
     <tr><td class="y">2022<span>7回目</span></td><td class="sp">8/6 – 9/6</td><td>
-      <p>週替わりブーストが元の入れ替え方式に戻りました。マイルストーンは「バランスのために見直し、間隔を広げた」とされています。</p></td></tr>
+      <p>週替わりブーストが元の入れ替え方式に戻ります。マイルストーンは「バランスのために見直し、間隔を広げた」とのこと。</p></td></tr>
     <tr><td class="y">2023<span>8回目</span></td><td class="sp">8/5 – 9/5</td><td>
-      <p><b>1回目の是正です。</b>集計をアルティメットの全撃破数に変更し、イベントクエストの外で狩っても進むようにしました。</p></td></tr>
+      <p><b>てこ入れ1回目。</b>集計をアルティメットの全撃破数に変え、イベントクエストの外で狩っても進むようにしました。</p></td></tr>
     <tr><td class="y">2024<span>9回目</span></td><td class="sp">8/12 – 9/9</td><td>
-      <p><b>2回目の是正です。</b>集計を「いちばんクリアされていないクエストのクリア数」に変更し、1本だけを回していても進まないようにしました。</p></td></tr>
+      <p><b>てこ入れ2回目。</b>集計を「いちばんクリアされていないクエストのクリア数」に変え、1本だけ回していても進まないようにしました。</p></td></tr>
     <tr><td class="y">2025<span>10回目</span></td><td class="sp">8/11 – 9/8</td><td>
-      <p><b>3回目の是正です。</b>クリア数の多い上位3本のバッジ率を−25%、少ない下位3本を+25%に補正しました。それでも森は5.6倍のままでした。</p></td></tr>
+      <p><b>てこ入れ3回目。</b>クリア数の多い上位3本のバッジ率を−25%、少ない下位3本を+25%に補正。それでも森は5.6倍のままでした。</p></td></tr>
   </tbody>
 </table>
 </div>
 <p class="tblnote">出典: 各年の告知スレッド（<a href="https://www.pioneer2.net/community/threads/3083" target="_blank" rel="noopener">2016</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/7734" target="_blank" rel="noopener">2017</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11345" target="_blank" rel="noopener">2018</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/15276" target="_blank" rel="noopener">2019</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/18985" target="_blank" rel="noopener">2020</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/21021" target="_blank" rel="noopener">2021</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/23826" target="_blank" rel="noopener">2022</a>）と <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki</a></p>
 
-<p>3年続けて手を入れても、偏りはほとんど変わりませんでした。<b>クエストと通貨そのものを取り替えるという今回の判断は、その3年の結果として出てきたもの</b>です。</p>
-
 <h2 id="unknown">まだ分からないこと</h2>
 
-<p>予告で明かされていないことは、まだたくさんあります。イベントが始まったら、次の点を確かめてここに追記します。</p>
+<p>イベントが始まったら、この5点を確かめてここに追記します。</p>
 
 <ul>
-  <li>新クエストは何本で、どのエリアが舞台なのか。<b>「同程度の難易度」が実際に成立しているか</b></li>
+  <li>新クエストは何本で、どのエリアが舞台か。<b>「同じくらいの難しさ」が実際に成立しているか</b></li>
   <li>トークンは何色あり、どういう名前になったか</li>
   <li>ショップの必要枚数は、予告の例（アイテムチケット＝赤2＋青2 など）とどう違うか</li>
-  <li>プラチナバッジに相当するものは何という名前で、どうすれば手に入るのか</li>
+  <li>プラチナバッジに相当するものの名前と入手方法</li>
   <li>マイルストーンの段階と必要ポイントは変わったか</li>
 </ul>
 
@@ -479,7 +560,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   <li><a href="https://www.pioneer2.net/community/forums/news.30/?order=post_date" target="_blank" rel="noopener">Ephinea公式ニュース一覧</a></li>
 </ul>
 
-<p class="srcline">このページは Ephinea の公式・wiki とは無関係の個人的なまとめです。予告の内容は変更されることがあるので、最終的な確認は公式の告知でお願いします。</p>
+<p class="srcline">このページは Ephinea の公式・wiki とは無関係の個人的なまとめです。予告の内容は変わることがあるので、最終的な確認は公式の告知でお願いします。</p>
 
 </article>
 </div>
