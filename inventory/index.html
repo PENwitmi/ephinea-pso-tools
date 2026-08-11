@@ -177,6 +177,8 @@ th.sorted { color: var(--accent); }
 tbody tr:hover td { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 td .notetxt { display: block; white-space: normal; font-size: 0.72rem; color: var(--sub); }
+/* 直前の行と同じアイテム(別の保管場所)であることの印 */
+td .cont { color: var(--sub); margin-right: 5px; font-size: 0.85em; }
 tr.hi td:first-child { border-left: 3px solid var(--gold); }
 tr.zero td { color: var(--sub); }
 .pill { display: inline-block; padding: 1px 8px; border-radius: 99px; font-size: 0.7rem; background: var(--accent-soft); color: var(--accent); }
@@ -286,6 +288,7 @@ tr.zero td { color: var(--sub); }
   <li>hit%依存の武器は該当hit列の価格を適用。防具はスタッツからMin/Med/High/Max段階を自動判定。</li>
   <li>「個別判断」表記は相場表に直接記載がないアイテムの推定値。0PD表示は市場価値がほぼ無いという意味で、実用価値が無いという意味ではない。</li>
   <li>表示が完全に同じアイテムは、保管場所ごとに1行へまとめて ×N と表示(グラインド値・特殊・%・スロット数まで一致するものだけ)。</li>
+  <li>同じアイテムが複数の場所にあるときは、隣り合わせに並べます(2行目以降は └ で示します)。</li>
   <li>メセタ⇔PDレート: 400,000-500,000 メセタ = 1PD。</li>
 </ul>
 </div>
@@ -824,6 +827,9 @@ function valuateAll(rawItems) {
   items.forEach(it => {
     const base = baseRaw(it.raw);
     const key = base + '|' + it.slot;
+    // 保管場所を跨いだ「同じアイテム」の目印。並べ替えのときこれが隣り合うようにする。
+    // 集約のキーから場所を落としただけのものなので、集約とグループ化の基準がズレない
+    it.grp = base;
     const g = groups[key];
     if (g) {
       g.qty += it.qty;
@@ -916,6 +922,34 @@ if (!inv || !inv.items || !inv.items.length) {
   });
 
   let sortKey = 'sub_hi', sortDir = -1;
+
+  // 同じアイテムが複数の場所にあるとき、その行を必ず隣り合わせにする。
+  // 評価額や数で並べると、場所ごとに値が違うぶん行が遠くに散ってしまうため
+  // (実データではパワーマテリアルの3行が227行離れていた)。
+  // グループを固めるのは**値が散らばる列(評価額・数)だけ**。場所順・カテゴリ順は
+  // そもそも別の軸でまとまっているので、同値のときの並びを揃えるだけにする。
+  const GROUPED = ['sub_hi', 'qty'];
+  const cmp = (x, y) => typeof x === 'string' ? x.localeCompare(y) : x - y;
+  const locRank = d => charOrder(d.who);
+  function sortRows(rows) {
+    const k = sortKey === 'raw' ? 'disp' : sortKey;  // アイテム列は表示名でソート
+    const grouped = GROUPED.includes(k);
+    // グループの代表値。**並べ替えの向きに合わせて取る**(降順なら最大、昇順なら最小)。
+    // 常に最大にすると、昇順のときグループが最大値の位置に置かれて順序が壊れる。
+    // **絞り込み後の行だけで計算する** — 隠れている行の値でグループ位置を決めない
+    const rep = {};
+    if (grouped) rows.forEach(d => {
+      const v = d[k], p = rep[d.grp];
+      rep[d.grp] = p === undefined ? v : (sortDir < 0 ? Math.max(p, v) : Math.min(p, v));
+    });
+    rows.sort((a, b) =>
+      // ① 主キー。グループを固める列ではグループの代表値、それ以外は行の値そのもの
+      (grouped ? cmp(rep[a.grp], rep[b.grp]) : cmp(a[k], b[k])) * sortDir
+      || cmp(a.grp, b.grp)                               // ② 同着ならアイテムで固める
+      || cmp(a[k], b[k]) * sortDir                       // ③ グループ内の並び
+      || locRank(a) - locRank(b) || cmp(a.loc, b.loc));  // ④ 最後は場所の順
+  }
+
   function render() {
     const q = document.getElementById('q').value.toLowerCase();
     const fc = document.getElementById('fcat').value;
@@ -928,20 +962,22 @@ if (!inv || !inv.items || !inv.items.length) {
       (!fv || d.sub_hi >= 1) && (!fz || d.sub_hi === 0);
     let rows = DATA.filter(d => baseF(d) && (!fc || d.cat === fc) && (!fl || d.who === fl));
     renderGrids(d => baseF(d) && (!fl || d.who === fl), d => baseF(d) && (!fc || d.cat === fc), fc, fl);
-    rows.sort((a, b) => {
-      const k = sortKey === 'raw' ? 'disp' : sortKey;  // アイテム列は表示名でソート
-      const x = a[k], y = b[k];
-      return (typeof x === 'string' ? x.localeCompare(y) : x - y) * sortDir;
-    });
+    sortRows(rows);
     const filtered = !!(fc || fl || fv || fz);
     document.getElementById('clearFilters').style.display = filtered ? '' : 'none';
     const sumLo = rows.reduce((s, r) => s + r.sub_lo, 0), sumHi = rows.reduce((s, r) => s + r.sub_hi, 0);
     document.getElementById('count').textContent = `${rows.length}件 / 小計 ${rangeStr(sumLo, sumHi)} PD`;
+    // 直前に描いた行と同じアイテムなら └ を付ける。評価額順だと 6.19 → 0.25 → 0.12 と
+    // 並ぶので、印が無いと並べ替えの不具合に見える。**描画順で判定する**ので、
+    // 場所順のようにグループが散る並びでは自動的に何も出ない
+    let prevGrp = null;
     document.querySelector('#tbl tbody').innerHTML = rows.map(d => {
       const big = d.sub_hi >= 20, zero = d.sub_hi < 0.5;
+      const cont = d.grp === prevGrp ? '<span class="cont" aria-hidden="true">└</span>' : '';
+      prevGrp = d.grp;
       return `<tr class="${big ? 'hi' : ''} ${zero ? 'zero' : ''}">
         <td>${d.id}</td>
-        <td>${d.disp}${d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
+        <td>${cont}${d.disp}${d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
         <td><span class="pill">${d.cat}</span></td>
         <td>${d.loc}</td>
         <td class="num">${d.qty}</td>
