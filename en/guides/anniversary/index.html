@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>The anniversary event is being rebuilt — Ephinea Reading</title>
+<title>The anniversary rebuild is on hold — Ephinea Reading</title>
 <style>/* Ephinea Tools 共通テーマ (単一ソース)
    全4ページ+Simulatorのローカル版に埋め込まれる。
    パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
@@ -298,6 +298,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tbl .sub { display: block; font-size: 0.82rem; color: var(--sub); margin-top: 3px;
             line-height: 1.6; }
 
+/* ---- 項目名と中身の2列表(会期・クエスト…)。**項目名を折り返させない** ----
+   左列に幅を与えないと「落ちる場 / 所」のように途中で折れる */
+.tbl.kv th { white-space: nowrap; width: 1%; font-weight: 700; vertical-align: top; }
+@media (max-width: 700px) {
+  .tbl.kv th, .tbl.kv td { display: block; width: auto; }
+  .tbl.kv th { border-bottom: none; padding-bottom: 0; }
+}
+
 /* ---- 新旧の対比表。左に項目名、右2列が「いままで / これから」 ---- */
 .tbl.cmp th { font-weight: 700; }
 .tbl.cmp tbody th { font-size: 0.84rem; color: var(--sub); white-space: nowrap;
@@ -341,24 +349,24 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 <link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/">
 <link rel="alternate" hreflang="en" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/anniversary/">
 <link rel="alternate" hreflang="x-default" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/">
-<meta name="description" content="Ephinea's anniversary event is being rebuilt from 2026: Maximum Attack E and the Anniversary Badges are going, replaced by a new quest series and coloured tokens. With what every event since 2016 actually was.">
+<meta name="description" content="The announced rebuild is on hold: the 11th anniversary runs in the old format, 12 Aug to 9 Sep. What changed in how badges drop, what was announced for the rebuild, and what every event since 2016 actually was.">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Ephinea Tools">
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/anniversary/">
-<meta property="og:title" content="The anniversary event is being rebuilt — Ephinea Reading">
-<meta property="og:description" content="Ephinea's anniversary event is being rebuilt from 2026: Maximum Attack E and the Anniversary Badges are going, replaced by a new quest series and coloured tokens. With what every event since 2016 actually was.">
+<meta property="og:title" content="The anniversary rebuild is on hold — Ephinea Reading">
+<meta property="og:description" content="The announced rebuild is on hold: the 11th anniversary runs in the old format, 12 Aug to 9 Sep. What changed in how badges drop, what was announced for the rebuild, and what every event since 2016 actually was.">
 <meta property="og:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-anniversary-en.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="The anniversary event is being rebuilt — Ephinea Reading">
-<meta name="twitter:description" content="Ephinea's anniversary event is being rebuilt from 2026: Maximum Attack E and the Anniversary Badges are going, replaced by a new quest series and coloured tokens. With what every event since 2016 actually was.">
+<meta name="twitter:title" content="The anniversary rebuild is on hold — Ephinea Reading">
+<meta name="twitter:description" content="The announced rebuild is on hold: the 11th anniversary runs in the old format, 12 Aug to 9 Sep. What changed in how badges drop, what was announced for the rebuild, and what every event since 2016 actually was.">
 <meta name="twitter:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-anniversary-en.png">
 <meta property="article:published_time" content="2026-08-11">
 <meta property="article:modified_time" content="2026-08-12">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"The anniversary event is being rebuilt","description":"Ephinea's anniversary event is being rebuilt from 2026: Maximum Attack E and the Anniversary Badges are going, replaced by a new quest series and coloured tokens. With what every event since 2016 actually was.","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/anniversary/","mainEntityOfPage":{"@type":"WebPage","@id":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/anniversary/"},"inLanguage":"en","datePublished":"2026-08-11","dateModified":"2026-08-12","author":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"publisher":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"image":"https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-anniversary-en.png","isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"}}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ephinea Tools","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"},{"@type":"ListItem","position":2,"name":"Ephinea Reading","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/"},{"@type":"ListItem","position":3,"name":"The anniversary event is being rebuilt","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/anniversary/"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"The anniversary rebuild is on hold","description":"The announced rebuild is on hold: the 11th anniversary runs in the old format, 12 Aug to 9 Sep. What changed in how badges drop, what was announced for the rebuild, and what every event since 2016 actually was.","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/anniversary/","mainEntityOfPage":{"@type":"WebPage","@id":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/anniversary/"},"inLanguage":"en","datePublished":"2026-08-11","dateModified":"2026-08-12","author":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"publisher":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"image":"https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-anniversary-en.png","isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ephinea Tools","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"},{"@type":"ListItem","position":2,"name":"Ephinea Reading","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/"},{"@type":"ListItem","position":3,"name":"The anniversary rebuild is on hold","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/anniversary/"}]}</script>
 </head>
 <body>
 <div class="wrap">
@@ -375,11 +383,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 <nav class="toc" aria-label="Contents">
   <div class="tlabel">CONTENTS</div>
   <ol>
-    <li><a href="#fixed">What is settled</a></li>
-    <li><a href="#diff">Before and after</a></li>
-    <li><a href="#why">Why it is changing</a></li>
+    <li><a href="#this">This year's event</a></li>
+    <li><a href="#diff">What was announced</a></li>
+    <li><a href="#why">Why they wanted to change it</a></li>
     <li><a href="#badges">Badges you already have</a></li>
-    <li><a href="#history">Nine years of changes</a></li>
+    <li><a href="#history">How it changed over the years</a></li>
     <li><a href="#unknown">Still unknown</a></li>
     <li><a href="#src">Sources</a></li>
   </ol>
@@ -387,40 +395,70 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 <article>
 
-<h1>The anniversary event is being rebuilt</h1>
+<h1>The anniversary rebuild is on hold</h1>
 
-<p class="lead">Ephinea's anniversary event has kept the same shape for nine years, and it is being rebuilt from 2026. The reason: <b>farming Forest over and over was always the best move</b>, and three years of adjustments failed to change that.</p>
+<p class="lead">The rebuild announced for 2026 <b>is not happening this year</b>. The 11th anniversary runs in <b>the same shape as before</b>, from 12 August to 9 September. Maximum Attack E and Anniversary Badges both stay; what changed instead is how badges drop.</p>
 
 <div class="keyfacts">
-  <div><div class="k">ANNOUNCED</div><div class="v">20 Sep 2025<span class="sub">Advance notice. Details can still change</span></div></div>
-  <div><div class="k">NEXT EVENT</div><div class="v">12 Aug 2026<span class="sub">Starts with maintenance at 04:30 UTC, up to an hour</span></div></div>
-  <div><div class="k">CONFIRMED CHANGES</div><div class="v">Only two<span class="sub">The quest and the badges are going</span></div></div>
+  <div><div class="k">RUNNING</div><div class="v">12 Aug – 9 Sep 2026<span class="sub">11th anniversary, four weeks</span></div></div>
+  <div><div class="k">FORMAT</div><div class="v">As before<span class="sub">The announced rebuild is on hold</span></div></div>
+  <div><div class="k">WHAT CHANGED</div><div class="v">How badges drop<span class="sub">Separate roll, party-wide, straight to the bank</span></div></div>
 </div>
 
-<h2 id="fixed">What is settled</h2>
+<h2 id="this">This year's event</h2>
 
-<p>Only these two were stated outright as "no plans to change".</p>
+<p>The official thread put it this way: "<b>due to unforeseen circumstances, we are repeating the former Anniversary Event format</b>". <a href="#diff">The announced rebuild</a> did not happen this year, and both Maximum Attack E and Anniversary Badges stay as they were.</p>
 
-<div class="cols2">
-  <div class="item fixed">
-    <h3>The event version of Maximum Attack E is going</h3>
-    <p>It was the centre of the event for nine years. <b>The year-round version stays.</b> "August Atrocity" also remains playable during the event.</p>
-  </div>
-  <div class="item fixed">
-    <h3>Anniversary Badges will no longer drop</h3>
-    <p>The next event is the last chance to earn them. <b>The shop stays</b>, so there is no hurry to spend what you have left.</p>
-  </div>
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>Dates</th><td>12 August – 9 September 2026</td></tr>
+    <tr><th>Quests</th><td>Eleven Maximum Attack E quests (Forest, Caves, Mines, Ruins, Temple, Spaceship, CCA, Seabed, Tower, Crater, Desert) plus August Atrocity. Each runs 5–10 minutes and cannot be failed</td></tr>
+    <tr><th>Badges</th><td>Bronze (all difficulties) / Silver (Very Hard and Ultimate) / Gold (Ultimate only) / Platinum (Ultimate only, extremely rare)</td></tr>
+    <tr><th>Where they drop</th><td>Anywhere, not just in the event quests. <b>Drop rate modifiers do not apply</b> — the rate is the same however many players you run with</td></tr>
+    <tr><th>Milestones</th><td>Ultimate clears are tallied, and <b>the least-cleared quest</b> sets the server's progress. Boosts unlocked this way apply everywhere, not only in the event quests</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">Rappies that are scared off instead of killed do not drop badges.</p>
+
+<h3>Changes from the 10th anniversary</h3>
+
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>The roll</th><td>Badges are now <b>independent of enemy drops</b> — one enemy can drop both a normal item and a badge</td></tr>
+    <tr><th>Who gets one</th><td>Rolled once per monster as a party drop, so <b>everyone in the party gets the same badge</b> (with Classic drops it goes to the floor instead)</td></tr>
+    <tr><th>Where it goes</th><td>Straight into <b>your character or shared bank</b> if there is room, otherwise to the floor. Notifications can be toggled per character with <code>/badgenotify</code></td></tr>
+    <tr><th>Spotting them</th><td>Badges on the ground <b>hover up and down</b> so they stand out from other red boxes</td></tr>
+    <tr><th>Milestones</th><td>Shuffled and expanded, aiming for <b>bigger rewards per unlock</b></td></tr>
+    <tr><th>Gold shop</th><td>Two additions: <b>Heart of Flight Fan</b> (turns certain slicers into Flight Fan) and <b>Blue Powder Coating</b> (changes the colour of certain weapons)</td></tr>
+  </tbody>
+</table>
 </div>
 
-<p>Everything else is advance notice. A maintenance to start the event has been announced for <b>12 August 2026, 04:30 UTC</b>, and may take up to an hour. <b>Nothing about its contents has been published yet.</b> Once it starts, the differences from the notice will be added here.</p>
+<p>The badge rate modifiers carry over from last year.</p>
 
-<p class="srcline">Source: <a href="https://www.pioneer2.net/community/threads/server-maintenance-scheduled-for-august-12th-2026-at-04-30-utc.33607/" target="_blank" rel="noopener">Ephinea forums, "Server maintenance scheduled for August 12th, 2026 at 04:30 UTC" (12 Aug 2026)</a></p>
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>Three most-cleared quests</th><td>−25%<br><span class="sub">only while at least 500 clears above the median</span></td></tr>
+    <tr><th>Three least-cleared quests</th><td>+25%</td></tr>
+    <tr><th>August Atrocity 1 / 2</th><td>+25%, always</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">Type <code>/badge</code> in game to see which quests currently carry a modifier.</p>
 
-<h2 id="diff">Before and after</h2>
+<p class="srcline">Source: <a href="https://www.pioneer2.net/community/threads/11th-anniversary-event-thread.33612/" target="_blank" rel="noopener">Ephinea forums, "11th Anniversary Event Thread" (12 Aug 2026)</a></p>
+
+<h2 id="diff">What was announced</h2>
+
+<p>This is the shape described in the September 2025 announcement. <b>It has not been implemented this year</b>, and nothing says it has been dropped either. The removal of Maximum Attack E and of the Anniversary Badges were both stated outright as "no plans to change".</p>
 
 <div class="tblwrap">
 <table class="tbl cmp">
-  <thead><tr><th></th><th class="was">2017 – 2025</th><th class="now">From 2026</th></tr></thead>
+  <thead><tr><th></th><th class="was">2017 – 2026</th><th class="now">As announced</th></tr></thead>
   <tbody>
     <tr>
       <th>Quest</th>
@@ -444,7 +482,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
     </tr>
     <tr>
       <th>Running one quest only</th>
-      <td class="was">Still got you all the way to Gold</td>
+      <td class="was">Still gets you all the way to Gold</td>
       <td class="now"><b>Missing colours, so nothing to buy</b><br><span class="sub">Though tokens are said to be tradeable</span></td>
     </tr>
     <tr>
@@ -459,15 +497,15 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   </tbody>
 </table>
 </div>
-<p class="tblnote">Token names and costs are placeholders for now.</p>
+<p class="tblnote">Token names and costs are placeholders. None of this shape is in play this year.</p>
 
-<p>The response in the thread was mostly positive, with several posts thanking the staff for keeping the year-round Maximum Attack E. What several players asked for was that the name Platinum Badge be kept if the item works the same way. The worry raised was that levelling the difficulty might be taken far enough to make the quests dull, and there were requests to keep them runnable solo or in a small party.</p>
+<p>The response in that thread was mostly positive, with several posts thanking the staff for keeping the year-round Maximum Attack E. What several players asked for was that the name Platinum Badge be kept if the item works the same way. The worry raised was that levelling the difficulty might be taken far enough to make the quests dull, and there were requests to keep them runnable solo or in a small party.</p>
 
 <p class="srcline">Source: <a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea announcement, "Regarding Future Anniversary Events" (2025-09-20)</a></p>
 
-<h2 id="why">Why it is changing</h2>
+<h2 id="why">Why they wanted to change it</h2>
 
-<p>Badges drop <b>per quest clear</b>. A faster lap therefore pays better, and Forest is the easiest area in the game. Staff pushed back against this three times over three years (see <a href="#history">Nine years of changes</a>). The 10th anniversary still ended like this.</p>
+<p>Badges drop <b>per quest clear</b>. A faster lap therefore pays better, and Forest is the easiest area in the game. Staff pushed back against this three times over three years (see <a href="#history">How it changed over the years</a>). The 10th anniversary still ended like this.</p>
 
 <div class="tblwrap">
 <table class="tbl">
@@ -489,7 +527,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 </div>
 <p class="tblnote">Final clear counts for the 2025 event, from the <a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">official event page</a>.</p>
 
-<p>Forest ran <b>5.6 times</b> as often as Seabed, the lowest. The bottom eight bunching up between 25,000 and 36,000 looks like people running each just far enough for the milestones and stopping. <b>Adjusting the payouts never broke the pull of the efficient quest.</b> So 2026 replaces the quests and the currency themselves.</p>
+<p>Forest ran <b>5.6 times</b> as often as Seabed, the lowest. The bottom eight bunching up between 25,000 and 36,000 looks like people running each just far enough for the milestones and stopping. <b>Adjusting the payouts never broke the pull of the efficient quest.</b> That is what the announced rebuild of the quests and the currency was for.</p>
 
 <h2 id="badges">Badges you already have</h2>
 
@@ -505,11 +543,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   </tbody>
 </table>
 </div>
-<p class="tblnote">The Bronze, Silver and Gold shops are unchanged as well.</p>
+<p class="tblnote">The Platinum list is the same six this year, and the weapons come with 0% in every category. The Bronze, Silver and Gold shops are unchanged too, apart from the two Gold additions.</p>
 
 <p class="srcline">Source: <a href="https://wiki.pioneer2.net/w/Anniversary_Badge_Shop" target="_blank" rel="noopener">Ephinea PSO Wiki — Anniversary Badge Shop</a></p>
 
-<h2 id="history">Nine years of changes</h2>
+<h2 id="history">How it changed over the years</h2>
 
 <p>The shape it has now was set in 2017. After that, the only things touched were <b>how milestones counted, and whether badges carried over</b>.</p>
 
@@ -520,7 +558,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
     <tr><td class="y">2016<span>1st</span></td><td class="sp">11 Aug – 1 Oct</td><td>
       <p>Called "Ephinea Summer Event". Three badge types, run on Maximum Attack 4, no milestones yet. It was extended partway through, making it the only seven-week event.</p></td></tr>
     <tr class="key"><td class="y">2017<span>2nd</span></td><td class="sp">13 Aug – 10 Sep</td><td>
-      <p><b>The current shape starts here.</b> Maximum Attack E arrives, the Platinum Badge brings the count to four, and milestones are introduced. <b>This held for nine years.</b></p></td></tr>
+      <p><b>The current shape starts here.</b> Maximum Attack E arrives, the Platinum Badge brings the count to four, and milestones are introduced. <b>It has held ever since.</b></p></td></tr>
     <tr><td class="y">2018<span>3rd</span></td><td class="sp">6 Aug – 3 Sep</td><td>
       <p>Badges were <b>year-numbered and replaced annually</b>. Last year's could only be traded three-for-one, and anything older was dead. Photon Sphere went from 50 badges to 70.</p></td></tr>
     <tr><td class="y">2019<span>4th</span></td><td class="sp">2 Aug – 6 Sep</td><td>
@@ -537,35 +575,35 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
       <p><b>Second push-back.</b> Counting moved to the clear count of the <i>least</i>-cleared quest, so running one quest alone stopped helping.</p></td></tr>
     <tr><td class="y">2025<span>10th</span></td><td class="sp">11 Aug – 8 Sep</td><td>
       <p><b>Third push-back.</b> The three most-cleared quests took a −25% badge rate, the three least-cleared got +25%. Forest still finished 5.6× ahead.</p></td></tr>
+    <tr class="key"><td class="y">2026<span>11th</span></td><td class="sp">12 Aug – 9 Sep</td><td>
+      <p><b>The announced rebuild is on hold.</b> Badges now roll separately from enemy drops, come out the same for the whole party, and go straight to the bank. Two additions to the Gold shop.</p></td></tr>
   </tbody>
 </table>
 </div>
-<p class="tblnote">Sources: the announcement thread for each year (<a href="https://www.pioneer2.net/community/threads/3083" target="_blank" rel="noopener">2016</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/7734" target="_blank" rel="noopener">2017</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11345" target="_blank" rel="noopener">2018</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/15276" target="_blank" rel="noopener">2019</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/18985" target="_blank" rel="noopener">2020</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/21021" target="_blank" rel="noopener">2021</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/23826" target="_blank" rel="noopener">2022</a>) and the <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki</a></p>
+<p class="tblnote">Sources: the announcement thread for each year (<a href="https://www.pioneer2.net/community/threads/3083" target="_blank" rel="noopener">2016</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/7734" target="_blank" rel="noopener">2017</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11345" target="_blank" rel="noopener">2018</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/15276" target="_blank" rel="noopener">2019</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/18985" target="_blank" rel="noopener">2020</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/21021" target="_blank" rel="noopener">2021</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/23826" target="_blank" rel="noopener">2022</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11th-anniversary-event-thread.33612/" target="_blank" rel="noopener">2026</a>) and the <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki</a></p>
 
 <h2 id="unknown">Still unknown</h2>
 
-<p>Once the event starts, these five will be checked and added here.</p>
+<p>These will be added here once they are known.</p>
 
 <ul>
-  <li>How many new quests there are and which areas they use, and <b>whether "roughly equal difficulty" actually holds</b></li>
-  <li>How many token colours there are, and what they are called</li>
-  <li>How shop costs compare with the example given (Item Ticket = 2 red + 2 blue)</li>
-  <li>The name and source of whatever replaces the Platinum Badge</li>
-  <li>Whether milestone tiers and their point requirements changed</li>
+  <li><b>What the milestone rewards are.</b> All sixteen tiers (1,000 to 20,000 points) still read "? ? ?" on the official page</li>
+  <li><b>When the announced rebuild will happen.</b> The thread only says the former format is being repeated due to unforeseen circumstances; nothing is said about what comes next</li>
 </ul>
 
 <h2 id="src">Sources</h2>
 
 <ul class="srclist">
+  <li><a href="https://www.pioneer2.net/community/threads/11th-anniversary-event-thread.33612/" target="_blank" rel="noopener">Ephinea forums, "11th Anniversary Event Thread" (12 Aug 2026)</a></li>
+  <li><a href="https://ephinea.pioneer2.net/11th-anniv-event/" target="_blank" rel="noopener">Ephinea, "Anniversary Event 2026!" (live milestone progress)</a></li>
   <li><a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea announcement, "Regarding Future Anniversary Events" (2025-09-20)</a></li>
-  <li><a href="https://www.pioneer2.net/community/threads/server-maintenance-scheduled-for-august-12th-2026-at-04-30-utc.33607/" target="_blank" rel="noopener">Ephinea forums, "Server maintenance scheduled for August 12th, 2026 at 04:30 UTC" (12 Aug 2026)</a></li>
   <li><a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">Ephinea, "Anniversary Event 2025!" (10th anniversary results)</a></li>
   <li><a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki — Anniversary event</a></li>
   <li><a href="https://wiki.pioneer2.net/w/Anniversary_Badge_Shop" target="_blank" rel="noopener">Ephinea PSO Wiki — Anniversary Badge Shop</a></li>
   <li><a href="https://www.pioneer2.net/community/forums/news.30/?order=post_date" target="_blank" rel="noopener">Ephinea news archive</a></li>
 </ul>
 
-<p class="srcline">This page is a personal summary, not affiliated with Ephinea or its wiki. Advance notices can change, so check the official announcements for the final word.</p>
+<p class="srcline">This page is a personal summary, not affiliated with Ephinea or its wiki. Event details can change, so check the official announcements for the final word.</p>
 
 </article>
 </div>

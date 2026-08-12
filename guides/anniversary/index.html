@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>アニバーサリーイベントが変わります — Ephinea 読みもの</title>
+<title>アニバーサリーイベントの変更は見送られました — Ephinea 読みもの</title>
 <style>/* Ephinea Tools 共通テーマ (単一ソース)
    全4ページ+シミュレーターのローカル版に埋め込まれる。
    パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
@@ -298,6 +298,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .tbl .sub { display: block; font-size: 0.82rem; color: var(--sub); margin-top: 3px;
             line-height: 1.6; }
 
+/* ---- 項目名と中身の2列表(会期・クエスト…)。**項目名を折り返させない** ----
+   左列に幅を与えないと「落ちる場 / 所」のように途中で折れる */
+.tbl.kv th { white-space: nowrap; width: 1%; font-weight: 700; vertical-align: top; }
+@media (max-width: 700px) {
+  .tbl.kv th, .tbl.kv td { display: block; width: auto; }
+  .tbl.kv th { border-bottom: none; padding-bottom: 0; }
+}
+
 /* ---- 新旧の対比表。左に項目名、右2列が「いままで / これから」 ---- */
 .tbl.cmp th { font-weight: 700; }
 .tbl.cmp tbody th { font-size: 0.84rem; color: var(--sub); white-space: nowrap;
@@ -341,24 +349,24 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 <link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/">
 <link rel="alternate" hreflang="en" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/anniversary/">
 <link rel="alternate" hreflang="x-default" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/">
-<meta name="description" content="Ephinea のアニバーサリーイベントは2026年から作り直されます。Maximum Attack E とアニバーサリーバッジの廃止、新クエストと色つきトークンの予告、2016年からの歴代イベントの内容をまとめました。">
+<meta name="description" content="2026年からの作り直しは見送られ、11周年は従来どおり8月12日から9月9日まで。バッジの落ち方の変更、予告されていた内容、2016年からの歴代イベントをまとめました。">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Ephinea Tools">
 <meta property="og:locale" content="ja_JP">
 <meta property="og:url" content="https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/">
-<meta property="og:title" content="アニバーサリーイベントが変わります — Ephinea 読みもの">
-<meta property="og:description" content="Ephinea のアニバーサリーイベントは2026年から作り直されます。Maximum Attack E とアニバーサリーバッジの廃止、新クエストと色つきトークンの予告、2016年からの歴代イベントの内容をまとめました。">
+<meta property="og:title" content="アニバーサリーイベントの変更は見送られました — Ephinea 読みもの">
+<meta property="og:description" content="2026年からの作り直しは見送られ、11周年は従来どおり8月12日から9月9日まで。バッジの落ち方の変更、予告されていた内容、2016年からの歴代イベントをまとめました。">
 <meta property="og:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-anniversary.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="アニバーサリーイベントが変わります — Ephinea 読みもの">
-<meta name="twitter:description" content="Ephinea のアニバーサリーイベントは2026年から作り直されます。Maximum Attack E とアニバーサリーバッジの廃止、新クエストと色つきトークンの予告、2016年からの歴代イベントの内容をまとめました。">
+<meta name="twitter:title" content="アニバーサリーイベントの変更は見送られました — Ephinea 読みもの">
+<meta name="twitter:description" content="2026年からの作り直しは見送られ、11周年は従来どおり8月12日から9月9日まで。バッジの落ち方の変更、予告されていた内容、2016年からの歴代イベントをまとめました。">
 <meta name="twitter:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-anniversary.png">
 <meta property="article:published_time" content="2026-08-11">
 <meta property="article:modified_time" content="2026-08-12">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"アニバーサリーイベントが変わります","description":"Ephinea のアニバーサリーイベントは2026年から作り直されます。Maximum Attack E とアニバーサリーバッジの廃止、新クエストと色つきトークンの予告、2016年からの歴代イベントの内容をまとめました。","url":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/","mainEntityOfPage":{"@type":"WebPage","@id":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/"},"inLanguage":"ja","datePublished":"2026-08-11","dateModified":"2026-08-12","author":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"publisher":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"image":"https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-anniversary.png","isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/"}}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ephinea Tools","item":"https://ephinea-pso-tools.nishimoto-learning.jp/"},{"@type":"ListItem","position":2,"name":"Ephinea 読みもの","item":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/"},{"@type":"ListItem","position":3,"name":"アニバーサリーイベントが変わります","item":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"アニバーサリーイベントの変更は見送られました","description":"2026年からの作り直しは見送られ、11周年は従来どおり8月12日から9月9日まで。バッジの落ち方の変更、予告されていた内容、2016年からの歴代イベントをまとめました。","url":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/","mainEntityOfPage":{"@type":"WebPage","@id":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/"},"inLanguage":"ja","datePublished":"2026-08-11","dateModified":"2026-08-12","author":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"publisher":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"image":"https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-anniversary.png","isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ephinea Tools","item":"https://ephinea-pso-tools.nishimoto-learning.jp/"},{"@type":"ListItem","position":2,"name":"Ephinea 読みもの","item":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/"},{"@type":"ListItem","position":3,"name":"アニバーサリーイベントの変更は見送られました","item":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/anniversary/"}]}</script>
 </head>
 <body>
 <div class="wrap">
@@ -375,11 +383,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 <nav class="toc" aria-label="目次">
   <div class="tlabel">目次</div>
   <ol>
-    <li><a href="#fixed">決まっていること</a></li>
-    <li><a href="#diff">いままでと2026年から</a></li>
-    <li><a href="#why">なぜ変えるのか</a></li>
+    <li><a href="#this">今年のイベント</a></li>
+    <li><a href="#diff">予告されていた変更</a></li>
+    <li><a href="#why">なぜ変えようとしたのか</a></li>
     <li><a href="#badges">手持ちのバッジ</a></li>
-    <li><a href="#history">9年間の変遷</a></li>
+    <li><a href="#history">これまでの変遷</a></li>
     <li><a href="#unknown">まだ分からないこと</a></li>
     <li><a href="#src">出典</a></li>
   </ol>
@@ -387,40 +395,70 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 <article>
 
-<h1>アニバーサリーイベントが変わります</h1>
+<h1>アニバーサリーイベントの変更は見送られました</h1>
 
-<p class="lead">9年間ずっと同じ形だった Ephinea のアニバーサリーイベントが、2026年から作り直されます。<b>森を回り続けるのがいちばん得</b>という偏りを、運営が3年かけても直せなかったためです。</p>
+<p class="lead">2026年から作り直されると予告されていたアニバーサリーイベントですが、<b>今年は見送られました</b>。11周年は<b>これまでと同じ形</b>で、8月12日から9月9日まで開かれています。Maximum Attack E もアニバーサリーバッジも残り、代わりにバッジの落ち方に手が入りました。</p>
 
 <div class="keyfacts">
-  <div><div class="k">告知</div><div class="v">2025年9月20日<span class="sub">予告の段階。中身は変わるかもしれません</span></div></div>
-  <div><div class="k">次のイベント</div><div class="v">2026年8月12日<span class="sub">13:30(日本時間)からのメンテナンスで開始。最大1時間</span></div></div>
-  <div><div class="k">確定している変更</div><div class="v">2件だけ<span class="sub">クエストとバッジの廃止</span></div></div>
+  <div><div class="k">開催中</div><div class="v">2026年8月12日 〜 9月9日<span class="sub">11周年。会期は4週間</span></div></div>
+  <div><div class="k">今年の形</div><div class="v">これまでどおり<span class="sub">予告された作り直しは見送り</span></div></div>
+  <div><div class="k">変わったところ</div><div class="v">バッジの落ち方<span class="sub">別枠ドロップ・パーティ共通・倉庫直行</span></div></div>
 </div>
 
-<h2 id="fixed">決まっていること</h2>
+<h2 id="this">今年のイベント</h2>
 
-<p>告知の中で「変更する予定はない」とはっきり書かれたのは、この2つだけです。</p>
+<p>公式スレッドの言葉は「<b>予期せぬ事情により、従来のアニバーサリーイベント形式を繰り返します</b>」でした。<a href="#diff">予告されていた作り直し</a>は今年は行われず、Maximum Attack E もアニバーサリーバッジもそのまま残ります。</p>
 
-<div class="cols2">
-  <div class="item fixed">
-    <h3>Maximum Attack E のイベント版がなくなる</h3>
-    <p>9年間イベントの中心だったクエストです。<b>通年で遊べる版は残ります。</b>「August Atrocity」もイベント中は引き続き遊べます。</p>
-  </div>
-  <div class="item fixed">
-    <h3>アニバーサリーバッジが手に入らなくなる</h3>
-    <p>次のイベントが最後の入手機会です。<b>交換所は残る</b>ので、余ったぶんは急いで使わなくてかまいません。</p>
-  </div>
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>会期</th><td>2026年8月12日 〜 9月9日</td></tr>
+    <tr><th>クエスト</th><td>Maximum Attack E 11本（森・洞窟・坑道・遺跡・神殿・宇宙船・中央管理区・プラント・制御塔・クレーター周辺・地下砂漠）と August Atrocity。1本5〜10分で、失敗はありません</td></tr>
+    <tr><th>バッジ</th><td>ブロンズ（全難易度）／シルバー（ベリーハード以上）／ゴールド（アルティメットのみ）／プラチナ（アルティメットのみ、極めて稀）</td></tr>
+    <tr><th>落ちる場所</th><td>イベントクエストの外でも落ちます。<b>人数によるドロップ率の補正は効きません</b>（何人で回っても同じ確率）</td></tr>
+    <tr><th>マイルストーン</th><td>アルティメットでのクリア数を集計し、<b>いちばんクリアが少ないクエスト</b>の数がサーバーの到達点になります。解除したブーストはイベントクエストの外にも効きます</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">逃げたラッピーからはバッジが落ちません。</p>
+
+<h3>10周年から変わったところ</h3>
+
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>落ち方</th><td>通常のドロップとは<b>別枠</b>になりました。敵1体から通常のアイテムとバッジが両方落ちることがあります</td></tr>
+    <tr><th>誰がもらえるか</th><td>敵ごとに1回だけ抽選し、<b>パーティ全員が同じバッジ</b>をもらいます（Classic drops のときは床に落ちます）</td></tr>
+    <tr><th>どこに入るか</th><td>空きがあれば<b>倉庫（キャラまたは共有）に直接入ります</b>。空きが無ければ床へ。通知の表示は <code>/badgenotify</code> でキャラごとに切り替えられます</td></tr>
+    <tr><th>見つけやすさ</th><td>床に落ちたバッジは<b>上下に揺れて</b>、ほかの赤箱と見分けられます</td></tr>
+    <tr><th>マイルストーン</th><td>段階を並べ替えて増やし、<b>1段階あたりの報酬を大きく</b>する方向に</td></tr>
+    <tr><th>ゴールドの交換</th><td>2種類追加。<b>Heart of Flight Fan</b>（特定のスライサーをフライトファンに変える）と <b>Blue Powder Coating</b>（特定の武器の色を変える）</td></tr>
+  </tbody>
+</table>
 </div>
 
-<p>残りはすべて予告です。イベントを始めるためのメンテナンスが告知され、<b>2026年8月12日の13:30(日本時間)</b>から最大1時間で行われます。ただし<b>イベントの中身はまだ公開されていません</b>。始まったら、予告との違いをこのページに書き足します。</p>
+<p>バッジ率の補正は昨年と同じ形で続きます。</p>
 
-<p class="srcline">出典: <a href="https://www.pioneer2.net/community/threads/server-maintenance-scheduled-for-august-12th-2026-at-04-30-utc.33607/" target="_blank" rel="noopener">Ephinea公式フォーラム「Server maintenance scheduled for August 12th, 2026 at 04:30 UTC」（2026-08-12）</a></p>
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>クリア数が多い上位3本</th><td>−25%<br><span class="sub">中央値より500クリア以上多い場合にかぎります</span></td></tr>
+    <tr><th>クリア数が少ない下位3本</th><td>+25%</td></tr>
+    <tr><th>August Atrocity 1 / 2</th><td>常に +25%</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">いまどのクエストに補正が入っているかは、ゲーム内で <code>/badge</code> と打つと確認できます。</p>
 
-<h2 id="diff">いままでと2026年から</h2>
+<p class="srcline">出典: <a href="https://www.pioneer2.net/community/threads/11th-anniversary-event-thread.33612/" target="_blank" rel="noopener">Ephinea公式フォーラム「11th Anniversary Event Thread」（2026-08-12）</a></p>
+
+<h2 id="diff">予告されていた変更</h2>
+
+<p>2025年9月の告知で示された形です。<b>今年は実施されていません</b>が、取り下げられたとも書かれていません。告知では Maximum Attack E とアニバーサリーバッジの廃止について「変更する予定はない」とはっきり書かれていました。</p>
 
 <div class="tblwrap">
 <table class="tbl cmp">
-  <thead><tr><th></th><th class="was">いままで（2017〜2025）</th><th class="now">2026年から</th></tr></thead>
+  <thead><tr><th></th><th class="was">いままで（2017〜2026）</th><th class="now">予告された形</th></tr></thead>
   <tbody>
     <tr>
       <th>クエスト</th>
@@ -429,7 +467,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
     </tr>
     <tr>
       <th>森だけで回れるか</th>
-      <td class="was">回れた。それがいちばん効率が良かった</td>
+      <td class="was">回れる。それがいちばん効率が良い</td>
       <td class="now"><b>森だけのクエストは作らない</b></td>
     </tr>
     <tr>
@@ -444,7 +482,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
     </tr>
     <tr>
       <th>1本だけ回した場合</th>
-      <td class="was">それでゴールドまで貯まった</td>
+      <td class="was">それでゴールドまで貯まる</td>
       <td class="now"><b>色が足りず何も買えない</b><br><span class="sub">ただしトークンは取引できるとのこと</span></td>
     </tr>
     <tr>
@@ -459,15 +497,15 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   </tbody>
 </table>
 </div>
-<p class="tblnote">トークンの名前も必要枚数も、まだ仮のものです。</p>
+<p class="tblnote">トークンの名前も必要枚数も仮のものです。この形は今年は実施されていません。</p>
 
-<p>スレッドでの反応はおおむね好意的で、通年版の Maximum Attack E が残ることへの感謝が目立ちました。複数のプレイヤーが求めていたのは、機能が同じなら名前はプラチナバッジのまま残してほしい、ということです。不安として挙がっていたのは、難易度を揃えることを意識しすぎてつまらないクエストにならないか、という点でした。ソロや少人数でも回せるようにしてほしい、という要望も出ています。</p>
+<p>告知のスレッドでの反応はおおむね好意的で、通年版の Maximum Attack E が残ることへの感謝が目立ちました。複数のプレイヤーが求めていたのは、機能が同じなら名前はプラチナバッジのまま残してほしい、ということです。不安として挙がっていたのは、難易度を揃えることを意識しすぎてつまらないクエストにならないか、という点でした。ソロや少人数でも回せるようにしてほしい、という要望も出ています。</p>
 
 <p class="srcline">出典: <a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea公式アナウンス「今後のアニバーサリーイベントについて」（2025-09-20）</a></p>
 
-<h2 id="why">なぜ変えるのか</h2>
+<h2 id="why">なぜ変えようとしたのか</h2>
 
-<p>バッジは<b>クエストをクリアするたび</b>にもらえます。だから1周が速いクエストほど得で、いちばん簡単な森に人が集まりました。運営は3年かけて3回てこ入れしています（<a href="#history">9年間の変遷</a>）。それでも10周年の結果はこうでした。</p>
+<p>バッジは<b>クエストをクリアするたび</b>にもらえます。だから1周が速いクエストほど得で、いちばん簡単な森に人が集まりました。運営は3年かけて3回てこ入れしています（<a href="#history">これまでの変遷</a>）。それでも10周年の結果はこうでした。</p>
 
 <div class="tblwrap">
 <table class="tbl">
@@ -489,7 +527,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 </div>
 <p class="tblnote">2025年イベントの最終クリア数（<a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">公式サイトの掲示</a>より）。</p>
 
-<p>森はいちばん少ないプラントの<b>5.6倍</b>。下位8本が25,000〜36,000回に固まっているのは、マイルストーンに必要なぶんだけ回して、そこで手を止めたからです。<b>報酬の配り方をいじっても、効率の良いクエストに人が集まる流れは止まりませんでした。</b>だから2026年は、クエストと通貨そのものを作り直します。</p>
+<p>森はいちばん少ないプラントの<b>5.6倍</b>。下位8本が25,000〜36,000回に固まっているのは、マイルストーンに必要なぶんだけ回して、そこで手を止めたからです。<b>報酬の配り方をいじっても、効率の良いクエストに人が集まる流れは止まりませんでした。</b>だから運営は、クエストと通貨そのものを作り直すと予告しました。</p>
 
 <h2 id="badges">手持ちのバッジ</h2>
 
@@ -505,11 +543,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   </tbody>
 </table>
 </div>
-<p class="tblnote">ブロンズ・シルバー・ゴールドの各ショップも、これまでどおりです。</p>
+<p class="tblnote">プラチナの交換先は今年も同じ6種です（武器はいずれも属性0%）。ブロンズ・シルバー・ゴールドの各ショップも、ゴールドの2種追加を除いてこれまでどおりです。</p>
 
 <p class="srcline">出典: <a href="https://wiki.pioneer2.net/w/Anniversary_Badge_Shop" target="_blank" rel="noopener">Ephinea PSO Wiki「Anniversary Badge Shop」</a></p>
 
-<h2 id="history">9年間の変遷</h2>
+<h2 id="history">これまでの変遷</h2>
 
 <p>いまの形ができたのは2017年です。以後、手が入ったのは<b>マイルストーンの集計方法と、バッジを持ち越せるかどうか</b>だけでした。</p>
 
@@ -520,7 +558,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
     <tr><td class="y">2016<span>1回目</span></td><td class="sp">8/11 – 10/1</td><td>
       <p>名称は「Ephinea Summer Event」。バッジは3種類、対象は Maximum Attack 4 で、マイルストーンはまだありません。途中で会期が延び、歴代唯一の7週間開催になりました。</p></td></tr>
     <tr class="key"><td class="y">2017<span>2回目</span></td><td class="sp">8/13 – 9/10</td><td>
-      <p><b>ここで今の形ができます。</b>Maximum Attack E が登場し、プラチナバッジが加わって4種類に、マイルストーンも導入。<b>この形が9年続きます。</b></p></td></tr>
+      <p><b>ここで今の形ができます。</b>Maximum Attack E が登場し、プラチナバッジが加わって4種類に、マイルストーンも導入。<b>この形が続いています。</b></p></td></tr>
     <tr><td class="y">2018<span>3回目</span></td><td class="sp">8/6 – 9/3</td><td>
       <p>バッジは<b>年号付きで、毎年入れ替わる</b>方式。前年ぶんは3枚を1枚に交換するしかなく、それより古いものは使えません。フォトンスフィアの必要枚数が50枚から70枚に。</p></td></tr>
     <tr><td class="y">2019<span>4回目</span></td><td class="sp">8/2 – 9/6</td><td>
@@ -537,35 +575,35 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
       <p><b>てこ入れ2回目。</b>集計を「いちばんクリアされていないクエストのクリア数」に変え、1本だけ回していても進まないようにしました。</p></td></tr>
     <tr><td class="y">2025<span>10回目</span></td><td class="sp">8/11 – 9/8</td><td>
       <p><b>てこ入れ3回目。</b>クリア数の多い上位3本のバッジ率を−25%、少ない下位3本を+25%に補正。それでも森は5.6倍のままでした。</p></td></tr>
+    <tr class="key"><td class="y">2026<span>11回目</span></td><td class="sp">8/12 – 9/9</td><td>
+      <p><b>予告されていた作り直しは見送り。</b>バッジの落ち方が変わり、通常のドロップとは別枠に、パーティ全員に同じものが出て、倉庫へ直接入るようになりました。ゴールドの交換に2種追加。</p></td></tr>
   </tbody>
 </table>
 </div>
-<p class="tblnote">出典: 各年の告知スレッド（<a href="https://www.pioneer2.net/community/threads/3083" target="_blank" rel="noopener">2016</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/7734" target="_blank" rel="noopener">2017</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11345" target="_blank" rel="noopener">2018</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/15276" target="_blank" rel="noopener">2019</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/18985" target="_blank" rel="noopener">2020</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/21021" target="_blank" rel="noopener">2021</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/23826" target="_blank" rel="noopener">2022</a>）と <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki</a></p>
+<p class="tblnote">出典: 各年の告知スレッド（<a href="https://www.pioneer2.net/community/threads/3083" target="_blank" rel="noopener">2016</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/7734" target="_blank" rel="noopener">2017</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11345" target="_blank" rel="noopener">2018</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/15276" target="_blank" rel="noopener">2019</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/18985" target="_blank" rel="noopener">2020</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/21021" target="_blank" rel="noopener">2021</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/23826" target="_blank" rel="noopener">2022</a><span class="sep">/</span><a href="https://www.pioneer2.net/community/threads/11th-anniversary-event-thread.33612/" target="_blank" rel="noopener">2026</a>）と <a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki</a></p>
 
 <h2 id="unknown">まだ分からないこと</h2>
 
-<p>イベントが始まったら、この5点を確かめてここに追記します。</p>
+<p>分かり次第、ここに書き足します。</p>
 
 <ul>
-  <li>新クエストは何本で、どのエリアが舞台か。<b>「同じくらいの難しさ」が実際に成立しているか</b></li>
-  <li>トークンは何色あり、どういう名前になったか</li>
-  <li>ショップの必要枚数は、予告の例（アイテムチケット＝赤2＋青2 など）とどう違うか</li>
-  <li>プラチナバッジに相当するものの名前と入手方法</li>
-  <li>マイルストーンの段階と必要ポイントは変わったか</li>
+  <li><b>マイルストーンの報酬</b>。公式ページでは16段階（1,000〜20,000ポイント）すべてが「? ? ?」のままです</li>
+  <li>予告されていた作り直しが<b>いつ行われるのか</b>。「予期せぬ事情により今年は従来の形式を繰り返す」とだけ書かれていて、次にどうするかは書かれていません</li>
 </ul>
 
 <h2 id="src">出典</h2>
 
 <ul class="srclist">
+  <li><a href="https://www.pioneer2.net/community/threads/11th-anniversary-event-thread.33612/" target="_blank" rel="noopener">Ephinea公式フォーラム「11th Anniversary Event Thread」（2026-08-12）</a></li>
+  <li><a href="https://ephinea.pioneer2.net/11th-anniv-event/" target="_blank" rel="noopener">Ephinea公式「Anniversary Event 2026!」（マイルストーンの進捗）</a></li>
   <li><a href="https://www.pioneer2.net/community/threads/regarding-future-anniversary-events-%E4%BB%8A%E5%BE%8C%E3%81%AE%E3%82%A2%E3%83%8B%E3%83%90%E3%83%BC%E3%82%B5%E3%83%AA%E3%83%BC%E3%82%A4%E3%83%99%E3%83%B3%E3%83%88%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6.31716/" target="_blank" rel="noopener">Ephinea公式アナウンス「今後のアニバーサリーイベントについて」（2025-09-20）</a></li>
-  <li><a href="https://www.pioneer2.net/community/threads/server-maintenance-scheduled-for-august-12th-2026-at-04-30-utc.33607/" target="_blank" rel="noopener">Ephinea公式フォーラム「Server maintenance scheduled for August 12th, 2026 at 04:30 UTC」（2026-08-12）</a></li>
   <li><a href="https://ephinea.pioneer2.net/10th-anniv-event/" target="_blank" rel="noopener">Ephinea公式「Anniversary Event 2025!」（10周年の実績値）</a></li>
   <li><a href="https://wiki.pioneer2.net/w/Anniversary_event" target="_blank" rel="noopener">Ephinea PSO Wiki「Anniversary event」</a></li>
   <li><a href="https://wiki.pioneer2.net/w/Anniversary_Badge_Shop" target="_blank" rel="noopener">Ephinea PSO Wiki「Anniversary Badge Shop」</a></li>
   <li><a href="https://www.pioneer2.net/community/forums/news.30/?order=post_date" target="_blank" rel="noopener">Ephinea公式ニュース一覧</a></li>
 </ul>
 
-<p class="srcline">このページは Ephinea の公式・wiki とは無関係の個人的なまとめです。予告の内容は変わることがあるので、最終的な確認は公式の告知でお願いします。</p>
+<p class="srcline">このページは Ephinea の公式・wiki とは無関係の個人的なまとめです。イベントの内容は変わることがあるので、最終的な確認は公式の告知でお願いします。</p>
 
 </article>
 </div>
