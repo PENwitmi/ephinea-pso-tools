@@ -292,18 +292,24 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 /* ツール側のパネル見出しの飾り棒は読み物では邪魔なので消す */
 .doc .panel > h2::before, .doc h2.sec::before { content: none; }
 
-/* IDカラーのページ。build_site.py が __SECID_CSS__ に差し込む。
-   ページの主役は「職種→色」「色→職」の2方向の順位。表とカードの見た目を
-   揃えると、どちらを読んでいるか分からなくなるので、
-   **職種→色 はカード、色→職 は行**とはっきり分ける。 */
+/* IDカラーのページ。build_site.py が __PAGE_CSS__ に reading.css と続けて差し込む。
+   ページの主役は「職種→色」の順位で、それは app.js が組み立てる。
+   **ここは reading.css の外にある部品だけを持つ**(順位カード・タブ・○×表・出典チップ)。
+   地の文・見出し・表の面は reading.css に任せる(2026-08-12 に .doc 配下へ入れた)。
+
+   余白は本文の呼吸に合わせる。カード内が詰まっていると、
+   見出し・理由・出典の3層が1つの塊に見えて読めない。 */
 
 /* ---- 共通 ---- */
-.sidwrap { overflow-x: auto; }
-.sidtbl { border-collapse: collapse; font-size: 0.8rem; width: 100%; }
-.sidtbl th, .sidtbl td { border: 1px solid var(--border); padding: 4px 6px; text-align: center; }
+/* 表はカード面に載せる(地の色の上に罫線だけ引いても表に見えない。reading.css の .tblwrap と同じ) */
+.sidwrap { overflow-x: auto; background: var(--card); border: 1px solid var(--border);
+           border-radius: 12px; margin-bottom: 0.8em; }
+.sidtbl { border-collapse: collapse; font-size: 0.82rem; width: 100%; }
+.sidtbl th, .sidtbl td { border: 1px solid var(--border); padding: 6px 8px; text-align: center; }
+/* 横スクロールで下に潜る列。**背景を必ず塗る**(未定義の変数だと透けて文字が重なる) */
 .sidtbl th.it, .sidtbl td.it { text-align: left; white-space: nowrap;
-                               position: sticky; left: 0; background: var(--panel); z-index: 1; }
-.sidtbl thead th { background: var(--panel); font-size: 0.72rem; white-space: nowrap; }
+                               position: sticky; left: 0; background: var(--card); z-index: 1; }
+.sidtbl thead th { background: var(--bg); font-size: 0.74rem; white-space: nowrap; }
 /* IDの色帯。列見出しでは押せる */
 .sidcol { padding: 2px 6px; border-radius: 5px; display: inline-block; }
 button.sidcol, .sidtbl .sidcol { cursor: pointer; }
@@ -311,90 +317,76 @@ button.sidcol, .sidtbl .sidcol { cursor: pointer; }
 .sidtbl td.miss { color: var(--sub); opacity: 0.4; }
 .sidtbl col.sel, .sidtbl td.sel, .sidtbl th.sel { background: var(--accent-soft); }
 .sidtbl td.hit.sel { background: var(--accent-soft); }
-.srclist { font-size: 0.82rem; }
-.srclist li { margin-bottom: 3px; }
 /* 事実のバッジ。意見の文章と混ぜないよう、必ず枠付きの小片で出す */
-.facts { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.76rem; margin-top: 8px; }
+.facts { display: flex; flex-wrap: wrap; gap: 6px; font-size: 0.78rem; margin-top: 12px; }
 .facts .f { border: 1px solid var(--border); border-radius: 99px; padding: 2px 10px;
             color: var(--sub); }
 .facts .f b { color: var(--text); font-weight: 600; }
 .facts .f.no { color: var(--gold); }
 .facts .f.yes { color: var(--accent); border-color: var(--accent); }
 
-/* ---- ① 職種から選ぶ ---- */
-.sidtabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+/* ---- 職種タブ ---- */
+.sidtabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
 .sidtab { padding: 6px 18px; border: 1px solid var(--border); border-radius: 99px;
           background: var(--card); color: var(--text); cursor: pointer;
           font-size: 0.9rem; font-weight: 600; }
 .sidtab.on { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
-/* 状況の切替。タブ(職種)より弱い見た目にして、上下関係を出す */
-.sitbar { display: inline-flex; border: 1px solid var(--border); border-radius: 99px;
-          overflow: hidden; margin-bottom: 12px; }
-.sitbtn { border: 0; background: var(--card); color: var(--sub); cursor: pointer;
-          font: inherit; font-size: 0.8rem; padding: 5px 16px; }
-.sitbtn.on { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
-.sumgrp + .sumgrp { margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border); }
-.sumlab { font-size: 0.78rem; color: var(--sub); font-weight: 700; margin-bottom: 2px; }
-/* 「クラスは問わない」は答えのひとつ。無理に順位をひねり出すより正確 */
-.anycls { color: var(--sub); font-weight: normal; }
-/* 早見: 職種ごとの①〜④を1行で。結論はこれだけにする(表を2つ並べない) */
-.pickrow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-           padding: 9px 2px; }
-.pickrow + .pickrow { border-top: 1px dashed var(--border); }
-.pickrow .cls { font-weight: 700; width: 6.5em; flex: none; }
-.pickrow .arrow { color: var(--sub); font-size: 0.8rem; }
-.pickrow .n { color: var(--sub); font-size: 0.72rem; margin-right: 2px; }
-.pickrow .slot { display: inline-flex; align-items: center; }
-.pickrow .slot.first .n { color: var(--accent); font-weight: 700; }
-.rkcard { display: grid; grid-template-columns: 2.2em 1fr; gap: 10px;
-          border: 1px solid var(--border); border-radius: 10px; background: var(--card);
-          padding: 12px 14px; margin-bottom: 10px; }
+
+/* ---- 順位カード(1キャラ目・追加キャラで同じ形) ---- */
+.rkcard { display: grid; grid-template-columns: 2.4em 1fr; gap: 14px;
+          border: 1px solid var(--border); border-radius: 12px; background: var(--card);
+          padding: 16px 18px; margin-bottom: 14px; }
 .rkcard.top { border-color: var(--accent); }
-.rkno { font-size: 1.5rem; font-weight: 800; color: var(--border); line-height: 1.1; }
+.rkno { font-size: 1.6rem; font-weight: 800; color: var(--border); line-height: 1.1; }
 .rkcard.top .rkno { color: var(--accent); }
-.rkhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-bottom: 5px; }
+.rkhead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; margin-bottom: 7px; }
 .rkhead .h { font-weight: 700; }
-.rkwhy { font-size: 0.86rem; }
-.rkwho { font-size: 0.78rem; color: var(--sub); margin-top: 6px; }
+.rkwhy { font-size: 0.94rem; line-height: 1.8; }
+.rkwho { font-size: 0.8rem; color: var(--sub); margin-top: 8px; }
+/* 出典どうしが割れている点。片方だけ書かず、割れていること自体を出す */
+.caution { border: 1px solid var(--gold); border-radius: 10px; padding: 14px 18px;
+           margin: 0 0 14px; background: var(--card); font-size: 0.9rem; line-height: 1.8; }
+.caution .ctitle { font-weight: 700; color: var(--gold); margin-bottom: 6px; }
+.method li { margin-bottom: 10px; }
+
+/* ---- 畳んである参考資料 ---- */
+/* 本文の途中に閉じた箱があると見落とすので、押せる面であることを枠で示す */
+.foldbox { border: 1px solid var(--border); border-radius: 12px; background: var(--card);
+           margin: 0 0 16px; }
+.foldbox > summary { cursor: pointer; padding: 13px 18px; font-size: 0.94rem;
+                     border-radius: 12px; }
+.foldbox > summary:hover { color: var(--accent); }
+.foldbox[open] > summary { border-bottom: 1px solid var(--border);
+                           border-radius: 12px 12px 0 0; }
+.foldbody { padding: 16px 18px; }
+.foldbody > p:last-child, .foldbody > .sidwrap:last-child { margin-bottom: 0; }
 
 /* ---- 資料 ---- */
 .crtbl td.hi { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .crtbl td.lo { color: var(--sub); opacity: 0.5; }
 .crtbl td.flat { color: var(--sub); }
-.sidonly { display: grid; gap: 8px; grid-template-columns: 1fr; }
+.sidonly { display: grid; gap: 10px; grid-template-columns: 1fr; margin-bottom: 1.2em; }
 @media (min-width: 760px) { .sidonly { grid-template-columns: 1fr 1fr; } }
-.sidonly .so { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px;
-               background: var(--card); font-size: 0.82rem; }
-.sidonly .so b { display: block; margin-bottom: 3px; }
-
-@media (max-width: 640px) {
-  .wikibox .wgrp { grid-template-columns: 1fr; }
-}
+.sidonly .so { border: 1px solid var(--border); border-radius: 10px; padding: 11px 14px;
+               background: var(--card); font-size: 0.86rem; line-height: 1.7; }
+.sidonly .so b { display: block; margin-bottom: 5px; }
 
 /* 参考: wiki のクラスガイド。**自分の推奨と混ざらないよう色を変える** */
-.wikibox { margin-bottom: 16px; }
 .wikibox .wgrp { display: grid; grid-template-columns: 14em 1fr; gap: 10px;
-                 align-items: center; padding: 6px 0; }
+                 align-items: center; padding: 9px 0; }
 .wikibox .wgrp + .wgrp { border-top: 1px dashed var(--border); }
-.wikibox .wlab { font-size: 0.78rem; color: var(--sub); }
+.wikibox .wlab { font-size: 0.82rem; color: var(--sub); }
 .wikibox .worder { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-@media (max-width: 640px) { .wikibox .wgrp { grid-template-columns: 1fr; gap: 3px; } }
+@media (max-width: 640px) { .wikibox .wgrp { grid-template-columns: 1fr; gap: 4px; } }
 
 /* 出典チップ。主張のすぐ下に置き、**Ephinea 以外は灰色**にして転用に注意が要ることを示す */
-.srcs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.src { font-size: 0.72rem; color: var(--accent); text-decoration: none;
+.srcs { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.src { font-size: 0.74rem; color: var(--accent); text-decoration: none;
        border: 1px solid var(--accent-soft); border-radius: 99px; padding: 1px 9px;
        background: var(--accent-soft); }
 .src:hover { text-decoration: underline; }
 .src.soth, a.soth { color: var(--sub); background: transparent; border-color: var(--border); }
 .srclist a.soth { border: 0; padding: 0; }
-.scopebox { padding: 10px 14px; margin-bottom: 16px; }
-.scopebox .note { margin: 0; }
-/* 出典どうしが割れている点。片方だけ書かず、割れていること自体を出す */
-.caution { border: 1px solid var(--gold); border-radius: 10px; padding: 12px 14px;
-           margin-bottom: 10px; background: var(--card); font-size: 0.84rem; }
-.caution .ctitle { font-weight: 700; color: var(--gold); margin-bottom: 5px; }
-.method li { margin-bottom: 8px; }
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%230b7fc2%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2331c7e8%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20x%3D%279%27%20y%3D%274%27%20width%3D%2714%27%20height%3D%2724%27%20rx%3D%276%27%20fill%3D%27url(%23g)%27%2F%3E%3C%2Fsvg%3E">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7fa">
@@ -418,8 +410,8 @@ button.sidcol, .sidtbl .sidcol { cursor: pointer; }
 <meta name="twitter:description" content="PSOBB Ephinea のIDカラー(Section ID)を職業別にまとめました。1キャラ目と追加キャラでは基準が変わるので分けて整理し、各案に出典を付けています。その色でしか出ないものも一覧化。">
 <meta name="twitter:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-section-id.png">
 <meta property="article:published_time" content="2026-08-11">
-<meta property="article:modified_time" content="2026-08-11">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"IDカラーの選び方","description":"PSOBB Ephinea のIDカラー(Section ID)を職業別にまとめました。1キャラ目と追加キャラでは基準が変わるので分けて整理し、各案に出典を付けています。その色でしか出ないものも一覧化。","url":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/section-id/","mainEntityOfPage":{"@type":"WebPage","@id":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/section-id/"},"inLanguage":"ja","datePublished":"2026-08-11","dateModified":"2026-08-11","author":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"publisher":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"image":"https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-section-id.png","isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/"}}</script>
+<meta property="article:modified_time" content="2026-08-12">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"IDカラーの選び方","description":"PSOBB Ephinea のIDカラー(Section ID)を職業別にまとめました。1キャラ目と追加キャラでは基準が変わるので分けて整理し、各案に出典を付けています。その色でしか出ないものも一覧化。","url":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/section-id/","mainEntityOfPage":{"@type":"WebPage","@id":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/section-id/"},"inLanguage":"ja","datePublished":"2026-08-11","dateModified":"2026-08-12","author":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"publisher":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"image":"https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-section-id.png","isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/"}}</script>
 <script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ephinea Tools","item":"https://ephinea-pso-tools.nishimoto-learning.jp/"},{"@type":"ListItem","position":2,"name":"Ephinea 読みもの","item":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/"},{"@type":"ListItem","position":3,"name":"IDカラーの選び方","item":"https://ephinea-pso-tools.nishimoto-learning.jp/guides/section-id/"}]}</script>
 </head>
 <body>
@@ -432,64 +424,81 @@ button.sidcol, .sidtbl .sidcol { cursor: pointer; }
   <button class="theme-btn" id="themeToggle" aria-label="配色テーマ切替">🌙 ダーク</button>
 </nav>
 <main>
+<div class="doc">
+
+<nav class="toc" aria-label="目次">
+  <div class="tlabel">目次</div>
+  <ol>
+    <li><a href="#first">1キャラ目にどのIDを選ぶか</a></li>
+    <li><a href="#extra">追加キャラにどのIDを選ぶか</a></li>
+    <li><a href="#misc">そのほか知っておくこと</a></li>
+    <li><a href="#common">コモン武器の出やすさ</a></li>
+    <li><a href="#only">この色でしか出ないもの</a></li>
+    <li><a href="#src">出典</a></li>
+  </ol>
+</nav>
+
+<article>
+
 <h1>🎨 IDカラーの選び方</h1>
 <p class="lead">「<b>1キャラ目にどのIDを選ぶか</b>」と「<b>追加キャラにどのIDを選ぶか</b>」の2つに絞った個人的なまとめです。<b>主張には出典を付けました。</b>「この色だけで出る」「Red Ring が出る」といった事実は、公式ドロップチャートから機械的に出しています。</p>
 
-<div class="panel scopebox">
-  <div class="note" id="scopeNote"></div>
+<div class="callout">
+  <p id="scopeNote"></p>
 </div>
 
 <h2 id="first">1キャラ目にどのIDを選ぶか</h2>
 <div class="sidtabs" id="firstTabs"></div>
-<p class="note" id="firstLead"></p>
+<p id="firstLead"></p>
 <div id="firstList"></div>
 <div id="firstCaution"></div>
 
 <h2 id="extra">追加キャラにどのIDを選ぶか</h2>
-<p class="note" id="extraLead"></p>
-<ul class="note method" id="extraMethod"></ul>
+<p id="extraLead"></p>
+<ul class="method" id="extraMethod"></ul>
 <div class="sidtabs" id="sidTabs"></div>
-<p class="note" id="extraClsLead"></p>
+<p id="extraClsLead"></p>
 <div id="extraList"></div>
 
-<details class="panel wikibox" id="wikiBox">
+<details class="foldbox wikibox" id="wikiBox">
   <summary><b>参考: wiki のクラスガイドの並べ方</b> <span class="sub" id="wikiGuides"></span></summary>
-  <div style="padding-top:10px" id="wikiBody"></div>
+  <div class="foldbody" id="wikiBody"></div>
 </details>
 
-<details class="panel" id="mxBox">
+<details class="foldbox" id="mxBox">
   <summary><b>この職種で気にする品が、どの色で出るか</b> <span class="sub">(○ = 出る / ・ = 出ない)</span></summary>
-  <div style="padding-top:10px">
-    <p class="note">○にカーソルを合わせると Ep・敵・分母が出ます。列見出しを押すとその色を強調します。<b>分母どうしは比べないでください</b>(レアエネミーの出現頻度と湧き数が入っていません)。</p>
+  <div class="foldbody">
+    <p>○にカーソルを合わせると Ep・敵・分母が出ます。列見出しを押すとその色を強調します。<b>分母どうしは比べないでください</b>(レアエネミーの出現頻度と湧き数が入っていません)。</p>
     <div class="sidwrap"><table class="sidtbl" id="sidTbl"></table></div>
-    <p class="note" id="sidMissing"></p>
+    <p class="tblnote" id="sidMissing"></p>
   </div>
 </details>
 
-<div class="panel">
-  <h2>そのほか知っておくこと</h2>
-  <ul class="note">
-    <li>IDは<b>クラスと名前の組み合わせ</b>で決まります。クラスを選んでから名前を入れる順で、狙ったIDにならなくても <code>/modsecid</code> で<b>Lv20 未満のあいだ1回だけ</b>変えられます。Lv20 で確定します。</li>
-    <li><b>ドロップを決めるのは部屋を立てた人のIDだけ</b>です。コモンの一部と、レアは全部。他の人の部屋に入るぶんには自分のIDは効きません。</li>
-    <li>クラス×性別のデイリー予報でレア率が上がりますが、<b>最大5%で毎日入れ替わります</b>。週次の25%や Ragol Boost Road の25%に比べて小さいので、クラス選びの根拠にはなりません。</li>
-    <li>下の表は<b>Ultimate</b>基準です。<b>難易度が変われば出る色も変わります</b>(例: Fire Scepter: Agni は Ultimate では落ちず、Normal〜Very Hard の Pinkal などで落ちます)。</li>
-    <li>○が付いていても、出どころが<b>レアエネミー</b>なら実際に会う頻度は別問題です。分母(1/N)は<b>その敵を倒したときの確率</b>で、湧き数は入っていません。</li>
-    <li>Yellowboze だけは別枠の恩恵があります。<b>メセタ増</b>と、<b>Episode 1 限定の属性(％)付き率アップ</b>です。</li>
-    <li>ES武器・S-rank武器はチャレンジ報酬なので<b>IDに関係ありません</b>。</li>
-  </ul>
-</div>
+<h2 id="misc">そのほか知っておくこと</h2>
+<ul>
+  <li>IDは<b>クラスと名前の組み合わせ</b>で決まります。クラスを選んでから名前を入れる順で、狙ったIDにならなくても <code>/modsecid</code> で<b>Lv20 未満のあいだ1回だけ</b>変えられます。Lv20 で確定します。</li>
+  <li><b>ドロップを決めるのは部屋を立てた人のIDだけ</b>です。コモンの一部と、レアは全部。他の人の部屋に入るぶんには自分のIDは効きません。</li>
+  <li>クラス×性別のデイリー予報でレア率が上がりますが、<b>最大5%で毎日入れ替わります</b>。週次の25%や Ragol Boost Road の25%に比べて小さいので、クラス選びの根拠にはなりません。</li>
+  <li>下の表は<b>Ultimate</b>基準です。<b>難易度が変われば出る色も変わります</b>(例: Fire Scepter: Agni は Ultimate では落ちず、Normal〜Very Hard の Pinkal などで落ちます)。</li>
+  <li>○が付いていても、出どころが<b>レアエネミー</b>なら実際に会う頻度は別問題です。分母(1/N)は<b>その敵を倒したときの確率</b>で、湧き数は入っていません。</li>
+  <li>Yellowboze だけは別枠の恩恵があります。<b>メセタ増</b>と、<b>Episode 1 限定の属性(％)付き率アップ</b>です。</li>
+  <li>ES武器・S-rank武器はチャレンジ報酬なので<b>IDに関係ありません</b>。</li>
+</ul>
 
-<h2>コモン武器の出やすさ</h2>
-<p class="note">落ちたコモン武器が<b>どの種別になるか</b>の割合です(武器が落ちる確率ではありません)。高Hitのコモンを自分で掘るなら、ここが効きます。<b>サーベル・ハンドガン・ケーンは全IDで13%固定</b>なので差が出ません。</p>
+<h2 id="common">コモン武器の出やすさ</h2>
+<p>落ちたコモン武器が<b>どの種別になるか</b>の割合です(武器が落ちる確率ではありません)。高Hitのコモンを自分で掘るなら、ここが効きます。<b>サーベル・ハンドガン・ケーンは全IDで13%固定</b>なので差が出ません。</p>
 <div class="sidwrap"><table class="sidtbl crtbl" id="crTbl"></table></div>
 
-<h2>この色でしか出ないもの</h2>
-<p class="note">Ultimate で<b>1色からしか落ちない</b>品です。各色のCard・DB's Saber・Flowen's Sword・Heart of〜 は仕組み上どの色にも1つずつあるので省いています。</p>
+<h2 id="only">この色でしか出ないもの</h2>
+<p>Ultimate で<b>1色からしか落ちない</b>品です。各色のCard・DB's Saber・Flowen's Sword・Heart of〜 は仕組み上どの色にも1つずつあるので省いています。</p>
 <div class="sidonly" id="sidOnly"></div>
 
-<h2>出典</h2>
+<h2 id="src">出典</h2>
 <ul class="srclist" id="sidSrc"></ul>
-<p class="note">このページは Ephinea の公式・wiki とは無関係の個人的なまとめです。ドロップ表は更新されることがあるので、最終確認は公式のチャートでお願いします。</p>
+<p class="srcline">このページは Ephinea の公式・wiki とは無関係の個人的なまとめです。ドロップ表は更新されることがあるので、最終確認は公式のチャートでお願いします。</p>
+
+</article>
+</div>
 
 </main>
 <footer class="footer">
@@ -727,11 +736,11 @@ function renderWiki() {
   const w = SECID.wiki[CLS];
   document.getElementById('wikiGuides').textContent = '(' + w.guides + ')';
   document.getElementById('wikiBody').innerHTML =
-    `<p class="note">${md(JA ? SECID.wiki.lead.ja : SECID.wiki.lead.en)}</p>`
+    `<p>${md(JA ? SECID.wiki.lead.ja : SECID.wiki.lead.en)}</p>`
     + w.groups.map(g => `<div class="wgrp"><div class="wlab">${esc(JA ? g.label : g.label_en)}</div>`
         + '<div class="worder">' + g.sids.map((s, i) =>
             (i ? '<span class="arrow">›</span>' : '') + sidCell(s)).join('') + '</div></div>').join('')
-    + '<ul class="note">' + (JA ? w.notes : w.notes_en).map(n => `<li>${md(n)}</li>`).join('') + '</ul>'
+    + '<ul>' + (JA ? w.notes : w.notes_en).map(n => `<li>${md(n)}</li>`).join('') + '</ul>'
     + srcHTML(['wiki_guides']);
 }
 
