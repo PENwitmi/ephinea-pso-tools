@@ -396,9 +396,10 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
     <div class="row"><label for="unit2">Unit 2</label><select id="unit2" class="slot-select unitsel"><option value="">-</option></select></div>
     <div class="row"><label for="unit3">Unit 3</label><select id="unit3" class="slot-select unitsel"><option value="">-</option></select></div>
     <div class="row"><label for="unit4">Unit 4</label><select id="unit4" class="slot-select unitsel"><option value="">-</option></select></div>
+    <!-- 職業を変えて外れた装備の知らせ。**装備欄の直後に置く**(ボタンの下だと何の話か分からない) -->
+    <div class="row varstat" id="equipWarn" aria-live="polite"></div>
     <!--SITEONLY--><div class="row" style="margin-top:6px"><button class="btn" id="addWishBtn" style="padding:5px 12px; font-size:0.78rem">🎯 Add unowned gear to wishlist</button></div>
     <div class="row varstat" id="addWishNote" style="line-height:1.5" aria-live="polite"></div><!--/SITEONLY-->
-    <div class="row varstat" id="equipWarn"></div>
   </div>
 
   <div class="panel">
@@ -455,7 +456,7 @@ td.zerocell { color: var(--strike); opacity: 0.5; }
   <li>Non-stacking effects like attack speed apply the highest source only; losing sources are struck through.</li>
   <li>How effects stack: technique power <b>adds up</b> / TP cost reduction <b>multiplies</b> / attack speed & V50x: <b>only the strongest applies</b> / Megid pierce does not stack / Technique range boosts: stacking behaviour is unverified, so only a single boost is shown.</li>
 </ul>
-<p class="note" style="margin-top:10px">Equipment data: <a href="https://wiki.pioneer2.net" target="_blank">wiki.pioneer2.net</a> (Ephinea) / character growth data: vanilla PSOBB / data generated: 2026-08-11</p>
+<p class="note" style="margin-top:10px">Equipment data: <a href="https://wiki.pioneer2.net" target="_blank">wiki.pioneer2.net</a> (Ephinea) / character growth data: vanilla PSOBB / data generated: 2026-08-12</p>
 </div>
 </main>
 <footer class="footer">
@@ -589,6 +590,10 @@ function hasEffect(slot, name, dict) {
   return EFFECT_ITEMS[slot].has(name) || !!(it && it.note_stats) || !!noteText(it);
 }
 
+// **その職業で装備できないものは選択肢に出さない**(2026-08-12。以前は ✕ を付けて残していたが、
+// 武器なら419件中160件前後が「選べないのに並んでいる」状態だった)。
+// 選択中でも残さない点が、下の絞り込み(効果を持つ装備のみ / inv.品のみ)と違う。
+// 職業を変えて装備できなくなったときは、その名前を返して呼び出し側に知らせる
 function fillSelect(sel, dict, sortKey, allowFn) {
   const ownOnly = $('ownOnly').checked;
   const prev = sel.value;
@@ -600,6 +605,7 @@ function fillSelect(sel, dict, sortKey, allowFn) {
   const groups = {};
   names.forEach(n => {
     const e = dict[n];
+    if (!canEquip(e)) return;                          // 職業で装備できない
     if (ownOnly && !own(n)) return;
     if (allowFn && !allowFn(n) && n !== prev) return;  // 選択中は絞り込み後も残す
     const g = e.type || e.group || '';
@@ -613,26 +619,35 @@ function fillSelect(sel, dict, sortKey, allowFn) {
       const o = document.createElement('option');
       o.value = n;
       const badge = own(n) ? ' 🔖' : '';
-      const dis = canEquip(e) ? '' : ' ✕';
-      o.textContent = `${jpName(n)} (${e.rarity}★)${badge}${dis}`;
-      if (!canEquip(e)) o.style.color = 'var(--strike)';
+      o.textContent = `${jpName(n)} (${e.rarity}★)${badge}`;
       og.appendChild(o);
     });
     sel.appendChild(og);
   });
-  if (prev && dict[prev]) sel.value = prev;
+  if (prev && dict[prev]) {
+    if (canEquip(dict[prev])) { sel.value = prev; return null; }
+    sel.value = '';                                    // 装備できなくなったので外す
+    return prev;
+  }
+  return null;   // 元から未選択、または装備DBに無い名前(従来どおり黙って消える)
 }
 
 function refreshSelects() {
   const showAll = $('allEquip').checked;
-  fillSelect($('weapon'), EQ.weapons, 'rarity', showAll ? null : (n => hasEffect('weapon', n, EQ.weapons)));
-  fillSelect($('frame'), EQ.frames, 'rarity', showAll ? null : (n => hasEffect('frame', n, EQ.frames)));
-  fillSelect($('barrier'), EQ.barriers, 'rarity', showAll ? null : (n => hasEffect('barrier', n, EQ.barriers)));
-  document.querySelectorAll('.unitsel').forEach(s => fillSelect(s, EQ.units, 'rarity'));
+  const dropped = [];
+  const put = name => { if (name) dropped.push(jpName(name)); };
+  put(fillSelect($('weapon'), EQ.weapons, 'rarity', showAll ? null : (n => hasEffect('weapon', n, EQ.weapons))));
+  put(fillSelect($('frame'), EQ.frames, 'rarity', showAll ? null : (n => hasEffect('frame', n, EQ.frames))));
+  put(fillSelect($('barrier'), EQ.barriers, 'rarity', showAll ? null : (n => hasEffect('barrier', n, EQ.barriers))));
+  document.querySelectorAll('.unitsel').forEach(s => put(fillSelect(s, EQ.units, 'rarity')));
   const cnt = id => $(id).querySelectorAll('option').length - 1;
+  const clsName = (CHAR[$('cls').value] || {}).name || '';
   $('equipFilterNote').textContent = showAll
-    ? `Showing all gear (weapons ${cnt('weapon')}, frames ${cnt('frame')}, barriers ${cnt('barrier')})`
-    : `Showing gear with effects only (weapons ${cnt('weapon')}, frames ${cnt('frame')}, barriers ${cnt('barrier')})`;
+    ? `Showing what ${clsName} can equip (weapons ${cnt('weapon')}, frames ${cnt('frame')}, barriers ${cnt('barrier')})`
+    : `Showing what ${clsName} can equip, with effects only (weapons ${cnt('weapon')}, frames ${cnt('frame')}, barriers ${cnt('barrier')})`;
+  // 職業を変えて装備できなくなったものは外れる。**黙って外すと数値が動いた理由が見えない**
+  $('equipWarn').textContent = dropped.length
+    ? `${clsName} cannot equip ${dropped.join(', ')} — unequipped` : '';
 }
 
 // ---------- 可変StatsUI ----------
