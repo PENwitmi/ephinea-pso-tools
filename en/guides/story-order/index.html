@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Ephinea Reading</title>
+<title>Story order (Japanese only) — Ephinea Reading</title>
 <style>/* Ephinea Tools 共通テーマ (単一ソース)
    全4ページ+Simulatorのローカル版に埋め込まれる。
    パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
@@ -292,74 +292,279 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 /* ツール側のパネル見出しの飾り棒は読み物では邪魔なので消す */
 .doc .panel > h2::before, .doc h2.sec::before { content: none; }
 
-/* 読みものの索引。build_site.py が __GUIDES_CSS__ に差し込む */
-.glist { display: grid; gap: 12px; grid-template-columns: 1fr; margin-bottom: 20px; }
-@media (min-width: 820px) { .glist { grid-template-columns: 1fr 1fr; } }
-.gcard { display: block; border: 1px solid var(--border); border-radius: 12px;
-         background: var(--card); padding: 16px 18px; text-decoration: none; color: inherit; }
-.gcard:hover { border-color: var(--accent); }
-.gcard .gt { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; }
-.gcard .gd { font-size: 0.84rem; color: var(--sub); }
-.gtools .gt2 { font-weight: 700; margin-bottom: 4px; }
-/* 読みもの側のヘッダー。ツールと取り違えないよう、ツールへ戻る導線だけ色を変える */
-.gnav .tab.tools { border-color: var(--accent); color: var(--accent); }
+/* ストーリー順のメモ。レイアウトは reading.css が持つ */
+
+/* 表のセル内の補足。1行目が主、2行目が但し書き */
+.tbl .sub { display: block; font-size: 0.82rem; color: var(--sub); margin-top: 3px;
+            line-height: 1.6; }
+
+/* ---- 項目名と中身の2列表。**項目名を折り返させない** ---- */
+.tbl.kv th { white-space: nowrap; width: 1%; font-weight: 700; vertical-align: top; }
+@media (max-width: 700px) {
+  .tbl.kv th, .tbl.kv td { display: block; width: auto; }
+  .tbl.kv th { border-bottom: none; padding-bottom: 0; }
+}
+
+/* ---- 2ルートの対比表 ---- */
+.tbl.cmp th { font-weight: 700; }
+.tbl.cmp tbody th { font-size: 0.84rem; color: var(--sub); white-space: nowrap;
+                    vertical-align: top; }
+.tbl.cmp td { width: 42%; }
+.tbl.cmp .now { background: var(--accent-soft); box-shadow: inset 3px 0 0 var(--accent); }
+.tbl.cmp thead .now { color: var(--accent); }
+.tbl.cmp tbody tr:hover { background: none; }
+.tbl.cmp tbody tr:hover .now { background: var(--accent-soft); }
+@media (max-width: 700px) { .tbl.cmp { min-width: 520px; } }
+
+/* ---- 順番の表。ねらいの列は補足なので弱く ---- */
+.tbl td.rm { font-size: 0.84rem; color: var(--sub); }
+/* 分岐ラインの4行は**続けてやる必要がある**ので、まとまりが見えるように地を敷く */
+.tbl tr.top > td { background: var(--accent-soft); }
+@media (max-width: 760px) { .tbl td.rm { display: none; } }
 </style>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2032%2032%27%3E%3Cdefs%3E%3ClinearGradient%20id%3D%27g%27%20x1%3D%270%27%20y1%3D%270%27%20x2%3D%271%27%20y2%3D%271%27%3E%3Cstop%20offset%3D%270%27%20stop-color%3D%27%230b7fc2%27%2F%3E%3Cstop%20offset%3D%271%27%20stop-color%3D%27%2331c7e8%27%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20x%3D%279%27%20y%3D%274%27%20width%3D%2714%27%20height%3D%2724%27%20rx%3D%276%27%20fill%3D%27url(%23g)%27%2F%3E%3C%2Fsvg%3E">
 <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7fa">
 <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0e141c">
-<link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/">
-<link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/">
-<link rel="alternate" hreflang="en" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/">
-<link rel="alternate" hreflang="x-default" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/">
-<meta name="description" content="Reading pages for PSOBB Ephinea: the questions the tools cannot answer, such as which Section ID to pick and what is changing about the anniversary event.">
-<meta property="og:type" content="website">
+<link rel="canonical" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/story-order/">
+<link rel="alternate" hreflang="ja" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/story-order/">
+<link rel="alternate" hreflang="en" href="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/story-order/">
+<link rel="alternate" hreflang="x-default" href="https://ephinea-pso-tools.nishimoto-learning.jp/guides/story-order/">
+<meta name="description" content="A personal note in Japanese: the order to play the 26 Episode 1 side stories, and how the Dr. Osto to Black Paper quest line branches into Soul Eater or Ragol Ring (locked per difficulty).">
+<meta property="og:type" content="article">
 <meta property="og:site_name" content="Ephinea Tools">
 <meta property="og:locale" content="en_US">
-<meta property="og:url" content="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/">
-<meta property="og:title" content="Ephinea Reading">
-<meta property="og:description" content="Reading pages for PSOBB Ephinea: the questions the tools cannot answer, such as which Section ID to pick and what is changing about the anniversary event.">
-<meta property="og:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og.png">
+<meta property="og:url" content="https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/story-order/">
+<meta property="og:title" content="Story order (Japanese only) — Ephinea Reading">
+<meta property="og:description" content="A personal note in Japanese: the order to play the 26 Episode 1 side stories, and how the Dr. Osto to Black Paper quest line branches into Soul Eater or Ragol Ring (locked per difficulty).">
+<meta property="og:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-story-order.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Ephinea Reading">
-<meta name="twitter:description" content="Reading pages for PSOBB Ephinea: the questions the tools cannot answer, such as which Section ID to pick and what is changing about the anniversary event.">
-<meta name="twitter:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og.png">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"CollectionPage","name":"Ephinea Reading","description":"Reading pages for PSOBB Ephinea: the questions the tools cannot answer, such as which Section ID to pick and what is changing about the anniversary event.","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/","inLanguage":"en","isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"}}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ephinea Tools","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"},{"@type":"ListItem","position":2,"name":"Ephinea Reading","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/"}]}</script>
+<meta name="twitter:title" content="Story order (Japanese only) — Ephinea Reading">
+<meta name="twitter:description" content="A personal note in Japanese: the order to play the 26 Episode 1 side stories, and how the Dr. Osto to Black Paper quest line branches into Soul Eater or Ragol Ring (locked per difficulty).">
+<meta name="twitter:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-story-order.png">
+<meta property="article:published_time" content="2026-08-15">
+<meta property="article:modified_time" content="2026-08-15">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Article","headline":"Story order (Japanese only)","description":"A personal note in Japanese: the order to play the 26 Episode 1 side stories, and how the Dr. Osto to Black Paper quest line branches into Soul Eater or Ragol Ring (locked per difficulty).","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/story-order/","mainEntityOfPage":{"@type":"WebPage","@id":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/story-order/"},"inLanguage":"en","datePublished":"2026-08-15","dateModified":"2026-08-15","author":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"publisher":{"@type":"Organization","name":"NISHIMOTO DEV","url":"https://dev.nishimoto-learning.jp"},"image":"https://ephinea-pso-tools.nishimoto-learning.jp/og-guides-story-order.png","isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Ephinea Tools","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"},{"@type":"ListItem","position":2,"name":"Ephinea Reading","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/"},{"@type":"ListItem","position":3,"name":"Story order (Japanese only)","item":"https://ephinea-pso-tools.nishimoto-learning.jp/en/guides/story-order/"}]}</script>
 </head>
 <body>
 <div class="wrap">
 <nav class="nav gnav" aria-label="Reading menu">
-  <a class="brand" href="../guides/">Ephinea Reading</a>
-  <a class="tab " href="../guides/section-id/">Picking a Section ID</a><a class="tab " href="../guides/anniversary/">The anniversary event</a><a class="tab " href="../guides/story-order/">Story order (JA only)</a>
-  <a class="tab" href="/guides/" hreflang="ja">日本語</a><span class="spacer"></span>
-  <a class="tab tools" href="../">Go to the tools →</a>
+  <a class="brand" href="../../guides/">Ephinea Reading</a>
+  <a class="tab " href="../../guides/section-id/">Picking a Section ID</a><a class="tab " href="../../guides/anniversary/">The anniversary event</a><a class="tab on" href="../../guides/story-order/">Story order (JA only)</a>
+  <a class="tab" href="/guides/story-order/" hreflang="ja">日本語</a><span class="spacer"></span>
+  <a class="tab tools" href="../../">Go to the tools →</a>
   <button class="theme-btn" id="themeToggle" aria-label="Toggle color theme">🌙 Dark</button>
 </nav>
 <main>
-<h1>📖 Reading</h1>
-<p class="lead">Personal write-ups on the parts of Ephinea <b>the tools cannot cover — how to choose, and what is going on</b>. Wherever the numbers can be checked, they are generated from sources like the official drop charts.</p>
+<div class="doc">
 
-<div class="glist">
-  <a class="gcard" href="section-id/">
-    <div class="gt">🎨 Picking a Section ID</div>
-    <div class="gd">The answer differs for a first character and an extra one. Ranked per class, with a source on every claim. What only one ID drops, and whether Red Ring is on the table, are generated from the official drop charts.</div>
-  </a>
-  <a class="gcard" href="anniversary/">
-    <div class="gt">🎂 The anniversary rebuild is on hold</div>
-    <div class="gd">The 11th anniversary runs in the old format, 12 August to 9 September. What is in it this year, how badge drops changed, what the announced rebuild was, and what the event has been until now.</div>
-  </a>
-  <a class="gcard" href="story-order/">
-    <div class="gt">🗺 Story order (Japanese only)</div>
-    <div class="gd">A personal note <b>in Japanese</b>: the order to play the 26 Episode 1 side stories, and how the Dr. Osto to Black Paper line branches into Soul Eater or Ragol Ring. The tables use English quest and item names.</div>
-  </a>
+<nav class="toc" aria-label="Contents">
+  <div class="tlabel">Contents</div>
+  <ol>
+    <li><a href="#shape">全体の形</a></li>
+    <li><a href="#unlock">解除の3層</a></li>
+    <li><a href="#branch">分岐ライン</a></li>
+    <li><a href="#order">やる順番</a></li>
+    <li><a href="#npc">誰がどこに出るか</a></li>
+    <li><a href="#ep24">Ep2 と Ep4</a></li>
+    <li><a href="#src">Sources</a></li>
+  </ol>
+</nav>
+
+<article>
+
+<h1>Story order (Japanese only)</h1>
+
+<p class="lead"><b>This page is a personal note written in Japanese.</b> The quest names, prerequisites, clients and item stats in the tables are in English, so the tables themselves may still be useful — the surrounding prose is not translated. Sources are the Ephinea wiki quest pages, linked at the bottom.</p>
+
+<div class="keyfacts">
+  <div><div class="k">Ep1 サイドストーリー</div><div class="v">26本<span class="sub">ソロ限定。ここに人間ドラマが集まっている</span></div></div>
+  <div><div class="k">Ep1 政府クエスト</div><div class="v">15本<span class="sub">1-1 から 4-5。マルチ限定の一本道</span></div></div>
+  <div><div class="k">気をつける所</div><div class="v">4本の分岐ライン<span class="sub">選択が難易度ごとに固定される</span></div></div>
 </div>
 
-<div class="panel gtools">
-  <div class="gt2">Looking for the tools?</div>
-  <p class="note">The things you load your characters and items into live in a separate set of pages: the mag planner, the stat simulator, the item list, the wishlist and so on.</p>
-  <p><a class="btn" href="../">Go to the tools →</a></p>
+<h2 id="shape">全体の形</h2>
+
+<p>ストーリーは2本立てで、受け方からして違う。</p>
+
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>政府クエスト</th><td><b>マルチ限定</b>。Ep1 は 1-1:Planet Ragol から 4-5:Dark Inheritance までの15本。番号順に進む一本道で、迷うところがない</td></tr>
+    <tr><th>サイドストーリー</th><td><b>ソロ限定</b>(One Person mode でしか受けられない)。Ep1 は26本。市井のNPCの話が集まっていて、<b>整理が要るのはこちら</b></td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="unlock">解除の3層</h2>
+
+<p>26本は前提条件で層になっている。</p>
+
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>第0層</th><td>Battle Training(Zidd) ／ Magnitude of Metal(Garon) ／ Claiming a Stake(Racton's son)<br><span class="sub">前提なし。この3本が他の大半の鍵になる</span></td></tr>
+    <tr><th>第1層</th><td>上の3本クリアで14本が一斉に開く。The Value of Money ／ Journalistic Pursuit ／ The Fake in Yellow ／ Native Research ／ Gran Squall ／ Addicting Food ／ The Lost Bride ／ <b>Secret Delivery</b> ／ Letter from Lionel ／ The Grave's Butler ／ Knowing One's Heart ／ The Retired Hunter ／ <b>Dr. Osto's Research</b> ／ Seek my Master</td></tr>
+    <tr><th>第2層以降</th><td>下の依存図のとおり</td></tr>
+    <tr><th>前提なし</th><td>From the Depths ／ Central Dome Fire Swirl<br><span class="sub">いつでも受けられる</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>Forest of Sorrow</th><td>← Native Research</td></tr>
+    <tr><th>Doc's Secret Plan</th><td>← Secret Delivery</td></tr>
+    <tr><th>Soul of Steel</th><td>← Doc's Secret Plan</td></tr>
+    <tr><th>Unsealed Door</th><td>← Secret Delivery ＋ Dr. Osto's Research</td></tr>
+    <tr><th>Waterfall Tears</th><td>← Addicting Food ＋ The Lost Bride ＋ Secret Delivery ＋ The Grave's Butler</td></tr>
+    <tr><th>Soul of a Blacksmith</th><td>← 同じ4本</td></tr>
+    <tr><th>Black Paper</th><td>← Waterfall Tears</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p><b>Secret Delivery が4本の鍵</b>になっている。ここを早めに通しておくと後がつかえない。</p>
+
+<h2 id="branch">分岐ライン（ここだけ注意）</h2>
+
+<p>Ephinea wiki が Black Paper のページにこう書いている。</p>
+
+<div class="callout">
+  <p>This quest is part of a quest line starting with <b>Dr. Osto's Research</b>. Any choices made in the quest are <b>permanent and cannot be changed after the quest is completed for the first time on that difficulty</b>, even if the quest is replayed after completing all side stories on that difficulty.</p>
+</div>
+
+<p><b>Dr. Osto's Research → Unsealed Door → Waterfall Tears → Black Paper</b> の4本は1本のクエストラインで、Sue と Bernie への受け答えで結末と報酬が変わる。<b>その難易度で初めてクリアした時点で確定</b>し、 から全サイドストーリーを埋めても変えられない。</p>
+
+<div class="tblwrap">
+<table class="tbl cmp">
+  <thead><tr><th></th><th class="now">Soul Eater ルート</th><th class="was">Ragol Ring ルート</th></tr></thead>
+  <tbody>
+    <tr>
+      <th>Dr. Osto's Research</th>
+      <td class="now"><b>Sue に名前を言わない</b></td>
+      <td class="was"><b>Sue に名前を言う</b></td>
+    </tr>
+    <tr>
+      <th>Unsealed Door</th>
+      <td class="now">Sue と話す → Bernie と話す</td>
+      <td class="was">Sue と話す → Bernie に <b>「Sure.」</b></td>
+    </tr>
+    <tr>
+      <th>Waterfall Tears</th>
+      <td class="now"><b>Kireek と戦う</b></td>
+      <td class="was">Pioneer 2 の Sue に Black Paper のことを聞く → もう一度話して去らせる → Cave 1 の Bernie に <b>「Yes」</b></td>
+    </tr>
+    <tr>
+      <th>Black Paper</th>
+      <td class="now">Cave 1 で <b>Kireek と戦って</b>からクリア</td>
+      <td class="was">Pioneer 2 の Sue に <b>「What's your purpose?」</b> → Cave 1 の Bernie と話す → クリア</td>
+    </tr>
+    <tr>
+      <th>味わい</th>
+      <td class="now">Kireek と2回やり合う戦闘寄りの結末</td>
+      <td class="was"><b>Kireek と戦わない</b>。Sue と Bernie の会話で真相に行き着く</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote">Sue は Pioneer 2、Bernie は Cave 1 にいる。</p>
+
+<h3>もらえるもの</h3>
+
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>Soul Eater</th><td><b>パルチザン ★9</b>。ATP 180–185 / ATA 40 / グラインド9 / 特殊 Berserk / 要 165 ATP。全職装備可<br><span class="sub">動いている間じわじわHPが減る。相場は 0hit で 1–2 PD</span></td></tr>
+    <tr><th>Ragol Ring</th><td><b>Barrier ★12</b>。DFP 105 / EVP 130 / All resists +10 / <b>要 Lv101</b>。全職装備可<br><span class="sub">死んだときスケープドールの代わりになる。相場は 0.5 PD</span></td></tr>
+  </tbody>
+</table>
+</div>
+<p class="tblnote"><b>どちらも敵からは落ちない。</b>このクエストラインでしか手に入らない。</p>
+
+<h3>両方見るには</h3>
+
+<p>固定されるのは<b>難易度ごと</b>なので、<b>ノーマルで片方、ハードでもう片方</b>を選べば両方の結末を見られる。ノーマルで Soul Eater、ハードで Ragol Ring、という具合。</p>
+
+<p class="tblnote">別Char なら別々に選べるかは wiki に書かれていない(クエストのクリア記録はChar 単位なので分かれるはずだが、未確認)。難易度で分けるのが確実。</p>
+
+<h2 id="order">やる順番</h2>
+
+<p>解除を無駄なく開けつつ、話のつながりを保つ順。</p>
+
+<div class="tblwrap">
+<table class="tbl">
+  <thead><tr><th>#</th><th>クエスト</th><th>依頼人</th><th>ねらい</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Battle Training</td><td>Zidd</td><td class="rm">全体の鍵</td></tr>
+    <tr><td>2</td><td>Magnitude of Metal</td><td>Garon</td><td class="rm">同上</td></tr>
+    <tr><td>3</td><td>Claiming a Stake</td><td>Racton's son</td><td class="rm">同上</td></tr>
+    <tr><td>4</td><td><b>Secret Delivery</b></td><td>Simons</td><td class="rm">4本の前提。早く開ける</td></tr>
+    <tr><td>5</td><td>Addicting Food</td><td>Trekka</td><td class="rm">Waterfall Tears の前提</td></tr>
+    <tr><td>6</td><td>The Lost Bride</td><td>Cicil</td><td class="rm">同上</td></tr>
+    <tr><td>7</td><td>The Grave's Butler</td><td>Matha Grave</td><td class="rm">同上</td></tr>
+    <tr class="top"><td>8</td><td><b>Dr. Osto's Research</b></td><td>Three scientists</td><td class="rm">分岐ライン開始。答えを決めてから</td></tr>
+    <tr class="top"><td>9</td><td><b>Unsealed Door</b></td><td>Three scientists</td><td class="rm">Sue → Bernie</td></tr>
+    <tr class="top"><td>10</td><td><b>Waterfall Tears</b></td><td>Kroe</td><td class="rm">姉を探す話</td></tr>
+    <tr class="top"><td>11</td><td><b>Black Paper</b></td><td>Kroe</td><td class="rm">決着。ここで報酬が確定</td></tr>
+    <tr><td>12</td><td>Doc's Secret Plan</td><td>Dr. Montague</td><td class="rm">Montague の線。Osto とは別</td></tr>
+    <tr><td>13</td><td>Soul of Steel</td><td>Montague</td><td class="rm">その続き</td></tr>
+    <tr><td>14</td><td>Native Research</td><td>Alicia</td><td class="rm">Alicia の線</td></tr>
+    <tr><td>15</td><td>Forest of Sorrow</td><td>Alicia</td><td class="rm">その続き</td></tr>
+    <tr><td>16</td><td>Journalistic Pursuit</td><td>Nol(記者)</td><td class="rm">取材に同行</td></tr>
+    <tr><td>17</td><td>Knowing One's Heart</td><td><b>Elly Person</b></td><td class="rm">Calus 救出。Ep2 へ続く</td></tr>
+    <tr><td>18</td><td>The Retired Hunter</td><td>Donoph</td><td class="rm">1万匹斬りの夢。99体討伐</td></tr>
+    <tr><td>19</td><td>Soul of a Blacksmith</td><td>Ozwald</td><td class="rm">鍛冶屋</td></tr>
+    <tr><td>20–</td><td>The Value of Money / The Fake in Yellow / Gran Squall / Letter from Lionel / Seek my Master / From the Depths / Central Dome Fire Swirl</td><td>各1話完結</td><td class="rm">好きな順で</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="npc">誰がどこに出るか</h2>
+
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>Sue / Bernie</th><td>Dr. Osto's Research → Unsealed Door → Waterfall Tears → Black Paper。<b>分岐を決める2人</b>。Sue は Pioneer 2、Bernie は Cave 1</td></tr>
+    <tr><th>Kroe</th><td>Waterfall Tears → Black Paper。姉を探す依頼から Black Paper の首謀者へ</td></tr>
+    <tr><th>Kireek</th><td>Soul Eater ルートで Waterfall Tears と Black Paper の2回戦う</td></tr>
+    <tr><th>Three scientists / Montague</th><td>Dr. Osto's Research・Unsealed Door の依頼人が「3人の科学者」。Dr. Montague は Doc's Secret Plan → Soul of Steel の別ラインを持つ</td></tr>
+    <tr><th>Alicia</th><td>Native Research → Forest of Sorrow。ラグオルの生態調査から、データへの疑いへ</td></tr>
+    <tr><th>Elly Person</th><td>Knowing One's Heart(Ep1) → <b>Seat of the Heart(Ep2)</b>。Calus との話が Ep2 まで続く</td></tr>
+    <tr><th>Nol</th><td>Journalistic Pursuit の依頼人(記者)</td></tr>
+    <tr><th>Donoph</th><td>The Retired Hunter の依頼人。「死ぬ前に1万匹斬りたい」老Hunter</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2 id="ep24">Ep2 と Ep4</h2>
+
+<div class="tblwrap">
+<table class="tbl kv">
+  <tbody>
+    <tr><th>Ep2 サイドストーリー</th><td><b>2本だけ</b>。Seat of the Heart(Elly Person) ／ Blue Star Memories(Nef)。どちらも前提なし。<b>Knowing One's Heart の に Seat of the Heart</b> をやると Elly の話がつながる</td></tr>
+    <tr><th>Ep4 サイドストーリー</th><td>6本。Warrior's Pride ／ The Restless Lion ／ Pioneer Spirit(いずれも Principal Tyrell) ／ 荒野の果てに ／ Black Paper's Dangerous Deal 1・2</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p class="tblnote">Ep4 の Black Paper's Dangerous Deal は名前が似ているだけで、Ep1 の Black Paper とは別物(フォトンクリスタルを賭ける運試し)。</p>
+
+<h2 id="src">Sources</h2>
+
+<ul class="srclist">
+  <li><a href="https://wiki.pioneer2.net/w/Quests" target="_blank" rel="noopener">Ephinea PSO Wiki「Quests」</a>(クエスト一覧・カテゴリ・本数)</li>
+  <li><a href="https://wiki.pioneer2.net/w/Black_Paper" target="_blank" rel="noopener">Ephinea PSO Wiki「Black Paper」</a>(分岐ラインと両ルートの手順)</li>
+  <li>前提クエストと依頼人は各クエストページの Prerequisites / Client 欄から。<a href="https://wiki.pioneer2.net/w/Waterfall_Tears" target="_blank" rel="noopener">Waterfall Tears</a> ／ <a href="https://wiki.pioneer2.net/w/Unsealed_Door" target="_blank" rel="noopener">Unsealed Door</a> ／ <a href="https://wiki.pioneer2.net/w/Knowing_One%27s_Heart" target="_blank" rel="noopener">Knowing One's Heart</a> ほか</li>
+  <li>Soul Eater / Ragol Ring の数値は、このサイトの装備DB(wiki 由来)と Price guide から</li>
+</ul>
+
+<p class="srcline">自分用のメモ。Ephinea の公式・wiki とは無関係。</p>
+
+</article>
 </div>
 
 </main>
