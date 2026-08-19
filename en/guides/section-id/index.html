@@ -514,7 +514,7 @@ button.sidcol, .sidtbl .sidcol { cursor: pointer; }
 <script>
 
 // ---- Python と共有する定数 (tools/constants.py が単一ソース) ----
-const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["Normal", "Hard", "Very Hard", "Ultimate"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "theme": "pso_theme"}};
+const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["Normal", "Hard", "Very Hard", "Ultimate"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "wishlist_char": "pso_wishlist_char", "wishlist_folded": "pso_wishlist_folded", "theme": "pso_theme", "sim_last": "pso_sim_last", "sim_presets": "pso_sim_presets", "mag_start": "pso_mag_start", "mag_plans": "pso_mag_plans", "mag_last": "pso_mag_last"}};
 const SKEYS = CONST.STORAGE_KEYS;
 
 // ---- テーマ ----
@@ -552,6 +552,23 @@ function charsBySid() {
   });
   return [...by.entries()].sort((a, b) => a[0] - b[0])
     .map(([sid, chars]) => ({ sid, name: SIDS[sid], chars }));
+}
+
+// ---- Magプランナーへ「いまのMag" 引き渡す ----
+// Item ListとCharactersの両方から呼ぶ。受け側は magpage/ui.js の
+// applyMagStartHandoff()。**キー名と項目の並びの契約はここだけに置く**
+// (3箇所に散っていると、片方だけ足して黙って落ちる)。
+// stats は整数、exp は 0–99 の端数。どちらも**整数演算で取り出しておくこと**
+// (5.06 から 0.06 を割り戻すと丸めでずれる)
+function magHandoff(o) {
+  try {
+    localStorage.setItem(SKEYS.mag_start, JSON.stringify({
+      form: o.form, stats: o.stats, exp: o.exp,
+      sync: o.sync || 0, iq: o.iq || 0, pbs: o.pbs || [],
+      cls: o.cls || null, sectionId: o.sectionId || null, char: o.char || null }));
+  } catch (e) { return false; }
+  location.href = '../mag/';
+  return true;
 }
 
 // ---- HTMLエスケープ (複数ページで使う) ----

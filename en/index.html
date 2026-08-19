@@ -272,7 +272,7 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 <script>
 
 // ---- Python と共有する定数 (tools/constants.py が単一ソース) ----
-const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["Normal", "Hard", "Very Hard", "Ultimate"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "theme": "pso_theme"}};
+const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["Normal", "Hard", "Very Hard", "Ultimate"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "wishlist_char": "pso_wishlist_char", "wishlist_folded": "pso_wishlist_folded", "theme": "pso_theme", "sim_last": "pso_sim_last", "sim_presets": "pso_sim_presets", "mag_start": "pso_mag_start", "mag_plans": "pso_mag_plans", "mag_last": "pso_mag_last"}};
 const SKEYS = CONST.STORAGE_KEYS;
 
 // ---- テーマ ----
@@ -310,6 +310,23 @@ function charsBySid() {
   });
   return [...by.entries()].sort((a, b) => a[0] - b[0])
     .map(([sid, chars]) => ({ sid, name: SIDS[sid], chars }));
+}
+
+// ---- Magプランナーへ「いまのMag" 引き渡す ----
+// Item ListとCharactersの両方から呼ぶ。受け側は magpage/ui.js の
+// applyMagStartHandoff()。**キー名と項目の並びの契約はここだけに置く**
+// (3箇所に散っていると、片方だけ足して黙って落ちる)。
+// stats は整数、exp は 0–99 の端数。どちらも**整数演算で取り出しておくこと**
+// (5.06 から 0.06 を割り戻すと丸めでずれる)
+function magHandoff(o) {
+  try {
+    localStorage.setItem(SKEYS.mag_start, JSON.stringify({
+      form: o.form, stats: o.stats, exp: o.exp,
+      sync: o.sync || 0, iq: o.iq || 0, pbs: o.pbs || [],
+      cls: o.cls || null, sectionId: o.sectionId || null, char: o.char || null }));
+  } catch (e) { return false; }
+  location.href = '../mag/';
+  return true;
 }
 
 // ---- HTMLエスケープ (複数ページで使う) ----
@@ -504,19 +521,39 @@ function psoEquipped(data) {
     } else if (code >= 0x010300 && code <= 0x010364) {         // Unit(最大4)
       if (IC[code] && eq.units.length < 4) eq.units.push(IC[code]);
     } else if (code >= 0x020000 && code <= 0x025200) {         // Mag
-      const st = [4, 6, 8, 10].map(o => (d[o + 1] << 8 | d[o]) / 100);
+      // **生の u16 を持つ**(1/100ポイント単位)。5.06 から 0.06 を割り戻すと丸めでずれるので、
+      // Magプランナーへ渡す端数は raw から整数演算で取り出す (raw%100)
+      const raw = [4, 6, 8, 10].map(o => d[o + 1] << 8 | d[o]);
+      const hx = b => b.toString(16).toUpperCase().padStart(2, '0');
       eq.mag = { name: IC[code & 0xFFFF00] || null, level: d[2],
-                 def: st[0], pow: st[1], dex: st[2], mind: st[3] };
+                 def: raw[0] / 100, pow: raw[1] / 100,
+                 dex: raw[2] / 100, mind: raw[3] / 100,
+                 raw: raw, sync: d[16], iq: d[17],
+                 pbs: (PSO.pbs[hx(d[3]) + hx(d[18])] || []).filter(Boolean) };
     }
   }
   return eq;
 }
 
-function psoParseItems(data, start, end, stride, slot, lines) {
+function psoParseItems(data, start, end, stride, slot, lines, mags) {
   for (let i = start; i < end; i += stride) {
     const d = data.slice(i, i + stride);
     if (d.length < stride || psoIsBlank(d)) continue;
-    lines.push(`${psoDecodeItem(d)}, Slot: ${slot}`);
+    const line = psoDecodeItem(d);
+    lines.push(`${line}, Slot: ${slot}`);
+    // **MagのSynchro・IQ・PBは行の文字列に入らない**(外部ビューアーの出力と
+    // バイト一致させる必要があるので raw は変えられない)。育成プランナーへ渡すため、
+    // ここで別に拾っておく。**キーは査定が集約に使うのと同じ基底**(末尾の " xN" を落とした
+    // 行 + 場所)。査定は同じ表示の行を1行にまとめて raw を "基底 ×N" に書き換えるので、
+    // 集約前の行をキーにすると引く側と食い違う。
+    // 同じ基底のMagが同じ場所に複数あると最後の1件でoverされるが、
+    // Synchro・IQ は raw に出ない = 表示から区別できない以上どうにもならない
+    const code = d[0] << 16 | d[1] << 8 | d[2];
+    if (mags && code >= 0x020000 && code <= 0x025200) {
+      const hx = b => b.toString(16).toUpperCase().padStart(2, '0');
+      mags[`${line.replace(/ x\d+$/, '')}|${slot}`] = { sync: d[16], iq: d[17],
+        pbs: (PSO.pbs[hx(d[3]) + hx(d[18])] || []).filter(Boolean) };
+    }
   }
 }
 
@@ -545,30 +582,31 @@ function psoCharMeta(data, slot) {
 }
 
 function psoParseBinaryFiles(fileList) {
-  // fileList: [{name, data(Uint8Array)}] → {lines, chars} (NORMALモードのみ)
+  // fileList: [{name, data(Uint8Array)}] → {lines, chars, mags} (NORMALモードのみ)
   const lines = [];
   const chars = {};
+  const mags = {};        // 「行|場所」→ {sync, iq, pbs}。raw に入らないMagの育成情報
   const charFiles = fileList.filter(f => /psochar/.test(f.name))
     .map(f => ({ f, n: parseInt((f.name.match(/Slot_\s*(\d+)/) || [0, 0])[1], 10) }))
     .sort((a, b) => a.n - b.n);
   for (const f of fileList) {
     if (/psoclassicbank/.test(f.name)) {
-      psoParseItems(f.data, 8, 4808, 24, 'ShareBank(Classic)', lines);
+      psoParseItems(f.data, 8, 4808, 24, 'ShareBank(Classic)', lines, mags);
       psoMeseta(f.data, 4, 'ShareBank(Classic)', lines);
     } else if (/psobank/.test(f.name)) {
-      psoParseItems(f.data, 8, 4808, 24, 'ShareBank', lines);
+      psoParseItems(f.data, 8, 4808, 24, 'ShareBank', lines, mags);
       psoMeseta(f.data, 4, 'ShareBank', lines);
     }
   }
   for (const { f, n } of charFiles) {
     const slot = n + 1;
     chars[slot] = psoCharMeta(f.data, slot);
-    psoParseItems(f.data, 20, 860, 28, String(slot), lines);
+    psoParseItems(f.data, 20, 860, 28, String(slot), lines, mags);
     psoMeseta(f.data, 884, String(slot), lines);
-    psoParseItems(f.data, 1800, 6600, 24, `${slot} Bank`, lines);
+    psoParseItems(f.data, 1800, 6600, 24, `${slot} Bank`, lines, mags);
     psoMeseta(f.data, 1796, `${slot} Bank`, lines);
   }
-  return { lines, chars };
+  return { lines, chars, mags };
 }
 
 // ---- importedみUI ----
@@ -587,7 +625,7 @@ fileInput.addEventListener('change', e => {
   e.target.value = '';
 });
 document.getElementById('pasteBtn').addEventListener('click', () => {
-  doImport(document.getElementById('pasteArea').value, '貼り付け', null);
+  doImport(document.getElementById('pasteArea').value, '貼り付け', null, null);
 });
 document.getElementById('clearBtn').addEventListener('click', () => {
   localStorage.removeItem(INV_KEY);
@@ -603,18 +641,18 @@ async function importFiles(files) {
     for (const f of bins) {
       loaded.push({ name: f.name, data: new Uint8Array(await f.arrayBuffer()) });
     }
-    const { lines, chars } = psoParseBinaryFiles(loaded);
+    const { lines, chars, mags } = psoParseBinaryFiles(loaded);
     const label = `official data (${bins.length} files)`;
-    doImport(lines.join('\n'), label, chars);
+    doImport(lines.join('\n'), label, chars, mags);
     return;
   }
   const f = files.find(x => /\.txt$/i.test(x.name)) || files[0];
   const reader = new FileReader();
-  reader.onload = () => doImport(reader.result, f.name, null);
+  reader.onload = () => doImport(reader.result, f.name, null, null);
   reader.readAsText(f);
 }
 
-function doImport(text, source, chars) {
+function doImport(text, source, chars, mags) {
   const items = parseInventoryText(text);
   const res = document.getElementById('importResult');
   if (!items.length) {
@@ -623,6 +661,8 @@ function doImport(text, source, chars) {
   }
   const payload = { imported: new Date().toISOString(), source, items };
   if (chars && Object.keys(chars).length) payload.chars = chars;
+  // Magの育成情報(Synchro・IQ・PB)。**貼り付けimportedみには原理的に無い**
+  if (mags && Object.keys(mags).length) payload.mags = mags;
   localStorage.setItem(INV_KEY, JSON.stringify(payload));
   const unknowns = items.filter(i => i.name && i.name.startsWith('unknown.')).length;
   res.innerHTML = `<span class="ok">✓ ${items.length} items imported</span> <span class="note">(${source})</span>` +

@@ -177,6 +177,11 @@ th.sorted { color: var(--accent); }
 tbody tr:hover td { background: color-mix(in srgb, var(--accent-soft) 55%, transparent); }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 td .notetxt { display: block; white-space: normal; font-size: 0.72rem; color: var(--sub); }
+/* 行に添える小さなボタン (Magの「続きを計算」)。**theme.css には置かない** —
+   共有CSSを触ると全ページのハッシュが変わり、中身を変えていない記事まで
+   sitemap の lastmod が動いてしまう。他のページでも使うようになったら移すこと */
+td .minibtn { border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 6px; padding: 1px 8px; margin-left: 8px; font-size: 0.72rem; line-height: 1.5; cursor: pointer; white-space: nowrap; vertical-align: middle; }
+td .minibtn:hover { background: var(--accent); color: #ffffff; }
 /* 直前の行と同じアイテム(別の保管場所)であることの印 */
 td .cont { color: var(--sub); margin-right: 5px; font-size: 0.85em; }
 tr.hi td:first-child { border-left: 3px solid var(--gold); }
@@ -306,7 +311,7 @@ tr.zero td { color: var(--sub); }
 <script>
 
 // ---- Python と共有する定数 (tools/constants.py が単一ソース) ----
-const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["Normal", "Hard", "Very Hard", "Ultimate"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "theme": "pso_theme"}};
+const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["Normal", "Hard", "Very Hard", "Ultimate"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "wishlist_char": "pso_wishlist_char", "wishlist_folded": "pso_wishlist_folded", "theme": "pso_theme", "sim_last": "pso_sim_last", "sim_presets": "pso_sim_presets", "mag_start": "pso_mag_start", "mag_plans": "pso_mag_plans", "mag_last": "pso_mag_last"}};
 const SKEYS = CONST.STORAGE_KEYS;
 
 // ---- テーマ ----
@@ -344,6 +349,23 @@ function charsBySid() {
   });
   return [...by.entries()].sort((a, b) => a[0] - b[0])
     .map(([sid, chars]) => ({ sid, name: SIDS[sid], chars }));
+}
+
+// ---- Magプランナーへ「いまのMag" 引き渡す ----
+// Item ListとCharactersの両方から呼ぶ。受け側は magpage/ui.js の
+// applyMagStartHandoff()。**キー名と項目の並びの契約はここだけに置く**
+// (3箇所に散っていると、片方だけ足して黙って落ちる)。
+// stats は整数、exp は 0–99 の端数。どちらも**整数演算で取り出しておくこと**
+// (5.06 から 0.06 を割り戻すと丸めでずれる)
+function magHandoff(o) {
+  try {
+    localStorage.setItem(SKEYS.mag_start, JSON.stringify({
+      form: o.form, stats: o.stats, exp: o.exp,
+      sync: o.sync || 0, iq: o.iq || 0, pbs: o.pbs || [],
+      cls: o.cls || null, sectionId: o.sectionId || null, char: o.char || null }));
+  } catch (e) { return false; }
+  location.href = '../mag/';
+  return true;
 }
 
 // ---- HTMLエスケープ (複数ページで使う) ----
@@ -984,15 +1006,55 @@ if (!inv || !inv.items || !inv.items.length) {
       const big = d.sub_hi >= 20, zero = d.sub_hi < 0.5;
       const cont = d.grp === prevGrp ? '<span class="cont" aria-hidden="true">└</span>' : '';
       prevGrp = d.grp;
+      // Magは育成の続きを出せる。**そのMagの行から直接**始められるようにする
+      // (育てているMagを装備しているとは限らない。倉庫にあるのが普通)
+      const magGo = d.cat === 'Mag' && magParts(d)
+        ? `<button type="button" class="minibtn" data-magrow="${d.id}">Continue this mag</button>` : '';
       return `<tr class="${big ? 'hi' : ''} ${zero ? 'zero' : ''}">
         <td>${d.id}</td>
-        <td>${cont}${d.disp}${d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
+        <td>${cont}${d.disp}${magGo}${d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
         <td><span class="pill">${d.cat}</span></td>
         <td>${d.loc}</td>
         <td class="num">${d.qty}</td>
         <td class="num"><span class="pdval ${big ? 'big' : ''}">${rangeStr(d.sub_lo, d.sub_hi)}</span></td>
       </tr>`;
     }).join('');
+    // Magの行 → 育成プランナーへ。Charactersの同名ボタンと同じ受け渡し
+    document.querySelectorAll('[data-magrow]').forEach(b =>
+      b.addEventListener('click', () => magStartFromRow(b.dataset.magrow)));
+  }
+
+  // Item Listの1行から、育成プランナーの「From a mag you own」へ渡す。
+  // **raw は外部ビューアーの出力とバイト一致させる約束なので触らない**。読むだけにして、
+  // raw に入らないSynchro・IQ・PB はimportedみ時に別途拾った inv.mags から補う
+  function magStartFromRow(id) {
+    const d = DATA.find(x => String(x.id) === String(id));
+    const p = d && magParts(d);
+    if (!p) return;
+    const [species, , stats] = p;
+    const inv = loadInventory() || {};
+    // **キーは d.raw ではなく d.grp**。集約された行(同じ素Magが3個など)は
+    // raw が "基底 ×3" に書き換わっているので引けない。grp は集約前の基底そのもの
+    const extra = (inv.mags || {})[`${d.grp}|${d.slot}`] || null;
+    // PBは raw では [左|中央|右] の順で出ているが、**習得順は [中央, 右, 左]**。
+    // inv.mags があればそちらが習得順そのままなので、逆算せずに使う
+    let pbs = extra ? extra.pbs : null;
+    if (!pbs) {
+      const cell = (d.extra || []).find(e => e.includes('|'));
+      const q = cell ? cell.split('|') : [];
+      pbs = [q[1], q[2], q[0]].filter(Boolean);
+    }
+    // 持たせるChar 。「4」も「4 Bank」もそのChar のものなので初期値にする。
+    // Shared bank(ShareBank)のMagだけは持ち主が分からないので、Mag画面で選んでもらう
+    const slotNum = String(d.slot).match(/^(\d+)/);
+    const ch = slotNum && inv.chars ? inv.chars[slotNum[1]] : null;
+    magHandoff({
+      form: species,
+      stats: (stats || []).map(v => Math.floor(v)),
+      exp: (stats || []).map(v => Math.round(v * 100) % 100),
+      sync: extra ? extra.sync : 0, iq: extra ? extra.iq : 0, pbs: pbs,
+      cls: ch ? ch.cls : null, sectionId: ch ? ch.sectionId : null,
+      char: ch ? ch.name : null });
   }
   const doSort = th => {
     const k = th.dataset.k;
