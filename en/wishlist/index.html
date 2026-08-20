@@ -320,13 +320,14 @@ function charsBySid() {
 // applyMagStartHandoff()。**キー名と項目の並びの契約はここだけに置く**
 // (3箇所に散っていると、片方だけ足して黙って落ちる)。
 // stats は整数、exp は 0–99 の端数。どちらも**整数演算で取り出しておくこと**
-// (5.06 から 0.06 を割り戻すと丸めでずれる)
+// (5.06 から 0.06 を割り戻すと丸めでずれる)。
+// **持ち主(職業・Section ID)は送らない**。MagはShared bankでいつでも渡せるので
+// いま誰が持っていても手順は同じで、誰に渡すかはソルバが割り出して手順に書く
 function magHandoff(o) {
   try {
     localStorage.setItem(SKEYS.mag_start, JSON.stringify({
       form: o.form, stats: o.stats, exp: o.exp,
-      sync: o.sync || 0, iq: o.iq || 0, pbs: o.pbs || [],
-      cls: o.cls || null, sectionId: o.sectionId || null, char: o.char || null }));
+      sync: o.sync || 0, iq: o.iq || 0, pbs: o.pbs || [] }));
   } catch (e) { return false; }
   location.href = '../mag/';
   return true;

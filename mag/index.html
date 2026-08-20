@@ -177,6 +177,25 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
           margin-bottom: 7px; font-size: 0.84rem; }
 .optrow > label { color: var(--sub); font-size: 0.78rem; }
 .optrow select, .optrow input { width: 100%; padding: 4px 6px; }
+/* ステータス1つ = 1行。ラベル / 整数値 . 小数値 / バー を横に並べる。
+   **整数値は右寄せ・小数値は左寄せ**にして、間の「.」を挟んで
+   1つの数値(5.02)として読めるようにする */
+.statrow { display: grid; grid-template-columns: 3.2em 4.2em 0.5em 4.2em minmax(0, 1fr);
+           align-items: center; gap: 5px; margin-bottom: 5px; font-size: 0.84rem; }
+.statrow > label { color: var(--sub); font-size: 0.78rem; font-weight: 600; }
+.statrow select, .statrow input { width: 100%; padding: 4px 6px; }
+.statrow input { font-variant-numeric: tabular-nums; }
+.statrow input[type="number"] { text-align: right; }
+.statrow input[type="text"] { text-align: left; font-size: 0.8rem; }
+.statdot { text-align: center; color: var(--sub); font-weight: 700; }
+.stathead > span { color: var(--sub); font-size: 0.72rem; }
+.stathead > span:nth-child(2) { text-align: right; }
+/* 狭い画面ではバーを次の行に落とす(整数値と小数値は横並びのまま) */
+@media (max-width: 420px) {
+  .statrow { grid-template-columns: 3.2em 4.2em 0.5em minmax(0, 1fr); }
+  .statrow select { grid-column: 2 / -1; }
+  .stathead { display: none; }
+}
 .pbpick { display: flex; flex-wrap: wrap; gap: 5px; }
 .pbtog { cursor: pointer; border: 1px solid var(--border); background: var(--card);
          color: var(--text); border-radius: 99px; padding: 3px 10px; font-size: 0.78rem; }
@@ -310,10 +329,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
        font-size: 0.92em; }
 .magnote { font-size: 0.84rem; color: var(--sub); margin: 8px 0; }
-/* 「Lv100の型から埋める」= 入力の補助。本体の入力と混ざらないよう囲って落とす */
-.ownfill { border: 1px dashed var(--border); border-radius: 8px; padding: 8px 10px;
-           margin-bottom: 10px; }
-.ownfill .note { margin: 6px 0 0; }
 .resbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .frozen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
           padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px;
@@ -397,37 +412,21 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
         <select id="magP2"></select></div>
     </div>
     <div id="magOwnBox" hidden>
-      <p class="note">育てかけのマグ・もらったマグ・手順を外れたマグの続きを出します。ゲーム内のマグ画面のとおりに入れてください。</p>
-      <div class="ownfill">
-        <div class="optrow"><label for="ownTplMag">Lv100の型から埋める</label>
-          <select id="ownTplMag"></select></div>
-        <div class="optrow"><label for="ownTplForm">　</label>
-          <select id="ownTplForm"></select></div>
-        <button type="button" class="reset" id="ownTplGo">この形態とステータスを入れる</button>
-        <p class="note">このツールのLv100プランどおりに育てたなら、形態と4つの整数はここから入れられます。バーの読みは画面を見て入れてください。</p>
-      </div>
       <div class="optrow"><label for="ownForm">いまの形態</label>
         <select id="ownForm"></select></div>
-      <div class="optrow"><label for="ownChar">マグを持たせるキャラ</label>
-        <select id="ownChar"></select></div>
-      <div id="ownCharManual" hidden>
-        <div class="optrow"><label for="ownCls">ジョブ</label>
-          <select id="ownCls"></select></div>
-        <div class="optrow"><label for="ownSid">Section ID</label>
-          <select id="ownSid"></select></div>
-      </div>
       <div id="ownStats"></div>
-      <div class="magtotal"><span>いまのマグのレベル</span><span><b id="ownLvNow">-</b></span></div>
-      <div class="optrow"><label for="ownLv">画面に出ているマグLv</label>
+      <div class="magtotal"><span>4つの合計</span><span><b id="ownLvNow">-</b></span></div>
+      <div class="optrow"><label for="ownLv">マグLv</label>
         <input type="number" id="ownLv" min="5" max="200" step="1" style="width:5em"></div>
       <div class="magnote" id="ownWarn"></div>
-      <details style="margin-top:8px"><summary class="sub">シンクロ・IQ・覚えているPB(マグセルを使う案を出すときだけ要ります)</summary>
+      <details id="ownPbBox" style="margin-top:8px" hidden><summary class="sub">覚えているPB</summary>
+        <div id="ownPbs" style="margin-top:6px"></div>
+      </details>
+      <details id="ownCellBox" style="margin-top:8px" hidden><summary class="sub">シンクロ・IQ (ピアンを狙うときだけ。シンクロ120・IQ180 が要ります)</summary>
         <div class="optrow"><label for="ownSync">シンクロ</label>
           <input type="number" id="ownSync" min="0" max="120" step="1" style="width:5em"></div>
         <div class="optrow"><label for="ownIq">IQ</label>
           <input type="number" id="ownIq" min="0" max="200" step="1" style="width:5em"></div>
-        <div class="optrow" style="align-items:start"><label>覚えているPB</label>
-          <div id="ownPbs"></div></div>
       </details>
     </div>
     <div class="magnote" id="magPresetNote"></div>
@@ -459,8 +458,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
 
   <div class="panel" style="margin-top:12px">
     <h2>3. 保存したプラン</h2>
-    <p class="note">育成は何日もかかるので、気に入った案は保存しておくと後から同じ手順を開けます。
-      <b>保存した手順は変わりません</b>(計算し直しません)。</p>
+    <p class="note"><b>保存した手順は変わりません</b>(ソルバを直しても計算し直しません)。</p>
     <div id="magPlanList" class="preset-list"></div>
     <div style="display:flex; gap:6px; margin-top:10px">
       <button class="reset" id="magExport">JSON書き出し</button>
@@ -478,7 +476,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
   <div class="mbhead"><div class="mbtitle">育て方を計算しています…</div>
     <button type="button" class="btn mbstop" id="magStop">中止</button></div>
   <div class="mbbar"><span></span></div>
-  <div class="mbnote">何万通りもの与え方を試して、<b>事故らない手順</b>を探しています。目標によっては10秒ほどかかります。計算は別スレッドで走っているので、待っている間もページは普通に操作できます。</div>
+  <div class="mbnote">何万通りもの与え方を試して、<b>事故らない手順</b>を探しています。待っている間もページは普通に操作できます。</div>
 </div>
 <div id="magOut"><div class="magempty">目標を決めて「育て方を計算する」を押してください。</div></div>
 </div>
@@ -497,7 +495,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
     <tr><td>第3進化</td><td>マグLv50 以降、レベルが<b>5の倍数のときの給餌ごとに何度でも</b></td><td>ジョブ + Section IDの偶奇</td></tr>
     <tr><td>第4進化<br>(レアマグ)</td><td>マグLv100 以降</td><td>ジョブ + 性別 + Section ID。<b>一度なると二度と判定されません</b></td></tr>
   </table>
-  <p class="note">つまり気を遣うのは <b>マグLv50 から レアマグになるまで</b> の区間です。ここはレベルが5の倍数のあいだ何度でも判定し直されるので、指定と違うキャラに持たせると途中で別の形態に化けます(Lv55のまま別のキャラが1個やるだけで変わります)。レアマグになった後は判定そのものが起きないので、誰に渡してもかまいません。</p>
+  <p class="note">つまり気を遣うのは <b>マグLv50 から レアマグになるまで</b> の区間です。この区間はレベルが5の倍数のあいだ何度でも判定し直されるので、手順に書いてあるのと違うキャラに持たせると途中で別の形態に化けます(Lv55のまま別のキャラが1個やるだけで変わります)。レアマグになった後は判定そのものが起きないので、誰に渡してもかまいません。</p>
   <p class="note">キャラ間の受け渡しは<b>アカウント共通の共有倉庫</b>を使います。チャットで <code>/bank</code> と打つと開き、預けたマグを別のキャラで取り出せます。</p>
   <p>レアマグ経由の案を先に出しているのは、そこから先は進化を気にせず伸ばすだけになるからです。</p>
   <p class="note">並び順は<b>手間の少なさ</b>です。手間は餌の個数ではなく<b>追いかけるものの数</b>で測っています。同じ餌を292個与えて数字が変わるのを待つのは追跡1つ、2種類を34セット交互に与えるのは追跡34、目印が無くて292個数えるのは追跡292、という数え方です。受け渡し1回は手順10個ぶんとして扱います(預ける・持ち替える・取り出す・装備し直す、と間違えられる操作が並ぶうえ、マグLv50〜100で違うキャラに持たせると形態が変わってしまうため)。<br>
@@ -563,13 +561,14 @@ function charsBySid() {
 // applyMagStartHandoff()。**キー名と項目の並びの契約はここだけに置く**
 // (3箇所に散っていると、片方だけ足して黙って落ちる)。
 // stats は整数、exp は 0〜99 の端数。どちらも**整数演算で取り出しておくこと**
-// (5.06 から 0.06 を割り戻すと丸めでずれる)
+// (5.06 から 0.06 を割り戻すと丸めでずれる)。
+// **持ち主(職業・Section ID)は送らない**。マグは共有倉庫でいつでも渡せるので
+// いま誰が持っていても手順は同じで、誰に渡すかはソルバが割り出して手順に書く
 function magHandoff(o) {
   try {
     localStorage.setItem(SKEYS.mag_start, JSON.stringify({
       form: o.form, stats: o.stats, exp: o.exp,
-      sync: o.sync || 0, iq: o.iq || 0, pbs: o.pbs || [],
-      cls: o.cls || null, sectionId: o.sectionId || null, char: o.char || null }));
+      sync: o.sync || 0, iq: o.iq || 0, pbs: o.pbs || [] }));
   } catch (e) { return false; }
   location.href = '../mag/';
   return true;
@@ -1222,6 +1221,31 @@ const classesOf = chars => (chars && chars.length)
 const charOf = (chars, cls, gender) => (chars || []).find(
   c => c.class === cls && (!gender || c.gender === gender)) || null;
 
+// マグを持たせる候補 [職業, 性別, Section ID]。
+// **持ち主は入力ではなく探索対象**。マグは共有倉庫でいつでも渡せるので、
+// 「いま誰が持っているか」は答えに関係ない。手順の側が「誰に渡すか」を出す。
+// キャラを渡されているときは実在する組合せだけに絞る(「手持ちのキャラだけで育てる」)。
+// 渡されていないときは、IDが効くのは第3進化の偶奇と第4進化のグループ所属だけなので
+// 偶数代表と奇数代表の2つで足りる。Python正本(holders)と揃えること
+function holders(chars) {
+  if (chars && chars.length) {
+    const seen = new Set(), out = [];
+    for (const c of chars) {
+      const sid = canonSid(c.section_id);
+      const par = SIDS.indexOf(sid) % 2;
+      const key = c.class + '|' + c.gender + '|' + par;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push([c.class, c.gender, sid]);
+    }
+    return out;
+  }
+  const out = [];
+  for (const c of ALL_CLASSES) for (const g of GENDERS)
+    for (const s of [SIDS[0], SIDS[1]]) out.push([c, g, s]);
+  return out;
+}
+
 // 工程がキャラに要求する条件。工程ごとに厳しさが違う。
 // 第1/第2進化は職業だけ(IDは不問)、第3進化は職業+Section IDの偶奇、
 // 第4進化は職業+性別+IDが完全一致でないと同じ結果にならない
@@ -1471,7 +1495,7 @@ function cellChain(form) {
 // 以前は「基本マグ(Lv5)にセルを使う」経路しか探索しておらず、36種のうち1種しか
 // 出せていなかった(2026-08-12)。セルマグになると給餌テーブル7に変わり、
 // 以降ステータスでは進化しない
-function cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells) {
+function cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells, chars) {
   if (useCells === false) return [];
   if (wantForm && !MG_CELLMAGS[wantForm]) return [];   // 通常マグ指定。セルでは終われない
   // 形態を指定されたときは連鎖も辿る。無指定のときは1段のものだけ
@@ -1479,23 +1503,60 @@ function cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells) {
     : Object.keys(MG_CELLMAGS).sort().filter(f => cellChain(f).length === 1);
   const final = MSTATS.reduce((a, s) => a + tgt[s], 0);
   const out = [];
-  for (const formC of forms) {
+  const seen = new Map();   // planKey -> out の添字。同じ手順なら手間の小さい方を残す
+  // **セルに必要なレベルまで育てる区間は、セルの種類に依らない**(必要レベルと持ち主だけで
+  // 決まる)。36種 × 12人ぶん組み直すと3倍以上遅くなるので、(持ち主, 必要レベル) で覚える
+  const growCache = new Map();
+  const growTo = (m, need, key) => {
+    if (!growCache.has(key)) {
+      let got = null;
+      for (let lv = Math.max(need, m.level + 5); lv <= final && !got; lv += 5) {
+        const [cands] = ordered(lv, m.stats, tgt, 3);
+        for (const w of cands) {
+          const r = runTo(m.clone(), w, bank);
+          if (r[0]) { got = r; break; }
+        }
+      }
+      growCache.set(key, got);
+    }
+    const hit = growCache.get(key);
+    return hit ? [hit[0].clone(), hit[1]] : null;
+  };
+  // **セルを使った後の区間は持ち主に依らない**(セルマグは stage>=4 なので
+  // _checkEvolution が即 return する = 形態も給餌テーブルも変わらない)
+  const afterCache = new Map();
+  const runAfterCell = m => {
+    const key = m.form + '|' + MSTATS.map(s => m.stats[s]).join(',')
+      + '|' + MSTATS.map(s => m.exp[s]).join(',');
+    if (!afterCache.has(key)) {
+      const r = runTo(m, tgt, bank);
+      afterCache.set(key, r[0] ? r : null);
+    }
+    const hit = afterCache.get(key);
+    return hit ? [hit[0].clone(), hit[1]] : [null, null];
+  };
+  // **持ち主で結果が変わるので渡してみる**(以前は固定していて 20案 → 52案 を
+  // 取りこぼしていた。2026-08-20)。効く道は2つあって、どちらも要る:
+  //   ① 同じセルでも Section ID の偶奇で別の形態になる (CELL_IDS)
+  //   ② セルに必要なレベルまで育てる区間は、第3形態の再判定(職業 × IDの偶奇)と
+  //      Lv100 を跨ぐときの第4進化(職業 × 性別 × ID)を通る
+  // ②があるので canUseCell が職業を見ないからといって偶奇2通りでは足りない
+  const hs = holders(chars);
+  for (const formC of forms) for (const [clsC, genC, sidC] of hs) {
     const chain = cellChain(formC);
     if (!chain.length || chain.length > MAX_CELL_CHAIN) continue;
     let m = st.mag.clone();
+    handOver(m, clsC, genC, sidC);
     const tail = [];
     let ok = true;
-    for (const [cell, , cond] of chain) {
+    for (let ci = 0; ci < chain.length; ci++) {
+      const [cell, , cond] = chain[ci];
       const need = cond.min_level || 0;
       if (m.level < need) {                  // セルに必要なレベルまで育ててから使う
-        let grown = null;
-        for (let lv = Math.max(need, m.level + 5); lv <= final && !grown; lv += 5) {
-          const [cands] = ordered(lv, m.stats, tgt, 3);
-          for (const w of cands) {
-            const r = runTo(m.clone(), w, bank);
-            if (r[0]) { grown = r; break; }
-          }
-        }
+        const key = [clsC, genC, sidC, need, ci, m.form,
+                     MSTATS.map(s => m.stats[s]).join(','),
+                     MSTATS.map(s => m.exp[s]).join(',')].join('|');
+        const grown = growTo(m, need, key);
         if (!grown) { ok = false; break; }
         m = grown[0];
         tail.push({ blocks: grown[1], after: m.snapshot() });
@@ -1504,14 +1565,26 @@ function cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells) {
       tail.push({ cellUse: cell, blocks: [], after: m.snapshot() });
     }
     if (!ok) continue;
-    const r2 = runTo(m, tgt, bank);
+    const r2 = runAfterCell(m);
     if (!r2[0] || !pbOk(r2[0].pbs, wantPbs, avoidPbs, true)) continue;
     tail.push({ blocks: r2[1], after: r2[0].snapshot() });
+    // セルを使う工程には**そのキャラに持たせておく**必要がある。記録しないと
+    // segmentsOf が受け渡しを出せず、alternatives も担当を列挙できない
+    tail[0] = Object.assign({}, tail[0],
+                            { cls: clsC, gender: genC, sid: sidC, parity: true });
     const p = pack(st, tail, r2[0]);
     p.rare = null;
     p.cells = chain.map(x => x[0]);
     p.cell = chain[chain.length - 1][0];     // 表示の互換用(最後に使うセル)
     p.cellForm = r2[0].form;
+    // 同じ手順になる持ち主が複数いるときは**受け渡しが少ない方**を採る
+    const k = planKey(p);
+    if (seen.has(k)) {
+      const i = seen.get(k);
+      if (cmpEase(planEase(p), planEase(out[i])) < 0) out[i] = p;
+      continue;
+    }
+    seen.set(k, out.length);
     out.push(p);
   }
   return out;
@@ -1549,15 +1622,34 @@ function finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm, useCells) {
       if (best) { out.push(best[1]); break; }
     }
   }
-  const r = runTo(st.mag.clone(), tgt, bank);
-  if (r[0] && pbOk(r[0].pbs, wantPbs, avoidPbs, true)
-      && (!wantForm || r[0].form === wantForm)) {
-    const p = pack(st, [{ blocks: r[1], after: r[0].snapshot() }], r[0]);
+  // (b) レアマグを経由しない案。**この区間も持ち主で結果が変わる**:
+  // 第3形態は5レベルごとに _third(職業 × IDの偶奇)で判定し直され、Lv100 を跨げば
+  // _fourth(職業 × 性別 × ID)も働く。以前はここで持ち主を渡していなかったため、
+  // 渡せば届く案が構造的に出せなかった(第3形態からの再開で 1案 → 8案。2026-08-20)
+  // **同じ手順になる持ち主が複数いるときは、受け渡しが少ない方を採る**。
+  // 先着順で潰すと、直前の工程と職業が食い違う持ち主を記録してしまい、
+  // 要らない受け渡しが1回増えた案として出てしまう
+  const atB = new Map();
+  for (const [cls, gen, sid] of holders(chars)) {
+    const mb = st.mag.clone();
+    handOver(mb, cls, gen, sid);
+    const r = runTo(mb, tgt, bank);
+    if (!r[0] || !pbOk(r[0].pbs, wantPbs, avoidPbs, true)) continue;
+    if (wantForm && r[0].form !== wantForm) continue;
+    const p = pack(st, [{ cls: cls, gender: gen, sid: sid,
+                          blocks: r[1], after: r[0].snapshot() }], r[0]);
     p.rare = null;
+    const k = planKey(p);
+    if (atB.has(k)) {
+      const i = atB.get(k);
+      if (cmpEase(planEase(p), planEase(out[i])) < 0) out[i] = p;
+      continue;
+    }
+    atB.set(k, out.length);
     out.push(p);
   }
   // (c) マグセル経由 — 育てている途中でセルを使う
-  return out.concat(cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells));
+  return out.concat(cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells, chars));
 }
 
 // **すでにレアマグになっているマグ**を目標まで伸ばす手順を作る。
@@ -2058,7 +2150,9 @@ function fillP2() {
 // 画面のバーからは端数を4分の1刻みでしか読めない。**「空」「満タン」とは呼ばない**
 // (端数 0.23 はバーの4分の1近くまで伸びていて、空には見えない)
 const BARS = [[0, 24], [25, 49], [50, 74], [75, 99]];
-const BAR_JP = ['4分の1に届いていない', '4分の1〜半分', '半分〜4分の3', '4分の3を超えている'];
+// 1行に収まる長さにする。**「空」「満タン」とは呼ばない**(端数 0.23 は空に見えない)ので、
+// 目盛りをどこまで超えたかを分数で言う。区間は BARS と対応
+const BAR_JP = ['1/4 未満', '1/4 〜 1/2', '1/2 〜 3/4', '3/4 以上'];
 const STAGE_JP = ['基本マグ', '第1進化', '第2進化', '第3進化', 'レアマグ (第4進化)'];
 
 function buildOwnBox() {
@@ -2075,42 +2169,33 @@ function buildOwnBox() {
         .map(n => `<option value="${esc2(n)}">${esc2(jpName(n))}</option>`).join('')
       + '</optgroup>').join('');
   // ステータス: 整数 + バーの読み + 小数(任意)
-  document.getElementById('ownStats').innerHTML = MSTATS.map(s =>
-    `<div class="optrow"><label for="own${s}">${s}</label>`
-    + `<input type="number" id="own${s}" min="0" max="200" step="1" value="0" style="width:4.5em">`
+  // 1ステ = 1行(ラベル / 整数値 / 小数値 / バー)。**.optrow は使わない** —
+  // あれはラベル+1列のグリッドなので、後ろの3つが折り返って1ステが3行になる。
+  // 見出しが無いと小数値の欄が何なのか分からないので、列の見出しを1行だけ置く
+  document.getElementById('ownStats').innerHTML =
+    '<div class="statrow stathead"><span></span><span>整数値</span><span></span><span>小数値</span><span>バー</span></div>'
+    + MSTATS.map(s =>
+    `<div class="statrow"><label for="own${s}">${s}</label>`
+    + `<input type="number" id="own${s}" min="0" max="200" step="1" value="0">`
+    + '<span class="statdot">.</span>'
+    + `<input type="text" id="ownDec${s}" inputmode="numeric" maxlength="4" placeholder="任意">`
     + `<select id="ownBar${s}" title="バーがどこまで伸びているか">`
     + BAR_JP.map((t, i) => `<option value="${i}">${esc2(t)}</option>`).join('')
     + '</select>'
-    + `<input type="text" id="ownDec${s}" placeholder="小数(任意)" style="width:5em">`
     + '</div>').join('')
     // 対訳が分断されるので1本で書く(連結すると短い語だけ訳されて日本語が混ざる)
-    + '<p class="note">バーの読みが分からなくても、小数が分かるなら右端に入れてください(アドオンを使っている場合や、キャラクターデータを読み込んだ場合)。小数を入れたステータスはバーの読みより優先します。</p>';
+    + '<p class="note">小数を入れたステータスはバーの読みより優先します。</p>';
   // 覚えているPB(3つまで)
   const pbs = [...new Set(Object.values(ALLMAGS).map(m => m.pb).filter(Boolean))].sort();
   document.getElementById('ownPbs').innerHTML = [0, 1, 2].map(i =>
     `<select id="ownPb${i}" style="margin-right:4px"><option value="">なし</option>`
     + pbs.map(p => `<option value="${esc2(p)}">${esc2(pbJp(p))}</option>`).join('')
     + '</select>').join('');
-  // いま持たせているキャラ: 取込みキャラがあればそこから選ぶ
-  const inv = loadInventory();
-  const chars = inv && inv.chars ? Object.values(inv.chars) : [];
-  const sel = document.getElementById('ownChar');
-  sel.innerHTML = chars.map((c, i) =>
-    `<option value="${i}">${esc2(c.name || '')} (${esc2(c.cls)} / ${esc2(c.sectionId)})</option>`)
-    .join('') + '<option value="">自分で入れる</option>';
-  document.getElementById('ownCls').innerHTML = ['HUmar', 'HUnewearl', 'HUcast', 'HUcaseal',
-    'RAmar', 'RAmarl', 'RAcast', 'RAcaseal', 'FOmar', 'FOmarl', 'FOnewm', 'FOnewearl']
-    .map(n => `<option value="${n}">${n}</option>`).join('');
-  document.getElementById('ownSid').innerHTML = SIDS
-    .map(n => `<option value="${n}">${esc2(n)}</option>`).join('');
-  if (!chars.length) { sel.value = ''; }
-  sel.onchange = () => {
-    document.getElementById('ownCharManual').hidden = sel.value !== '';
-    updateOwn();
-  };
-  document.getElementById('ownCharManual').hidden = chars.length > 0;
-  buildOwnTemplate();
-  ['ownForm', 'ownLv', 'ownCls', 'ownSid'].concat(
+  // **「いま誰が持っているか」は聞かない。** マグは共有倉庫でいつでも渡せるので
+  // 答えに関係なく、誰に渡すかは手順の側が出す。聞いていた頃は入力で探索を固定していて、
+  // 第3形態からの再開で 84案中 45案しか出ていなかった(2026-08-20)。
+  // 「誰を使えるか」を絞りたいときは「こだわり」の『手持ちのキャラだけで育てる』を使う
+  ['ownForm', 'ownLv'].concat(
     MSTATS.map(s => 'own' + s), MSTATS.map(s => 'ownBar' + s),
     MSTATS.map(s => 'ownDec' + s))
     .forEach(id => {
@@ -2119,45 +2204,13 @@ function buildOwnBox() {
     });
 }
 
-// Lv100の型から整数を埋める入力補助。
-// **形態と4つの整数しか入れない**。端数(バーの読み)は画面を見ないと分からないので、
-// ここで勝手に 0 を入れてはいけない。旧「レアマグから先」モードは端数を 0 と決め打ちして
-// いて、実際の端数が 0 でないと 7.2% で目標を超えていた(2026-08-19 にこの形へ統合)
-function buildOwnTemplate() {
-  const m = document.getElementById('ownTplMag'), f = document.getElementById('ownTplForm');
-  if (!m || !f) return;
-  const by = lv100ByMag();
-  m.innerHTML = Object.keys(by).sort((a, b) => jpName(a) < jpName(b) ? -1 : 1)
-    .map(n => `<option value="${esc(n)}">${esc(jpName(n))}</option>`).join('');
-  const fillForms = () => {
-    f.innerHTML = (by[m.value] || []).map(t =>
-      `<option value="${esc(t.target.join(','))}">${esc(t.style)} — ${t.target.join('/')}</option>`)
-      .join('');
-  };
-  m.onchange = fillForms;
-  fillForms();
-  document.getElementById('ownTplGo').onclick = () => {
-    const stats = (f.value || '').split(',').map(Number);
-    if (stats.length !== 4) return;
-    document.getElementById('ownForm').value = m.value;
-    MSTATS.forEach((s, i) => { document.getElementById('own' + s).value = stats[i]; });
-    document.getElementById('ownLv').value = stats.reduce((a, b) => a + b, 0);
-    updateOwn();          // 埋めた結果をその場で検算して見せる
-  };
-}
-
-// いま持たせているキャラ (取込みから選ぶか、手で入れる)
-function ownChar() {
-  const sel = document.getElementById('ownChar');
-  const inv = loadInventory();
-  const chars = inv && inv.chars ? Object.values(inv.chars) : [];
-  if (sel && sel.value !== '' && chars[Number(sel.value)]) {
-    const c = chars[Number(sel.value)];
-    return { cls: classKeyOf(c.cls), gender: genderOf(c.cls), sid: canonSid(c.sectionId) };
-  }
-  const n = document.getElementById('ownCls').value || 'HUmar';
-  return { cls: classKeyOf(n), gender: genderOf(n),
-           sid: document.getElementById('ownSid').value || 'Viridia' };
+// 小数値の欄は**「.」の後ろだけ**を書く。画面に「5.02」と出ていれば 02、
+// 「5.2」と出ていれば 2。小数として読むので "02"→0.02 / "2"→0.2 になる。
+// 「0.02」「.02」と丸ごと書かれても受ける。空・数字以外は null(バーの読みを使う)
+function decExp(raw) {
+  const t = String(raw == null ? '' : raw).trim().replace(/^0?\./, '');
+  if (t === '' || !/^\d+$/.test(t)) return null;
+  return Math.round(Number('0.' + t) * 100) % 100;
 }
 
 // フォームを読んで、ソルバに渡す出発点と端数の区間にする。
@@ -2172,11 +2225,10 @@ function ownStart() {
   let wide = false;
   MSTATS.forEach((s, i) => {
     stats[s] = Number(document.getElementById('own' + s).value) || 0;
-    const dec = (document.getElementById('ownDec' + s).value || '').trim();
-    if (dec !== '' && !isNaN(Number(dec))) {
-      const e = Math.round(Number(dec) * 100) % 100;
-      exp[s] = ((e % 100) + 100) % 100;
-      range[s] = [exp[s], exp[s]];
+    const dec = decExp(document.getElementById('ownDec' + s).value);
+    if (dec !== null) {
+      exp[s] = dec;
+      range[s] = [dec, dec];
     } else {
       const b = BARS[Number(document.getElementById('ownBar' + s).value) || 0];
       range[s] = b.slice();
@@ -2184,12 +2236,13 @@ function ownStart() {
       wide = true;
     }
   });
-  const ch = ownChar();
   const pbs = [0, 1, 2].map(i => document.getElementById('ownPb' + i).value).filter(Boolean);
   const sync = Number(document.getElementById('ownSync').value) || 0;
   const iq = Number(document.getElementById('ownIq').value) || 0;
+  // **持ち主は渡さない**(ソルバが探索して手順に「誰に持たせるか」を書く)。
+  // Mag は職業・IDを要求するので既定のまま作り、以降は handOver が上書きする
   return { start: { form: form, stats: stats, exp: exp, sync: sync, iq: iq, pbs: pbs,
-                    cls: ch.cls, gender: ch.gender, sectionId: ch.sid },
+                    cls: 'HU', gender: 'M', sectionId: 'Viridia' },
            expRange: wide ? range : null };
 }
 
@@ -2219,6 +2272,14 @@ function updateOwn() {
   if (own.start.pbs.length > Math.min(stage, 3))
     msg.push(`${jpName(own.start.form)} が覚えていられるPBは ${Math.min(stage, 3)}個までです`);
   w.innerHTML = msg.length ? `<span class="warn">${esc(msg.join(' / '))}</span>` : '';
+  // **効かない入力は出さない**。効く条件は3つとも「まだ進化が残っているか」で決まる:
+  //   PB      : 第1〜3進化のときだけ(素マグはまだ持てず、レアマグはもう増えない)
+  //   シンクロ・IQ: 第3形態のときだけ(条件に使うセルはピアン1種で、その前提が第3形態)
+  const evolving = stage >= 1 && stage <= 3;
+  document.getElementById('ownPbBox').hidden = !evolving;
+  document.getElementById('ownCellBox').hidden = stage !== 3;
+  // **持ち主については何も書かない**。ここはマグ画面の数字を写す欄で、持ち主はそこに
+  // 出てこない。誰に渡すかは手順の「マグを持たせる」が言うので、入力欄で先回りしない
   updateSum();
 }
 // スライダーの下限を出発点に合わせる(ステータスは減らないので下回れない)。
@@ -2239,8 +2300,9 @@ function applyPreset() {
     syncStartMins();                    // ステータスは減らないので下限をいまの値に上げる
     if (rare.value && rare.value === rare.dataset.presetVal) rare.value = '';
     rare.dataset.presetVal = '';
-    // 対訳は**ソースの文字列リテラル**に当たるので、ここで連結すると訳が分断される。1本で書く
-    note.textContent = 'いま持っているマグの続きを出します。ステータスは減らないので、目標はいまの値以上にしてください';
+    // 出発点を下回る目標は magSumWarn が具体的に言う(「POW は 30 以上」)。
+    // 先回りして一般論を書かない
+    note.textContent = '';
     return;
   }
   MSTATS.forEach(s => {
@@ -2252,8 +2314,9 @@ function applyPreset() {
   if (PRESET_MODE === 'lv100') {
     rare.value = document.getElementById('magP1').value;
     rare.dataset.presetVal = rare.value;
-    note.textContent = 'Lv100でレアマグを確定させるところまでの目標です。'
-      + '以降は形態が変わらないので、続きは後から決められます';
+    // モード名が「レアマグ確定まで (Lv100)」なので、そこは繰り返さない。
+    // 対訳は**ソースの文字列リテラル**に当たるので `+` で連結しない(訳が分断される)
+    note.textContent = 'Lv100でレアマグが確定すると、以降は形態が変わりません。続きは後から決められます';
   } else {
     // プリセットが入れた指定だけを外す。自分で選び直したものはそのまま残す
     if (rare.value && rare.value === rare.dataset.presetVal) rare.value = '';
@@ -2871,7 +2934,7 @@ function stepHTML(ev, done, next) {
         + '<div class="tlsub">' + (stage >= 4
           ? 'すでにレアマグになっているので、もう進化しません。育てるキャラは誰でもかまいません'
           // 対訳はソースの文字列リテラルに当たるので、連結せず1本で書く
-          : 'マグLv50 から先は5レベルごとに形態が判定し直されます。下の「マグを持たせる」で指定したキャラに持たせてください')
+          : 'マグLv50 から先は5レベルごとに形態が判定し直されます。下の「マグを持たせる」に出るキャラに持たせてください')
         + '</div>';
     }
   } else if (ev.kind === 'cell') {
@@ -3135,25 +3198,24 @@ function readMagState() {
 // 「いま持っているマグから」の入力。画面に入れたものをそのまま保存して戻せるようにする
 function readOwnFields() {
   const g = id => { const e = document.getElementById(id); return e ? e.value : ''; };
-  return { form: g('ownForm'), lv: g('ownLv'), char: g('ownChar'),
-           cls: g('ownCls'), sid: g('ownSid'), sync: g('ownSync'), iq: g('ownIq'),
+  // 持ち主(char / cls / sid)は 2026-08-20 に入力から外した。
+  // 古い保存データには残っているが、読むときも書くときも無視する
+  return { form: g('ownForm'), lv: g('ownLv'),
+           sync: g('ownSync'), iq: g('ownIq'),
            stats: MSTATS.map(s => g('own' + s)), bars: MSTATS.map(s => g('ownBar' + s)),
            decs: MSTATS.map(s => g('ownDec' + s)), pbs: [0, 1, 2].map(i => g('ownPb' + i)) };
 }
 function applyOwnFields(o) {
   if (!o) return;
   const set = (id, v) => { const e = document.getElementById(id); if (e) e.value = v || ''; };
-  set('ownForm', o.form); set('ownLv', o.lv); set('ownChar', o.char);
-  set('ownCls', o.cls); set('ownSid', o.sid); set('ownSync', o.sync); set('ownIq', o.iq);
+  set('ownForm', o.form); set('ownLv', o.lv);
+  set('ownSync', o.sync); set('ownIq', o.iq);
   MSTATS.forEach((s, i) => {
     set('own' + s, (o.stats || [])[i]);
     set('ownBar' + s, (o.bars || [])[i] || '0');
     set('ownDec' + s, (o.decs || [])[i]);
   });
   [0, 1, 2].forEach(i => set('ownPb' + i, (o.pbs || [])[i]));
-  const sel = document.getElementById('ownChar');
-  const man = document.getElementById('ownCharManual');
-  if (sel && man) man.hidden = sel.value !== '';
 }
 // 保存データの移行。**保存プランの手順そのものは凍結**なので触らない。
 // 直すのは入力欄の状態だけ (どのモードで計算し直すか)
@@ -3197,10 +3259,13 @@ function applyMagState(st) {
   document.getElementById('magBank').checked = !!st.bank;
   document.getElementById('magOwn').checked = !!st.own;
   document.getElementById('magNoCell').checked = !!st.noCell;
+  // **モードが同じでも入れ直す**。buildPresets() は切り替わったときしか走らないので、
+  // own モードのまま別のプランを開くと注記と入力欄の出し分けが前のマグのまま残る
+  if (PRESET_MODE === 'own') { applyPreset(); updateOwn(); }
   // 移行したときだけ知らせる。applyPreset() が書いた注記より後に上書きすること。
   // 対訳は**ソースの文字列リテラル**に当たるので、連結せず1本で書く
   if (st.migratedFromRare) {
-    document.getElementById('magPresetNote').textContent = '「レアマグから先」は「いま持っているマグから」にまとめました。計算し直すときは、ステータスのバーがどこまで伸びているかを画面で見て入れてください。';
+    document.getElementById('magPresetNote').textContent = '「レアマグから先」は「いま持っているマグから」にまとめました。';
   }
 }
 
@@ -3549,18 +3614,14 @@ function applyMagStartHandoff() {
   set('ownForm', form);
   MSTATS.forEach((s, i) => {
     set('own' + s, (h.stats || [])[i] || 0);
-    set('ownDec' + s, ((h.exp || [])[i] || 0) / 100);   // 端数はそのまま渡す(バーは使わない)
+    // 端数はそのまま渡す(バーは使わない)。**欄は「.」の後ろだけ**なので2桁に揃える
+    set('ownDec' + s, String((h.exp || [])[i] || 0).padStart(2, '0'));
   });
   set('ownLv', (h.stats || []).reduce((a, b) => a + b, 0));
   set('ownSync', h.sync || 0); set('ownIq', h.iq || 0);
   (h.pbs || []).slice(0, 3).forEach((p, i) => set('ownPb' + i, p));
-  // 持たせているキャラ: 取込み一覧から同じ人を選ぶ
-  const inv = loadInventory();
-  const chars = inv && inv.chars ? Object.values(inv.chars) : [];
-  const idx = chars.findIndex(c => c.name === h.char);
-  if (idx >= 0) set('ownChar', String(idx));
-  else { set('ownChar', ''); set('ownCls', h.cls || 'HUmar'); set('ownSid', h.sectionId || 'Viridia'); }
-  document.getElementById('ownCharManual').hidden = idx >= 0;
+  // **持ち主は受け取らない**。いま誰が持っていても手順は同じで、
+  // 誰に渡すかはソルバが割り出して手順に書く
   updateOwn();
   const note = document.getElementById('magPresetNote');
   if (!form) note.textContent = '取り込んだマグの形態が分かりませんでした。上で選んでください';
@@ -4145,6 +4206,31 @@ const classesOf = chars => (chars && chars.length)
 const charOf = (chars, cls, gender) => (chars || []).find(
   c => c.class === cls && (!gender || c.gender === gender)) || null;
 
+// マグを持たせる候補 [職業, 性別, Section ID]。
+// **持ち主は入力ではなく探索対象**。マグは共有倉庫でいつでも渡せるので、
+// 「いま誰が持っているか」は答えに関係ない。手順の側が「誰に渡すか」を出す。
+// キャラを渡されているときは実在する組合せだけに絞る(「手持ちのキャラだけで育てる」)。
+// 渡されていないときは、IDが効くのは第3進化の偶奇と第4進化のグループ所属だけなので
+// 偶数代表と奇数代表の2つで足りる。Python正本(holders)と揃えること
+function holders(chars) {
+  if (chars && chars.length) {
+    const seen = new Set(), out = [];
+    for (const c of chars) {
+      const sid = canonSid(c.section_id);
+      const par = SIDS.indexOf(sid) % 2;
+      const key = c.class + '|' + c.gender + '|' + par;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push([c.class, c.gender, sid]);
+    }
+    return out;
+  }
+  const out = [];
+  for (const c of ALL_CLASSES) for (const g of GENDERS)
+    for (const s of [SIDS[0], SIDS[1]]) out.push([c, g, s]);
+  return out;
+}
+
 // 工程がキャラに要求する条件。工程ごとに厳しさが違う。
 // 第1/第2進化は職業だけ(IDは不問)、第3進化は職業+Section IDの偶奇、
 // 第4進化は職業+性別+IDが完全一致でないと同じ結果にならない
@@ -4394,7 +4480,7 @@ function cellChain(form) {
 // 以前は「基本マグ(Lv5)にセルを使う」経路しか探索しておらず、36種のうち1種しか
 // 出せていなかった(2026-08-12)。セルマグになると給餌テーブル7に変わり、
 // 以降ステータスでは進化しない
-function cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells) {
+function cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells, chars) {
   if (useCells === false) return [];
   if (wantForm && !MG_CELLMAGS[wantForm]) return [];   // 通常マグ指定。セルでは終われない
   // 形態を指定されたときは連鎖も辿る。無指定のときは1段のものだけ
@@ -4402,23 +4488,60 @@ function cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells) {
     : Object.keys(MG_CELLMAGS).sort().filter(f => cellChain(f).length === 1);
   const final = MSTATS.reduce((a, s) => a + tgt[s], 0);
   const out = [];
-  for (const formC of forms) {
+  const seen = new Map();   // planKey -> out の添字。同じ手順なら手間の小さい方を残す
+  // **セルに必要なレベルまで育てる区間は、セルの種類に依らない**(必要レベルと持ち主だけで
+  // 決まる)。36種 × 12人ぶん組み直すと3倍以上遅くなるので、(持ち主, 必要レベル) で覚える
+  const growCache = new Map();
+  const growTo = (m, need, key) => {
+    if (!growCache.has(key)) {
+      let got = null;
+      for (let lv = Math.max(need, m.level + 5); lv <= final && !got; lv += 5) {
+        const [cands] = ordered(lv, m.stats, tgt, 3);
+        for (const w of cands) {
+          const r = runTo(m.clone(), w, bank);
+          if (r[0]) { got = r; break; }
+        }
+      }
+      growCache.set(key, got);
+    }
+    const hit = growCache.get(key);
+    return hit ? [hit[0].clone(), hit[1]] : null;
+  };
+  // **セルを使った後の区間は持ち主に依らない**(セルマグは stage>=4 なので
+  // _checkEvolution が即 return する = 形態も給餌テーブルも変わらない)
+  const afterCache = new Map();
+  const runAfterCell = m => {
+    const key = m.form + '|' + MSTATS.map(s => m.stats[s]).join(',')
+      + '|' + MSTATS.map(s => m.exp[s]).join(',');
+    if (!afterCache.has(key)) {
+      const r = runTo(m, tgt, bank);
+      afterCache.set(key, r[0] ? r : null);
+    }
+    const hit = afterCache.get(key);
+    return hit ? [hit[0].clone(), hit[1]] : [null, null];
+  };
+  // **持ち主で結果が変わるので渡してみる**(以前は固定していて 20案 → 52案 を
+  // 取りこぼしていた。2026-08-20)。効く道は2つあって、どちらも要る:
+  //   ① 同じセルでも Section ID の偶奇で別の形態になる (CELL_IDS)
+  //   ② セルに必要なレベルまで育てる区間は、第3形態の再判定(職業 × IDの偶奇)と
+  //      Lv100 を跨ぐときの第4進化(職業 × 性別 × ID)を通る
+  // ②があるので canUseCell が職業を見ないからといって偶奇2通りでは足りない
+  const hs = holders(chars);
+  for (const formC of forms) for (const [clsC, genC, sidC] of hs) {
     const chain = cellChain(formC);
     if (!chain.length || chain.length > MAX_CELL_CHAIN) continue;
     let m = st.mag.clone();
+    handOver(m, clsC, genC, sidC);
     const tail = [];
     let ok = true;
-    for (const [cell, , cond] of chain) {
+    for (let ci = 0; ci < chain.length; ci++) {
+      const [cell, , cond] = chain[ci];
       const need = cond.min_level || 0;
       if (m.level < need) {                  // セルに必要なレベルまで育ててから使う
-        let grown = null;
-        for (let lv = Math.max(need, m.level + 5); lv <= final && !grown; lv += 5) {
-          const [cands] = ordered(lv, m.stats, tgt, 3);
-          for (const w of cands) {
-            const r = runTo(m.clone(), w, bank);
-            if (r[0]) { grown = r; break; }
-          }
-        }
+        const key = [clsC, genC, sidC, need, ci, m.form,
+                     MSTATS.map(s => m.stats[s]).join(','),
+                     MSTATS.map(s => m.exp[s]).join(',')].join('|');
+        const grown = growTo(m, need, key);
         if (!grown) { ok = false; break; }
         m = grown[0];
         tail.push({ blocks: grown[1], after: m.snapshot() });
@@ -4427,14 +4550,26 @@ function cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells) {
       tail.push({ cellUse: cell, blocks: [], after: m.snapshot() });
     }
     if (!ok) continue;
-    const r2 = runTo(m, tgt, bank);
+    const r2 = runAfterCell(m);
     if (!r2[0] || !pbOk(r2[0].pbs, wantPbs, avoidPbs, true)) continue;
     tail.push({ blocks: r2[1], after: r2[0].snapshot() });
+    // セルを使う工程には**そのキャラに持たせておく**必要がある。記録しないと
+    // segmentsOf が受け渡しを出せず、alternatives も担当を列挙できない
+    tail[0] = Object.assign({}, tail[0],
+                            { cls: clsC, gender: genC, sid: sidC, parity: true });
     const p = pack(st, tail, r2[0]);
     p.rare = null;
     p.cells = chain.map(x => x[0]);
     p.cell = chain[chain.length - 1][0];     // 表示の互換用(最後に使うセル)
     p.cellForm = r2[0].form;
+    // 同じ手順になる持ち主が複数いるときは**受け渡しが少ない方**を採る
+    const k = planKey(p);
+    if (seen.has(k)) {
+      const i = seen.get(k);
+      if (cmpEase(planEase(p), planEase(out[i])) < 0) out[i] = p;
+      continue;
+    }
+    seen.set(k, out.length);
     out.push(p);
   }
   return out;
@@ -4472,15 +4607,34 @@ function finish(st, tgt, chars, bank, wantPbs, avoidPbs, wantForm, useCells) {
       if (best) { out.push(best[1]); break; }
     }
   }
-  const r = runTo(st.mag.clone(), tgt, bank);
-  if (r[0] && pbOk(r[0].pbs, wantPbs, avoidPbs, true)
-      && (!wantForm || r[0].form === wantForm)) {
-    const p = pack(st, [{ blocks: r[1], after: r[0].snapshot() }], r[0]);
+  // (b) レアマグを経由しない案。**この区間も持ち主で結果が変わる**:
+  // 第3形態は5レベルごとに _third(職業 × IDの偶奇)で判定し直され、Lv100 を跨げば
+  // _fourth(職業 × 性別 × ID)も働く。以前はここで持ち主を渡していなかったため、
+  // 渡せば届く案が構造的に出せなかった(第3形態からの再開で 1案 → 8案。2026-08-20)
+  // **同じ手順になる持ち主が複数いるときは、受け渡しが少ない方を採る**。
+  // 先着順で潰すと、直前の工程と職業が食い違う持ち主を記録してしまい、
+  // 要らない受け渡しが1回増えた案として出てしまう
+  const atB = new Map();
+  for (const [cls, gen, sid] of holders(chars)) {
+    const mb = st.mag.clone();
+    handOver(mb, cls, gen, sid);
+    const r = runTo(mb, tgt, bank);
+    if (!r[0] || !pbOk(r[0].pbs, wantPbs, avoidPbs, true)) continue;
+    if (wantForm && r[0].form !== wantForm) continue;
+    const p = pack(st, [{ cls: cls, gender: gen, sid: sid,
+                          blocks: r[1], after: r[0].snapshot() }], r[0]);
     p.rare = null;
+    const k = planKey(p);
+    if (atB.has(k)) {
+      const i = atB.get(k);
+      if (cmpEase(planEase(p), planEase(out[i])) < 0) out[i] = p;
+      continue;
+    }
+    atB.set(k, out.length);
     out.push(p);
   }
   // (c) マグセル経由 — 育てている途中でセルを使う
-  return out.concat(cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells));
+  return out.concat(cellPlans(st, tgt, bank, wantPbs, avoidPbs, wantForm, useCells, chars));
 }
 
 // **すでにレアマグになっているマグ**を目標まで伸ばす手順を作る。

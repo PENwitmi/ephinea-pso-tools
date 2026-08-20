@@ -356,13 +356,14 @@ function charsBySid() {
 // applyMagStartHandoff()。**キー名と項目の並びの契約はここだけに置く**
 // (3箇所に散っていると、片方だけ足して黙って落ちる)。
 // stats は整数、exp は 0〜99 の端数。どちらも**整数演算で取り出しておくこと**
-// (5.06 から 0.06 を割り戻すと丸めでずれる)
+// (5.06 から 0.06 を割り戻すと丸めでずれる)。
+// **持ち主(職業・Section ID)は送らない**。マグは共有倉庫でいつでも渡せるので
+// いま誰が持っていても手順は同じで、誰に渡すかはソルバが割り出して手順に書く
 function magHandoff(o) {
   try {
     localStorage.setItem(SKEYS.mag_start, JSON.stringify({
       form: o.form, stats: o.stats, exp: o.exp,
-      sync: o.sync || 0, iq: o.iq || 0, pbs: o.pbs || [],
-      cls: o.cls || null, sectionId: o.sectionId || null, char: o.char || null }));
+      sync: o.sync || 0, iq: o.iq || 0, pbs: o.pbs || [] }));
   } catch (e) { return false; }
   location.href = '../mag/';
   return true;
@@ -1046,15 +1047,11 @@ if (!inv || !inv.items || !inv.items.length) {
     }
     // 持たせるキャラ。「4」も「4 Bank」もそのキャラのものなので初期値にする。
     // 共有倉庫(ShareBank)のマグだけは持ち主が分からないので、マグ画面で選んでもらう
-    const slotNum = String(d.slot).match(/^(\d+)/);
-    const ch = slotNum && inv.chars ? inv.chars[slotNum[1]] : null;
     magHandoff({
       form: species,
       stats: (stats || []).map(v => Math.floor(v)),
       exp: (stats || []).map(v => Math.round(v * 100) % 100),
-      sync: extra ? extra.sync : 0, iq: extra ? extra.iq : 0, pbs: pbs,
-      cls: ch ? ch.cls : null, sectionId: ch ? ch.sectionId : null,
-      char: ch ? ch.name : null });
+      sync: extra ? extra.sync : 0, iq: extra ? extra.iq : 0, pbs: pbs });
   }
   const doSort = th => {
     const k = th.dataset.k;
