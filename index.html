@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ephinea Tools — PSOBB ステータスシミュレーター & アイテム一覧</title>
-<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)、アイテム一覧(全キャラ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)。データはブラウザ内にのみ保存。">
+<title>Ephinea Tools — PSOBB マグ育成プランナー & ステータスシミュレーター</title>
+<meta name="description" content="PSOBB Ephineaサーバー用の非公式ツール集。マグ育成プランナー(仕上がりから餌の順番を逆算)、ステータスシミュレーター(装備効果・セット効果の可視化)、アイテム一覧(全キャラ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)、キャラクター一覧。データはブラウザ内にのみ保存。">
 <style>/* Ephinea Tools 共通テーマ (単一ソース)
    全4ページ+シミュレーターのローカル版に埋め込まれる。
    パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
@@ -158,7 +158,20 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 .hero { margin-bottom: 18px; padding: 18px 20px; border: 1px solid var(--border); border-radius: 14px; background: linear-gradient(135deg, var(--accent-soft), var(--card) 55%); }
 .hero h1 { font-size: 1.5rem; margin-bottom: 4px; }
-.cards2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 14px; }
+/* ツールカードは5枚。auto-fit だと最後の1〜2枚が余って行が欠けるので、
+   6分割の格子に「上段3枚(各2) + 下段2枚(各3)」で敷き詰める。**枚数が変わったら要調整** */
+.cards2 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 14px; }
+.cards2 > .toolcard { grid-column: span 2; }
+.cards2 > .toolcard:nth-last-child(-n+2) { grid-column: span 3; }
+@media (max-width: 900px) {
+  .cards2 { grid-template-columns: repeat(2, 1fr); }
+  .cards2 > .toolcard, .cards2 > .toolcard:nth-last-child(-n+2) { grid-column: span 1; }
+  .cards2 > .toolcard:last-child { grid-column: span 2; }
+}
+@media (max-width: 560px) {
+  .cards2 { grid-template-columns: 1fr; }
+  .cards2 > .toolcard, .cards2 > .toolcard:last-child { grid-column: span 1; }
+}
 .toolcard { display: block; text-decoration: none; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; transition: border-color 0.15s; }
 .toolcard:hover { border-color: var(--accent); }
 .toolcard h3 { margin-bottom: 6px; }
@@ -182,16 +195,16 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 <meta property="og:site_name" content="Ephinea Tools">
 <meta property="og:locale" content="ja_JP">
 <meta property="og:url" content="https://ephinea-pso-tools.nishimoto-learning.jp/">
-<meta property="og:title" content="Ephinea Tools — PSOBB ステータスシミュレーター &amp; アイテム一覧">
-<meta property="og:description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)、アイテム一覧(全キャラ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)。データはブラウザ内にのみ保存。">
+<meta property="og:title" content="Ephinea Tools — PSOBB マグ育成プランナー &amp; ステータスシミュレーター">
+<meta property="og:description" content="PSOBB Ephineaサーバー用の非公式ツール集。マグ育成プランナー(仕上がりから餌の順番を逆算)、ステータスシミュレーター(装備効果・セット効果の可視化)、アイテム一覧(全キャラ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)、キャラクター一覧。データはブラウザ内にのみ保存。">
 <meta property="og:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Ephinea Tools — PSOBB ステータスシミュレーター &amp; アイテム一覧">
-<meta name="twitter:description" content="PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)、アイテム一覧(全キャラ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)。データはブラウザ内にのみ保存。">
+<meta name="twitter:title" content="Ephinea Tools — PSOBB マグ育成プランナー &amp; ステータスシミュレーター">
+<meta name="twitter:description" content="PSOBB Ephineaサーバー用の非公式ツール集。マグ育成プランナー(仕上がりから餌の順番を逆算)、ステータスシミュレーター(装備効果・セット効果の可視化)、アイテム一覧(全キャラ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)、キャラクター一覧。データはブラウザ内にのみ保存。">
 <meta name="twitter:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og.png">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Ephinea Tools — PSOBB ステータスシミュレーター & アイテム一覧","description":"PSOBB Ephineaサーバー用の非公式ツール集。ステータスシミュレーター(装備効果・セット効果の可視化)、アイテム一覧(全キャラ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)。データはブラウザ内にのみ保存。","url":"https://ephinea-pso-tools.nishimoto-learning.jp/","applicationCategory":"GameApplication","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript","inLanguage":"ja","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"},"isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Ephinea Tools — PSOBB マグ育成プランナー & ステータスシミュレーター","description":"PSOBB Ephineaサーバー用の非公式ツール集。マグ育成プランナー(仕上がりから餌の順番を逆算)、ステータスシミュレーター(装備効果・セット効果の可視化)、アイテム一覧(全キャラ・全倉庫の横断検索とPD評価)、欲しいものリスト(ドロップ逆引き)、キャラクター一覧。データはブラウザ内にのみ保存。","url":"https://ephinea-pso-tools.nishimoto-learning.jp/","applicationCategory":"GameApplication","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript","inLanguage":"ja","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"},"isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/"}}</script>
 </head>
 <body>
 <div class="wrap">
@@ -205,15 +218,15 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 <main>
 <div class="hero">
   <h1>Ephinea Tools</h1>
-  <p style="margin:2px 0 6px; font-size:0.95rem">PSO Blue Burst (Ephineaサーバー) 用の非公式ツール集です。<b>「あのアイテムはどのキャラの倉庫だっけ?」</b><b>「この装備はどんな効果?」</b>をブラウザだけで解決できます。</p>
+  <p style="margin:2px 0 6px; font-size:0.95rem">PSO Blue Burst (Ephineaサーバー) 用の非公式ツール集です。<b>「このマグ、どの餌をどの順であげる?」</b><b>「あのアイテムはどのキャラの倉庫だっけ?」</b><b>「この装備はどんな効果?」</b>をブラウザだけで解決できます。</p>
   <div class="note" style="line-height:1.9">
-    <b>1️⃣ キャラクターデータを取り込む</b>(1分・任意) → <b>2️⃣ アイテム一覧</b>で全キャラ・全倉庫を横断検索 → <b>3️⃣ シミュレーター</b>で持っている装備からビルドを組む<br>
-    取込みなしでも、シミュレーターは全装備データ入りでそのまま使えます。
+    <b>キャラクターデータを取り込む</b>(1分)と、キャラクターとアイテム一覧が使えるようになり、ほかのツールも自分の持ち物を踏まえた表示になります。<br>
+    取込みなしでも、マグ育成プランナー・シミュレーター・欲しいものリストはそのまま使えます。
   </div>
 </div>
 
 <div class="panel">
-  <h2>1️⃣ キャラクターデータ取込み</h2>
+  <h2>キャラクターデータ取込み</h2>
   <p class="note" style="margin-bottom:10px">Ephinea公式からメールで届くキャラクターデータ(<b>.psochar / .psobank ファイル</b>)を<b>そのまま全部まとめてドロップ</b>するだけ。変換ツールは不要です。全キャラの所持品・個人倉庫・共有倉庫に加えて<b>キャラクター名・職業・レベル</b>も読み込まれます。データは<b>あなたのブラウザ内でのみ処理・保存</b>され、外部には一切送信されません。</p>
   <details style="margin-bottom:10px"><summary>キャラクターデータの入手方法 (Ephinea公式)</summary>
     <ol class="note" style="margin:6px 0 0 1.4em">
@@ -236,17 +249,25 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 </div>
 
 <div class="cards2">
-  <a class="toolcard" href="./inventory/">
-    <h3>2️⃣ 📦 アイテム一覧</h3>
-    <p>「あのレア武器どのキャラの倉庫だっけ?」を解決。全キャラの所持品・個人倉庫・共有倉庫をまとめて検索・絞り込み。ついでに相場(Price guide準拠のPD評価)の目安も分かります。</p>
+  <a class="toolcard" href="./characters/">
+    <h3>👤 キャラクター</h3>
+    <p>取り込んだキャラクターの職業・Section ID・レベル・ステータス・装備を一覧できます。データに記録されていないマテリアル使用数は、素のステータスから逆算して表示。そのままシミュレーターへ渡せます。</p>
   </a>
-  <a class="toolcard" href="./simulator/">
-    <h3>3️⃣ ⚔️ ステータスシミュレーター</h3>
-    <p>職業・レベル・マグ・マテリアル・装備を選ぶと、ステータスと装備効果が一目で分かります。「この効果はどの装備から出ているのか」「攻撃速度はどれが優先されるのか」「Thirteenのセット効果は何と組めば発動するのか」まで表示。データを取り込むと所持品に🔖が付き、持っている装備だけでビルドを検討できます。</p>
+  <a class="toolcard" href="./inventory/">
+    <h3>📦 アイテム一覧</h3>
+    <p>「あのレア武器どのキャラの倉庫だっけ?」を解決。全キャラの所持品・個人倉庫・共有倉庫をまとめて検索・絞り込み。ついでに相場(Price guide準拠のPD評価)の目安も分かります。</p>
   </a>
   <a class="toolcard" href="./wishlist/">
     <h3>🎯 欲しいものリスト</h3>
     <p>欲しいアイテムを登録すると、どの難易度・どのSection IDで誰(どの箱)からどの確率でドロップするかを逆引きできます。PD相場の目安付き。データを取り込んでいれば、既に持っているものは所持済みとして表示されます。</p>
+  </a>
+  <a class="toolcard" href="./simulator/">
+    <h3>⚔️ ステータスシミュレーター</h3>
+    <p>職業・レベル・マグ・マテリアル・装備を選ぶと、ステータスと装備効果が一目で分かります。「この効果はどの装備から出ているのか」「攻撃速度はどれが優先されるのか」「Thirteenのセット効果は何と組めば発動するのか」まで表示。データを取り込むと所持品に🔖が付き、持っている装備だけでビルドを検討できます。</p>
+  </a>
+  <a class="toolcard" href="./mag/">
+    <h3>🧬 マグ育成プランナー</h3>
+    <p>仕上がりのステータスを決めると、どの餌をどの順で何個あげればいいかを逆算します。レアマグ・マグセル・バンクを使う手や、途中で誰に持たせるかまで含めて、いちばん楽な育て方から順に提示。育てかけのマグの続きからも計算できます。</p>
   </a>
 </div>
 
@@ -687,7 +708,7 @@ function showStatus() {
   sum.innerHTML =
     `<span class="sumchip">✓ <b>${inv.items.length}</b>件 取り込み済み <span class="note">(${(inv.imported || '').slice(0, 16).replace('T', ' ')})</span></span>` +
     chars +
-    `<a class="btn nextbtn" href="./inventory/">次へ: 2️⃣ アイテム一覧で確認する →</a>`;
+    `<a class="btn nextbtn" href="./inventory/">次へ: アイテム一覧で確認する →</a>`;
   clearBtn.style.display = '';
 }
 showStatus();

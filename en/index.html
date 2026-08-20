@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Ephinea Tools — PSOBB Stat Simulator & Item List</title>
-<meta name="description" content="Unofficial tools for the PSOBB Ephinea server: stats simulator (equipment and set effects), item list (search across all characters and banks with PD pricing), and a wishlist (reverse drop lookup). All data stays in your browser.">
+<title>Ephinea Tools — PSOBB Mag Planner & Stat Simulator</title>
+<meta name="description" content="Unofficial tools for the PSOBB Ephinea server: a mag planner (working the feeding order back from the stats you want), a stat simulator (equipment and set effects), an item list (search across all characters and banks with PD pricing), a wishlist (reverse drop lookup) and a character overview. All data stays in your browser.">
 <style>/* Ephinea Tools 共通テーマ (単一ソース)
    全4ページ+Simulatorのローカル版に埋め込まれる。
    パレット方針: クリーン・ライト基調 + フォトンブルー(PSOブルー)アクセント。
@@ -158,7 +158,20 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 .hero { margin-bottom: 18px; padding: 18px 20px; border: 1px solid var(--border); border-radius: 14px; background: linear-gradient(135deg, var(--accent-soft), var(--card) 55%); }
 .hero h1 { font-size: 1.5rem; margin-bottom: 4px; }
-.cards2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 14px; }
+/* ツールカードは5枚。auto-fit だと最後の1–2枚が余って行が欠けるので、
+   6分割の格子に「上段3枚(各2) + 下段2枚(各3)」で敷き詰める。**枚数が変わったら要調整** */
+.cards2 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-bottom: 14px; }
+.cards2 > .toolcard { grid-column: span 2; }
+.cards2 > .toolcard:nth-last-child(-n+2) { grid-column: span 3; }
+@media (max-width: 900px) {
+  .cards2 { grid-template-columns: repeat(2, 1fr); }
+  .cards2 > .toolcard, .cards2 > .toolcard:nth-last-child(-n+2) { grid-column: span 1; }
+  .cards2 > .toolcard:last-child { grid-column: span 2; }
+}
+@media (max-width: 560px) {
+  .cards2 { grid-template-columns: 1fr; }
+  .cards2 > .toolcard, .cards2 > .toolcard:last-child { grid-column: span 1; }
+}
 .toolcard { display: block; text-decoration: none; color: var(--text); background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 18px; transition: border-color 0.15s; }
 .toolcard:hover { border-color: var(--accent); }
 .toolcard h3 { margin-bottom: 6px; }
@@ -182,16 +195,16 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 <meta property="og:site_name" content="Ephinea Tools">
 <meta property="og:locale" content="en_US">
 <meta property="og:url" content="https://ephinea-pso-tools.nishimoto-learning.jp/en/">
-<meta property="og:title" content="Ephinea Tools — PSOBB Stat Simulator &amp; Item List">
-<meta property="og:description" content="Unofficial tools for the PSOBB Ephinea server: stats simulator (equipment and set effects), item list (search across all characters and banks with PD pricing), and a wishlist (reverse drop lookup). All data stays in your browser.">
+<meta property="og:title" content="Ephinea Tools — PSOBB Mag Planner &amp; Stat Simulator">
+<meta property="og:description" content="Unofficial tools for the PSOBB Ephinea server: a mag planner (working the feeding order back from the stats you want), a stat simulator (equipment and set effects), an item list (search across all characters and banks with PD pricing), a wishlist (reverse drop lookup) and a character overview. All data stays in your browser.">
 <meta property="og:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Ephinea Tools — PSOBB Stat Simulator &amp; Item List">
-<meta name="twitter:description" content="Unofficial tools for the PSOBB Ephinea server: stats simulator (equipment and set effects), item list (search across all characters and banks with PD pricing), and a wishlist (reverse drop lookup). All data stays in your browser.">
+<meta name="twitter:title" content="Ephinea Tools — PSOBB Mag Planner &amp; Stat Simulator">
+<meta name="twitter:description" content="Unofficial tools for the PSOBB Ephinea server: a mag planner (working the feeding order back from the stats you want), a stat simulator (equipment and set effects), an item list (search across all characters and banks with PD pricing), a wishlist (reverse drop lookup) and a character overview. All data stays in your browser.">
 <meta name="twitter:image" content="https://ephinea-pso-tools.nishimoto-learning.jp/og.png">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Ephinea Tools — PSOBB Stat Simulator & Item List","description":"Unofficial tools for the PSOBB Ephinea server: stats simulator (equipment and set effects), item list (search across all characters and banks with PD pricing), and a wishlist (reverse drop lookup). All data stays in your browser.","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/","applicationCategory":"GameApplication","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript","inLanguage":"en","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"},"isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"}}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Ephinea Tools — PSOBB Mag Planner & Stat Simulator","description":"Unofficial tools for the PSOBB Ephinea server: a mag planner (working the feeding order back from the stats you want), a stat simulator (equipment and set effects), an item list (search across all characters and banks with PD pricing), a wishlist (reverse drop lookup) and a character overview. All data stays in your browser.","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/","applicationCategory":"GameApplication","operatingSystem":"Any (web browser)","browserRequirements":"Requires JavaScript","inLanguage":"en","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"JPY"},"isPartOf":{"@type":"WebSite","name":"Ephinea Tools","url":"https://ephinea-pso-tools.nishimoto-learning.jp/en/"}}</script>
 </head>
 <body>
 <div class="wrap">
@@ -205,15 +218,15 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 <main>
 <div class="hero">
   <h1>Ephinea Tools</h1>
-  <p style="margin:2px 0 6px; font-size:0.95rem">Unofficial tools for PSO Blue Burst (Ephinea server). Answer <b>"which character's bank was that item in?"</b> and <b>"what does this gear actually do?"</b> right in your browser.</p>
+  <p style="margin:2px 0 6px; font-size:0.95rem">Unofficial tools for PSO Blue Burst (Ephinea server). Answer <b>"what do I feed this mag, and in what order?"</b> <b>"which character's bank was that item in?"</b> and <b>"what does this gear actually do?"</b> right in your browser.</p>
   <div class="note" style="line-height:1.9">
-    <b>1️⃣ Import your character data</b> (1 min, optional) → <b>2️⃣ Item List</b> to search every character and bank at once →  <b>3️⃣ Simulator</b> to build with gear you actually own<br>
-    No import needed to use the simulator — it ships with the full equipment database.
+    <b>Import your character data</b> (1 min) to unlock Characters and the Item List, and to let the other tools account for what you actually own.<br>
+    Without importing anything, the mag planner, the simulator and the wishlist work as they are.
   </div>
 </div>
 
 <div class="panel">
-  <h2>1️⃣ Import character data</h2>
+  <h2>Import character data</h2>
   <p class="note" style="margin-bottom:10px">Just drop the character data files e-mailed to you by Ephinea (<b>.psochar / .psobank</b>) — all of them at once, no converter needed. Every character's inventory, bank and the shared bank are loaded, plus <b>character names, classes and levels</b>. Everything is processed and stored <b>only inside your browser</b>; nothing is ever sent anywhere.</p>
   <details style="margin-bottom:10px"><summary>How to get your character data (official)</summary>
     <ol class="note" style="margin:6px 0 0 1.4em">
@@ -236,17 +249,25 @@ details summary { cursor: pointer; font-size: 0.82rem; color: var(--accent); mar
 </div>
 
 <div class="cards2">
-  <a class="toolcard" href="./inventory/">
-    <h3>2️⃣ 📦 Item List</h3>
-    <p>Solves "which character's bank was that rare in?" — search and filter every character's inventory, bank and the shared bank at once, with Price guide-based PD value estimates on the side.</p>
+  <a class="toolcard" href="./characters/">
+    <h3>👤 Characters</h3>
+    <p>See the class, Section ID, level, stats and equipped gear of every character you imported. Material usage is not stored in the data, so it is worked back out of the raw stats and shown for you. Any character can be sent straight to the simulator.</p>
   </a>
-  <a class="toolcard" href="./simulator/">
-    <h3>3️⃣ ⚔️ Stat Simulator</h3>
-    <p>Pick a class, level, mag, materials and gear to see your stats and every equipment effect at a glance — including which item each effect comes from, which attack-speed source wins, and what completes the Thirteen set effect. Import your data and owned items get a 🔖 badge so you can plan builds with gear you actually have.</p>
+  <a class="toolcard" href="./inventory/">
+    <h3>📦 Item List</h3>
+    <p>Solves "which character's bank was that rare in?" — search and filter every character's inventory, bank and the shared bank at once, with Price guide-based PD value estimates on the side.</p>
   </a>
   <a class="toolcard" href="./wishlist/">
     <h3>🎯 Wishlist</h3>
     <p>Add the items you want and reverse-look-up which difficulty, Section ID and enemy (or box) drops them, at what rate. With PD value estimates. If you've imported your data, items you already own are marked as owned.</p>
+  </a>
+  <a class="toolcard" href="./simulator/">
+    <h3>⚔️ Stat Simulator</h3>
+    <p>Pick a class, level, mag, materials and gear to see your stats and every equipment effect at a glance — including which item each effect comes from, which attack-speed source wins, and what completes the Thirteen set effect. Import your data and owned items get a 🔖 badge so you can plan builds with gear you actually have.</p>
+  </a>
+  <a class="toolcard" href="./mag/">
+    <h3>🧬 Mag Planner</h3>
+    <p>Set the stats you want to end up with and the planner works backwards to the exact feeding order — which food, how many, and when. Rare mags, mag cells, the bank trick and who to hand the mag to along the way are all part of the plan, ranked from the easiest one to carry out. It can also start from a mag you have already been raising.</p>
   </a>
 </div>
 
@@ -687,7 +708,7 @@ function showStatus() {
   sum.innerHTML =
     `<span class="sumchip">✓ <b>${inv.items.length}</b> items imported  <span class="note">(${(inv.imported || '').slice(0, 16).replace('T', ' ')})</span></span>` +
     chars +
-    `<a class="btn nextbtn" href="./inventory/">Next: 2️⃣ Check them in the Item List →</a>`;
+    `<a class="btn nextbtn" href="./inventory/">Next: Check them in the Item List →</a>`;
   clearBtn.style.display = '';
 }
 showStatus();
