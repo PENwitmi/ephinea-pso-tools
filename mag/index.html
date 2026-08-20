@@ -329,6 +329,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
        font-size: 0.92em; }
 .magnote { font-size: 0.84rem; color: var(--sub); margin: 8px 0; }
+/* 入力の塊の見出し。**4ステの入力が2つ並ぶ**(いまのマグ / 仕上がりの目標)ので、
+   どちらがどちらか分かるようにする */
+.grouplab { font-size: 0.8rem; font-weight: 700; color: var(--accent);
+            border-top: 1px solid var(--border); padding-top: 8px; margin: 12px 0 7px; }
+#magOwnBox > .grouplab:first-child { border-top: none; padding-top: 0; margin-top: 0; }
 .resbtns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .frozen { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px;
           padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px;
@@ -399,7 +404,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
 <div class="maglayout">
 <div class="maginputs">
   <div class="panel">
-    <h2>1. 仕上がりの目標</h2>
+    <h2>1. 目標</h2>
     <div class="modepick">
       <button type="button" class="modebtn on" data-mode="wiki">wiki推奨プラン</button>
       <button type="button" class="modebtn" data-mode="lv100">レアマグ確定まで (Lv100)</button>
@@ -412,6 +417,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
         <select id="magP2"></select></div>
     </div>
     <div id="magOwnBox" hidden>
+      <div class="grouplab">いまのマグ</div>
       <div class="optrow"><label for="ownForm">いまの形態</label>
         <select id="ownForm"></select></div>
       <div id="ownStats"></div>
@@ -430,6 +436,7 @@ code { background: var(--accent-soft); border-radius: 4px; padding: 0 5px;
       </details>
     </div>
     <div class="magnote" id="magPresetNote"></div>
+    <div class="grouplab">仕上がりの目標</div>
     <div id="magStats"></div>
     <div class="magtotal"><span>合計 (マグのレベル)</span><span><b id="magSum">200</b> / 200</span></div>
     <div class="magnote" id="magSumWarn"></div>
