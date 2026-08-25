@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>RAmarl / Greenill・アルティメット装備の見取り図</title>
+<style>
+:root {
+  --bg: #f4f7fa; --card: #ffffff; --text: #16212e; --sub: #536476;
+  --border: #dde5ee; --accent: #0a6fae; --accent-soft: #e6f4fc;
+  --photon: #31c7e8;
+  --gold: #8a6114; --gold-soft: #fbf3e2; --red: #d92d20; --green: #0f7a58;
+  --chip-weapon: #e6f2fd; --chip-weapon-t: #0a5cb0;
+  --chip-unit: #f1ecfe; --chip-unit-t: #5b2ccc;
+  --chip-barrier: #fbf3e2; --chip-barrier-t: #7d5710;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #0e141c; --card: #161f2b; --text: #e6edf5; --sub: #94a5b9;
+    --border: #24313f; --accent: #3db4f2; --accent-soft: #10293c;
+    --gold: #e0a94f; --gold-soft: #2f2510; --red: #f97066; --green: #3ccb95;
+    --chip-weapon: #132a3e; --chip-weapon-t: #6cb8f7;
+    --chip-unit: #241a3d; --chip-unit-t: #b18aff;
+    --chip-barrier: #2f2510; --chip-barrier-t: #e0a94f; }
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+       background: var(--bg); color: var(--text); line-height: 1.7;
+       padding: 24px 14px 80px; font-size: 15px; }
+.wrap { max-width: 780px; margin: 0 auto; }
+a { color: var(--accent); }
+
+h1 { font-size: 1.35rem; margin-bottom: 6px; }
+h2 { display: flex; align-items: center; gap: 8px; font-size: 1.05rem;
+     margin: 30px 0 12px; color: var(--sub); font-weight: 700; }
+h2::before { content: ''; width: 3px; height: 1em; border-radius: 2px;
+             background: linear-gradient(180deg, var(--accent), var(--photon)); }
+p { margin: 6px 0; }
+
+.lead { border-left: 3px solid var(--accent);
+        border-image: linear-gradient(180deg, var(--accent), var(--photon)) 1;
+        padding: 2px 0 2px 12px; margin: 8px 0 20px;
+        color: var(--sub); font-size: 0.92rem; }
+.note { font-size: 0.82rem; color: var(--sub); margin-top: 6px; }
+.footer { margin-top: 40px; font-size: 0.75rem; color: var(--sub); }
+.footer a { color: var(--sub); }
+
+.item { background: var(--card); border: 1px solid var(--border);
+        border-radius: 12px; padding: 14px 18px; margin: 10px 0; }
+.item .head { display: flex; align-items: baseline; flex-wrap: wrap;
+              gap: 8px 10px; margin-bottom: 6px; }
+.item .name { font-size: 1.1rem; font-weight: 800; }
+.item .en { font-size: 0.78rem; color: var(--sub); font-weight: 500;
+            margin-left: -4px; }
+.item .drops { font-size: 0.85rem; color: var(--sub); margin: 4px 0 10px; }
+.item .drops .idtag { vertical-align: middle; }
+.item .drops .rate { font-variant-numeric: tabular-nums; font-weight: 600;
+                     color: var(--text); }
+.item .drops .and { color: var(--sub); margin: 0 6px; }
+.item .drops .droprow { display: block; padding: 2px 0; }
+.item .drops .rare { display: inline-block; padding: 0 6px; border-radius: 99px;
+                     font-size: 0.68rem; font-weight: 700; color: var(--red);
+                     border: 1px solid var(--red); margin-left: 4px;
+                     vertical-align: middle; }
+.item dl { display: grid; grid-template-columns: 6em 1fr;
+           gap: 4px 12px; margin-top: 6px; font-size: 0.92rem; }
+.item dt { font-size: 0.78rem; font-weight: 700; color: var(--sub);
+           padding-top: 4px; }
+.item dd { margin: 0; }
+
+.kind { display: inline-block; padding: 1px 8px; border-radius: 99px;
+        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.02em;
+        background: var(--chip-weapon); color: var(--chip-weapon-t); }
+.kind.unit    { background: var(--chip-unit);    color: var(--chip-unit-t); }
+.kind.barrier { background: var(--chip-barrier); color: var(--chip-barrier-t); }
+
+.idtag { display: inline-block; padding: 1px 8px; border-radius: 99px;
+         font-size: 0.72rem; font-weight: 700;
+         background: var(--sid, var(--accent-soft));
+         color: var(--sid-fg, var(--accent));
+         border: 1px solid rgba(0,0,0,0.18); vertical-align: middle; }
+.sid-viridia   { --sid: #00A562; --sid-fg: #FFFFFF; }
+.sid-green     { --sid: #76FE43; --sid-fg: #000000; }
+.sid-bluefull  { --sid: #4488FF; --sid-fg: #FFFFFF; }
+.sid-purple    { --sid: #CC00FF; --sid-fg: #FFFFFF; }
+.sid-pink      { --sid: #FF87CB; --sid-fg: #000000; }
+.sid-red       { --sid: #F70F0F; --sid-fg: #FFFFFF; }
+.sid-oran      { --sid: #F7830F; --sid-fg: #000000; }
+.sid-yellow    { --sid: #F7F715; --sid-fg: #000000; }
+
+@media (max-width: 560px) {
+  .item dl { grid-template-columns: 1fr; gap: 2px; }
+  .item dt { padding-top: 8px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<h1>アルティメット到達おめでとう</h1>
+<div class="lead">
+<p>RAmarl / Section ID = Greenill 向けの、これから何を掘りに行くかの見取り図。
+上から順に「まず狙う → その次 → 長期の目標 → 余裕があれば」と並んでいます。
+急がなくていいし、順番も自由。</p>
+<p>rate は敵1体あたりのドロップ確率。Hildetorr / Dorphon Eclair / Merissa AA は<b>レア変異</b>で、通常敵の <b>1/500</b> の確率でしか湧かないので、表示上の 1/2 は「レア変異と遭遇できたときの確率」であって、実効的なドロップ確率は <b>1/1,000 相当</b>になる。</p>
+</div>
+
+<!-- ============ まず狙う ============ -->
+<h2>まず狙う(アルティメット序盤を安全にする)</h2>
+
+<div class="item">
+  <div class="head">
+    <span class="name">フローズンシューター</span>
+    <span class="en">Frozen Shooter</span>
+    <span class="kind">武器 / ライフル</span>
+  </div>
+  <div class="drops">
+    <span class="idtag sid-green">Greenill</span> Ep1 Hildetorr <span class="rate">1/2</span> <span class="rare">レア変異</span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>単体対象のライフル。スペシャル攻撃は<b>100% 凍結</b>(凍らない敵を除く)。凍った敵はダメージが増える</dd>
+    <dt>メリット</dt><dd>アルティメット序盤は敵の攻撃1発でHPが吹き飛ぶが、この1本があれば「凍らせて→殴る」の型で安全に処理できる。パーティでも動きを止めるだけで貢献になる。特に速い敵に効く</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <div class="head">
+    <span class="name">スプレッドニードル</span>
+    <span class="en">Spread Needle</span>
+    <span class="kind">武器 / ライフル</span>
+  </div>
+  <div class="drops">
+    <span class="idtag sid-green">Greenill</span> Ep1 Merlan <span class="rate">1/900</span>
+    <span class="and">/</span>
+    <span class="idtag sid-red">Redria</span> Ep1 Dark Bringer <span class="rate">1/358</span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>1発で5発同時発射するライフル。スペシャル攻撃は麻痺(Seize)、5体対象</dd>
+    <dt>メリット</dt><dd>群れる敵の相手が一気に楽になる。麻痺を撒ければ数体をまとめて止められる。フローズンシューター(単体凍結)と役割が違うので、両方あると場面ごとに使い分けられる</dd>
+  </dl>
+</div>
+
+<!-- ============ その次 ============ -->
+<h2>その次(命中と手数を底上げする)</h2>
+
+<div class="item">
+  <div class="head">
+    <span class="name">V101</span>
+    <span class="kind unit">ユニット</span>
+  </div>
+  <div class="drops">
+    <span class="droprow"><span class="idtag sid-oran">Oran</span> Ep1 Sinow Blue <span class="rate">1/3,034</span></span>
+    <span class="droprow"><span class="idtag sid-viridia">Viridia</span> Ep1 Crimson Assassin <span class="rate">1/2,291</span></span>
+    <span class="droprow"><span class="idtag sid-yellow">Yellowboze</span> Ep1 Baranz <span class="rate">1/2,965</span></span>
+    <span class="droprow"><span class="idtag sid-green">Greenill</span> Ep4 Zu <span class="rate">1/2,048</span></span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>ATP / DFP / MST / EVP / LCK 各 +15、ATA +1.5、<b>攻撃速度 +40%</b></dd>
+    <dt>メリット</dt><dd>本命は攻撃速度 +40%(Heavenly/Battle と同じスペック)。1秒あたりの発射数が 1.4 倍になるので、火力が実質 1.4 倍になる。RAmarl の装備の中では単独最強クラス</dd>
+    <dt>掘り方</dt><dd>Greenill でも Ep4 Zu から出るが、1体ごとに出会う機会が少なく実プレイでは狙いにくい。定番は Oran のシノワブルー(Lost SOUL BLADE / Knight of Coral の周回)。<b>Greenill / Pinkal / Redria の3色だけでは狙いが立ちにくいので、Oran / Viridia / Yellowboze のキャラを持つ人にお願いするのが現実的</b></dd>
+  </dl>
+</div>
+
+<div class="item">
+  <div class="head">
+    <span class="name">V501</span>
+    <span class="kind unit">ユニット</span>
+  </div>
+  <div class="drops">
+    <span class="droprow"><span class="idtag sid-bluefull">Bluefull</span> Ep2 Sinow Berill <span class="rate">1/1,024</span></span>
+    <span class="droprow"><span class="idtag sid-bluefull">Bluefull</span> Ep2 Delsaber <span class="rate">1/1,024</span></span>
+    <span class="droprow"><span class="idtag sid-pink">Pinkal</span> Ep2 Deldepth <span class="rate">1/1,280</span></span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>凍結・感電・麻痺・混乱・即死のスペシャル攻撃の成功率 +50%(テクの状態異常や、Devil's / Demon's のような HP 吸収系は対象外)</dd>
+    <dt>メリット</dt><dd>スプレッドニードル(麻痺)や後述のカノンルージュ / オフェリセーズ(混乱)のスペシャルが決まりやすくなる。<b>フローズンシューターは既にスペシャル 100% 凍結なので V501 の恩恵は無い</b></dd>
+    <dt>掘り方</dt><dd>Greenill では出ない。Pinkal の Deldepth でも出るが、<b>Bluefull の Ep2 海底で Sinow Berill / Delsaber を回した方が数が出るので現実的</b>。Bluefull のキャラがある人に頼む</dd>
+  </dl>
+</div>
+
+<!-- ============ 長期 ============ -->
+<h2>長期の目標</h2>
+
+<div class="item">
+  <div class="head">
+    <span class="name">ヘブンストライカー</span>
+    <span class="en">Heaven Striker</span>
+    <span class="kind">武器 / ハンドガン</span>
+  </div>
+  <div class="drops">
+    <span class="idtag sid-green">Greenill</span> <span class="idtag sid-red">Redria</span> Ep4 Pyro Goran <span class="rate">1/3,344</span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>ハンドガンだが通常攻撃はライフル並みの射程・自動照準。スペシャル攻撃は<b>Berserk</b>(HP を消費して超高火力を撃つ)。単体対象</dd>
+    <dt>真価</dt><dd><b>Striker Unit(セルマグ)を装備している状態</b>だと、スペシャル攻撃が <b>Divine Punishment</b> に変わり本領を発揮する(ビート時間の百の位が偶数のときに発動)。Striker Unit は <b>Heaven Striker Coat(マグセル)を Lv50 以上の Garuda に使う</b>ことで作れる4段階進化のセルマグ</dd>
+    <dt>メリット</dt><dd>ボス戦の削り速度が別物になる。ドロップ率が低いので、日々のクエストの副産物として狙う。イベント時の Maximum Attack E で狙うと現実的</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <div class="head">
+    <span class="name">Limiter → Adept</span>
+    <span class="kind unit">ユニット(Sealed)</span>
+  </div>
+  <div class="drops">
+    <span class="idtag sid-pink">Pinkal</span> Ep4 Girtablulu <span class="rate">1/394</span>
+    <span class="note">(Greenill では出ない)</span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>Limiter 自体は装備するとステータスが下がる封印品(ATA -10 など)。
+      <b>Limiter を装備した状態で敵を 20,000 体倒す</b>と、インベントリの Limiter に
+      「Use」が出て、<b>Adept</b> というユニットに化ける。<br>
+      Adept の効果: ATP / DFP / MST / EVP / LCK 各 +10、<b>ATA +20</b>、
+      EFR / EIC / ETH / EDK / ELT 各 +6、<b>TP消費 -25%</b>(重ね掛け可能)</dd>
+    <dt>メリット</dt><dd>V101 が攻撃速度で手数を稼ぐのに対し、Adept は <b>ATA を +20 大幅に伸ばしつつ、全ステータス・全属性耐性を底上げし、TP 消費まで軽減</b>する。命中が火力に直結する Ranger では効きが大きく、V101 とは別軸で不可欠なユニット</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <div class="head">
+    <span class="name">レッドリング</span>
+    <span class="en">Red Ring</span>
+    <span class="kind barrier">バリア</span>
+  </div>
+  <div class="drops">
+    <span class="idtag sid-green">Greenill</span> <span class="idtag sid-red">Redria</span> Ep1 Dark Falz <span class="rate">1/186</span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>ATP / ATA / MST / LCK 各 +20、DFP・EVP は大幅上昇、EFR / EIC / ETH 各 +30、EDK / ELT 各 +5、パッシブ HP / TP 回復。<b>装備には Lv180 以上が必要</b></dd>
+    <dt>メリット</dt><dd>攻撃・命中・防御・耐性が同時に上がる万能バリアで、<b>ほぼ全キャラで最強クラス</b>のエンドコンテンツ級装備。<b>装備には Lv180 が必要</b>なので、Lv80 の今からは長い道のり。Dark Falz は Lv80 でも(パーティを組めば)倒せるので、拾うだけ拾って倉庫で待たせておく手もある</dd>
+  </dl>
+</div>
+
+<!-- ============ 余裕があれば ============ -->
+<h2>余裕があれば(用途特化・持っておくと便利)</h2>
+
+<div class="item">
+  <div class="head">
+    <span class="name">カノンルージュ</span>
+    <span class="en">Cannon Rouge</span>
+    <span class="kind">武器 / バズーカ</span>
+  </div>
+  <div class="drops">
+    <span class="idtag sid-green">Greenill</span> Ep4 Dorphon Eclair <span class="rate">1/2</span> <span class="rare">レア変異</span>
+    <span class="and">/</span>
+    <span class="idtag sid-red">Redria</span> Ep4 Ba Boota <span class="rate">1/900</span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd><b>10体対象</b>のバズーカ。スペシャル攻撃は混乱(Chaos)</dd>
+    <dt>メリット</dt><dd>10体まとめて混乱を撒けるので、群れた敵を同士討ちで消化できる。強敵の相手を放置して他を捌ける</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <div class="head">
+    <span class="name">オフェリセーズ</span>
+    <span class="en">Ophelie Seize</span>
+    <span class="kind">武器 / ハンドガン</span>
+  </div>
+  <div class="drops">
+    <span class="idtag sid-pink">Pinkal</span> Ep4 Merissa AA <span class="rate">1/2</span> <span class="rare">レア変異</span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>単体対象のハンドガン。スペシャル攻撃は<b>混乱(Chaos)</b>(名前の Seize と紛らわしいが、実際は Chaos)</dd>
+    <dt>メリット</dt><dd>基礎火力が高く、道中の単体処理が楽になる。ヘブンストライカーが届かないうちの繋ぎとして優秀</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <div class="head">
+    <span class="name">勇者のディスカ</span>
+    <span class="en">Diska of Braveman</span>
+    <span class="kind">武器 / スライサー</span>
+  </div>
+  <div class="drops">
+    <span class="droprow"><span class="idtag sid-red">Redria</span> Ep4 Ze Boota <span class="rate">1/168</span></span>
+    <span class="droprow"><span class="idtag sid-red">Redria</span> Ep1 Arlan / Bartle <span class="rate">1/213</span></span>
+    <span class="droprow"><span class="idtag sid-pink">Pinkal</span> Ep2 Zol Gibbon <span class="rate">1/183</span></span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>投擲武器のスライサー。<b>4体対象</b>。スペシャル攻撃は Berserk(HP を消費して超火力)</dd>
+    <dt>メリット</dt><dd>Ranger が苦手な範囲攻撃を補える。群れる小型敵をまとめて削れる。フレーム Thirteen とのセット効果(武器 ATP +50%、攻撃速度 +10%、ATA +30)もある。Redria の Ep4 Ze Boota で出やすい</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <div class="head">
+    <span class="name">狂信者のスライサー</span>
+    <span class="en">Slicer of Fanatic</span>
+    <span class="kind">武器 / スライサー</span>
+  </div>
+  <div class="drops">
+    <span class="idtag sid-pink">Pinkal</span> Ep4 Merissa A <span class="rate">1/1,379</span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>スライサーの中では ATP 最高。ただし target は<b>3体</b>(標準の4より少ない)。スペシャル攻撃は<b>Demon's</b>(耐性を無視して敵の現HPを大きく削る)</dd>
+    <dt>メリット</dt><dd>Demon's のスペシャルで硬い敵の HP を一気に削れる。勇者のディスカとは役割が違う(ディスカ = ATPは劣るが4体、狂信者のスライサー = 高火力+Demon's だが3体)</dd>
+  </dl>
+</div>
+
+<div class="footer">
+<p>出典: <a href="https://wiki.pioneer2.net/w/Ranger_guide" target="_blank" rel="noopener">Ephinea Wiki / Ranger guide</a>
+・ドロップ率は Ephinea 公式ドロップチャート(このサイトの「欲しいものリスト」と同じ数値)。
+武器の効果は Ephinea Wiki の各アイテムページ準拠。</p>
+</div>
+
+</div>
+</body>
+</html>
