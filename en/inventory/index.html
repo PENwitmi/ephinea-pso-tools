@@ -163,6 +163,28 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .card.gold { background: var(--gold-soft); border-color: var(--gold); }
 .card.gold .val { color: var(--gold); }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+.viewopts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
+/* シンプルモード: アイテム名(+評価額)だけに絞る。掲示板コピペ用のノイズ排除 */
+#tbl.simple thead th:nth-child(1),
+#tbl.simple thead th:nth-child(3),
+#tbl.simple thead th:nth-child(4),
+#tbl.simple thead th:nth-child(5),
+#tbl.simple tbody td:nth-child(1),
+#tbl.simple tbody td:nth-child(3),
+#tbl.simple tbody td:nth-child(4),
+#tbl.simple tbody td:nth-child(5) { display: none; }
+#tbl.simple .starmark,
+#tbl.simple .pill,
+#tbl.simple .notetxt,
+#tbl.simple .cont { display: none; }
+#tbl.simple { min-width: 0; }
+#tbl.simple tr.hi td:first-child { border-left: none; }
+#tbl.simple tr.zero td { color: inherit; }
+#tbl.simple tbody tr { cursor: text; }
+#tbl.simple tbody tr:hover td { background: transparent; }
+/* 評価額列の非表示。シンプルモードとは独立で効くので、通常表示でも隠せる */
+#tbl.hideval thead th:nth-child(6),
+#tbl.hideval tbody td:nth-child(6) { display: none; }
 .controls input[type=search], .controls select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 0.85rem; }
 .controls input[type=search] { flex: 1 1 200px; min-width: 160px; }
 .controls label.chk { font-size: 0.8rem; color: var(--sub); display: flex; align-items: center; gap: 4px; cursor: pointer; border: 1px solid var(--border); border-radius: 99px; padding: 4px 12px; background: var(--card); }
@@ -182,6 +204,11 @@ td .notetxt { display: block; white-space: normal; font-size: 0.72rem; color: va
    sitemap の lastmod が動いてしまう。他のページでも使うようになったら移すこと */
 td .minibtn { border: 1px solid var(--accent); background: transparent; color: var(--accent); border-radius: 6px; padding: 1px 8px; margin-left: 8px; font-size: 0.72rem; line-height: 1.5; cursor: pointer; white-space: nowrap; vertical-align: middle; }
 td .minibtn:hover { background: var(--accent); color: #ffffff; }
+/* ★選択マーク。行のどこをクリックしても切り替わるので、これ自体はLooksだけ */
+td .starmark { color: var(--sub); font-size: 0.95rem; padding: 0 4px; margin-right: 4px; vertical-align: middle; user-select: none; }
+td .starmark.on { color: var(--gold); }
+tbody tr { cursor: pointer; }
+tbody tr:hover .starmark { color: var(--gold); }
 /* 直前の行と同じアイテム(別の保管場所)であることの印 */
 td .cont { color: var(--sub); margin-right: 5px; font-size: 0.85em; }
 tr.hi td:first-child { border-left: 3px solid var(--gold); }
@@ -272,8 +299,16 @@ tr.zero td { color: var(--sub); }
   <select id="floc" aria-label="Filter by character"><option value="">Character: all</option></select>
   <label class="chk"><input type="checkbox" id="fval"> ≥1 PD only</label>
   <label class="chk"><input type="checkbox" id="fzero"> 0 PD only</label>
+  <label class="chk"><input type="checkbox" id="fsel"> ★Selected only</label>
   <button class="reset" id="clearFilters" style="display:none">Clear filters ✕</button>
+  <button class="reset" id="clearSelection" style="display:none">★Clear all selections</button>
   <span class="count" id="count" aria-live="polite"></span>
+</div>
+<div class="viewopts">
+  <label class="chk"><input type="checkbox" id="fnote" checked> 💬 Show descriptions</label>
+  <label class="chk"><input type="checkbox" id="fshowval" checked> 💴 Show value</label>
+  <label class="chk"><input type="checkbox" id="fsimple"> 📋 Simple mode</label>
+  <button class="reset" id="copyTrade" style="display:none">📋 Copy to clipboard</button>
 </div>
 <div class="tblwrap">
 <table id="tbl">
@@ -311,7 +346,7 @@ tr.zero td { color: var(--sub); }
 <script>
 
 // ---- Python と共有する定数 (tools/constants.py が単一ソース) ----
-const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["Normal", "Hard", "Very Hard", "Ultimate"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "wishlist_char": "pso_wishlist_char", "wishlist_folded": "pso_wishlist_folded", "theme": "pso_theme", "sim_last": "pso_sim_last", "sim_presets": "pso_sim_presets", "mag_start": "pso_mag_start", "mag_plans": "pso_mag_plans", "mag_last": "pso_mag_last"}};
+const CONST = {"SECTION_IDS": ["Viridia", "Greenill", "Skyly", "Bluefull", "Purplenum", "Pinkal", "Redria", "Oran", "Yellowboze", "Whitill"], "DIFFICULTIES": ["Normal", "Hard", "Very Hard", "Ultimate"], "DIFFICULTIES_JP": ["Normal", "Hard", "Very Hard", "Ultimate"], "COMMON_ARMORS": ["Frame", "Armor", "Solid Frame", "Hyper Frame", "King's Frame", "Dragon Frame", "Absorb Armor", "Protect Frame", "General Armor", "Perfect Frame", "Valiant Frame", "Imperial Armor", "Holiness Armor", "Guardian Armor", "Divinity Armor", "Ultimate Frame"], "CONSUMABLES": ["Monomate", "Dimate", "Trimate", "Monofluid", "Difluid", "Trifluid", "Sol Atomizer", "Moon Atomizer", "Star Atomizer", "Telepipe", "Trap Vision"], "BASE_WEAPONS": ["Saber", "Handgun", "Cane", "Sword", "Dagger", "Partisan", "Slicer", "Gun", "Rifle", "Mechgun", "Shot", "Rod", "Wand"], "TIER_ORDER": ["Min Stat", "Med Stat", "Med-High Stat", "High Stat", "Max EVP", "Max DFP", "Max Stat"], "MESETA_RATE_FALLBACK": [400000, 500000], "STORAGE_KEYS": {"inventory": "pso_inventory", "wishlist": "pso_wishlist", "wishlist_char": "pso_wishlist_char", "wishlist_folded": "pso_wishlist_folded", "theme": "pso_theme", "sim_last": "pso_sim_last", "sim_presets": "pso_sim_presets", "mag_start": "pso_mag_start", "mag_plans": "pso_mag_plans", "mag_last": "pso_mag_last", "inv_selected": "pso_inv_selected", "inv_shownote": "pso_inv_shownote", "inv_showval": "pso_inv_showval"}};
 const SKEYS = CONST.STORAGE_KEYS;
 
 // ---- テーマ ----
@@ -984,21 +1019,45 @@ if (!inv || !inv.items || !inv.items.length) {
       || locRank(a) - locRank(b) || cmp(a.loc, b.loc));  // ④ 最後は場所の順
   }
 
+  // ★選択セット。localStorage に grp|slot の配列で永続化。
+  // grp は装備データ・グラインド・特殊込みの基底名なので数量が変わっても同一と見なされる
+  const SEL_KEY = SKEYS.inv_selected;
+  const selKey = d => `${d.grp}|${d.slot}`;
+  let selected = new Set();
+  try { selected = new Set(JSON.parse(localStorage.getItem(SEL_KEY) || '[]')); } catch (e) {}
+  const saveSel = () => localStorage.setItem(SEL_KEY, JSON.stringify([...selected]));
+
+  // 売買モードのコピー対象を保持。DOMを走査するより最後にフィルタ・ソートした配列を使う方が確実
+  let visibleRows = [];
+
   function render() {
     const q = document.getElementById('q').value.toLowerCase();
     const fc = document.getElementById('fcat').value;
     const fl = document.getElementById('floc').value;
     const fv = document.getElementById('fval').checked;
     const fz = document.getElementById('fzero').checked;
+    const fs = document.getElementById('fsel').checked;
+    // 説明文の表示切替。非表示中は検索対象からも外す (見えないものにヒットしないため)
+    const fn = document.getElementById('fnote').checked;
+    // ★フィルタは baseF に混ぜる (値フィルタと同じ扱い)。内訳カードの計算にも反映される
     const baseF = d =>
       (!q || d.raw.toLowerCase().includes(q) || d.disp.toLowerCase().includes(q) ||
-       (d.note && d.note.toLowerCase().includes(q))) &&
-      (!fv || d.sub_hi >= 1) && (!fz || d.sub_hi === 0);
+       (fn && d.note && d.note.toLowerCase().includes(q))) &&
+      (!fv || d.sub_hi >= 1) && (!fz || d.sub_hi === 0) &&
+      (!fs || selected.has(selKey(d)));
     let rows = DATA.filter(d => baseF(d) && (!fc || d.cat === fc) && (!fl || d.who === fl));
     renderGrids(d => baseF(d) && (!fl || d.who === fl), d => baseF(d) && (!fc || d.cat === fc), fc, fl);
     sortRows(rows);
-    const filtered = !!(fc || fl || fv || fz);
+    visibleRows = rows;
+    const fSimple = document.getElementById('fsimple').checked;
+    const fShowVal = document.getElementById('fshowval').checked;
+    const tbl = document.getElementById('tbl');
+    tbl.classList.toggle('simple', fSimple);
+    tbl.classList.toggle('hideval', !fShowVal);
+    document.getElementById('copyTrade').style.display = fSimple ? '' : 'none';
+    const filtered = !!(fc || fl || fv || fz || fs);
     document.getElementById('clearFilters').style.display = filtered ? '' : 'none';
+    document.getElementById('clearSelection').style.display = selected.size ? '' : 'none';
     const sumLo = rows.reduce((s, r) => s + r.sub_lo, 0), sumHi = rows.reduce((s, r) => s + r.sub_hi, 0);
     document.getElementById('count').textContent = `${rows.length} items / subtotal ${rangeStr(sumLo, sumHi)} PD`;
     // 直前に描いた行と同じアイテムなら └ を付ける。評価額順だと 6.19 → 0.25 → 0.12 と
@@ -1009,13 +1068,17 @@ if (!inv || !inv.items || !inv.items.length) {
       const big = d.sub_hi >= 20, zero = d.sub_hi < 0.5;
       const cont = d.grp === prevGrp ? '<span class="cont" aria-hidden="true">└</span>' : '';
       prevGrp = d.grp;
+      const isOn = selected.has(selKey(d));
+      // ★はLooksだけ。行のどこをクリックしても toggle されるようにデリゲート
+      const star = `<span class="starmark${isOn ? ' on' : ''}" aria-hidden="true">${isOn ? '★' : '☆'}</span>`;
       // Magは育成の続きを出せる。**そのMagの行から直接**始められるようにする
       // (育てているMagを装備しているとは限らない。倉庫にあるのが普通)
       const magGo = d.cat === 'Mag' && magParts(d)
         ? `<button type="button" class="minibtn" data-magrow="${d.id}">Continue this mag</button>` : '';
-      return `<tr class="${big ? 'hi' : ''} ${zero ? 'zero' : ''}">
+      const ariaSel = isOn ? 'Unselect this item' : 'Select this item';
+      return `<tr class="${big ? 'hi' : ''} ${zero ? 'zero' : ''}" data-selkey="${selKey(d)}" role="button" tabindex="0" aria-label="${ariaSel}">
         <td>${d.id}</td>
-        <td>${cont}${d.disp}${magGo}${d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
+        <td>${cont}${star}${d.disp}${magGo}${fn && d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
         <td><span class="pill">${d.cat}</span></td>
         <td>${d.loc}</td>
         <td class="num">${d.qty}</td>
@@ -1024,7 +1087,7 @@ if (!inv || !inv.items || !inv.items.length) {
     }).join('');
     // Magの行 → 育成プランナーへ。Charactersの同名ボタンと同じ受け渡し
     document.querySelectorAll('[data-magrow]').forEach(b =>
-      b.addEventListener('click', () => magStartFromRow(b.dataset.magrow)));
+      b.addEventListener('click', e => { e.stopPropagation(); magStartFromRow(b.dataset.magrow); }));
   }
 
   // Item Listの1行から、育成プランナーの「From a mag you own」へ渡す。
@@ -1075,9 +1138,65 @@ if (!inv || !inv.items || !inv.items.length) {
     document.getElementById('floc').value = '';
     document.getElementById('fval').checked = false;
     document.getElementById('fzero').checked = false;
+    document.getElementById('fsel').checked = false;
     render();
   });
-  ['q', 'fcat', 'floc', 'fval', 'fzero'].forEach(id => document.getElementById(id).addEventListener('input', render));
+  // ★を全解除。フィルタとは別扱いで、選択セット自体を空にする
+  document.getElementById('clearSelection').addEventListener('click', () => {
+    selected.clear();
+    saveSel();
+    document.getElementById('fsel').checked = false;
+    render();
+  });
+  ['q', 'fcat', 'floc', 'fval', 'fzero', 'fsel', 'fnote', 'fshowval', 'fsimple'].forEach(id => document.getElementById(id).addEventListener('input', render));
+  // 評価額表示もLooksの好みなので永続化 (シンプルモード自体は一時的なので永続化しない)
+  const VAL_KEY = SKEYS.inv_showval;
+  const savedVal = localStorage.getItem(VAL_KEY);
+  if (savedVal !== null) document.getElementById('fshowval').checked = savedVal === 'true';
+  document.getElementById('fshowval').addEventListener('input', () =>
+    localStorage.setItem(VAL_KEY, document.getElementById('fshowval').checked));
+  // シンプルモードのクリップボードコピー。掲示板貼り付け用テキストを1発で作る。
+  // 評価額トグルがOFFなら名前だけ、ONなら "名前 - 12–34 PD" 形式
+  document.getElementById('copyTrade').addEventListener('click', async () => {
+    const showVal = document.getElementById('fshowval').checked;
+    const text = visibleRows.map(d =>
+      showVal ? `${d.disp} - ${rangeStr(d.sub_lo, d.sub_hi)} PD` : d.disp
+    ).join('\n');
+    const btn = document.getElementById('copyTrade');
+    try {
+      await navigator.clipboard.writeText(text);
+      const orig = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      setTimeout(() => { btn.textContent = orig; }, 1500);
+    } catch (e) { alert('コピー失敗: ' + e.message); }
+  });
+  // 説明表示の状態は localStorage で永続化 (Looksの好みなのでリロード後も復元)。
+  // 初期値は ON (現状のLooksを維持)
+  const NOTE_KEY = SKEYS.inv_shownote;
+  const savedNote = localStorage.getItem(NOTE_KEY);
+  if (savedNote !== null) document.getElementById('fnote').checked = savedNote === 'true';
+  document.getElementById('fnote').addEventListener('input', () =>
+    localStorage.setItem(NOTE_KEY, document.getElementById('fnote').checked));
+  // 行クリックで★トグル。tbody に1回だけ付けるので innerHTML 再描画でも消えない。
+  // Magの「続きを計算」など行内の他のボタンは stopPropagation で除外。
+  // シンプルモード中はテキスト選択を邪魔しないよう★トグルを抑制する
+  document.querySelector('#tbl tbody').addEventListener('click', e => {
+    if (document.getElementById('fsimple').checked) return;
+    const tr = e.target.closest('tr[data-selkey]');
+    if (!tr) return;
+    const k = tr.dataset.selkey;
+    if (selected.has(k)) selected.delete(k); else selected.add(k);
+    saveSel();
+    render();
+  });
+  // キーボード操作 (Enter/Space) でもトグル可能に
+  document.querySelector('#tbl tbody').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    const tr = e.target.closest('tr[data-selkey]');
+    if (!tr) return;
+    e.preventDefault();
+    tr.click();
+  });
 
   // Characterページから ?slot=N で来たら、そのChar で絞り込んだ状態で開く。
   // floc の値は slotWho() が作る「Char {番号}({名前})」形式なので前方一致で拾う
