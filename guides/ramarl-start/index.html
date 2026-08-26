@@ -74,6 +74,24 @@ p { margin: 6px 0; }
 .kind.unit    { background: var(--chip-unit);    color: var(--chip-unit-t); }
 .kind.barrier { background: var(--chip-barrier); color: var(--chip-barrier-t); }
 
+/* 掘り主体チップ。Greenill/Pinkal/Redria の3色で妥当に掘れるか、
+   他色(Bluefull/Oran/Yellowboze)のキャラに頼む必要があるかを見出しで一目化する */
+.pull { display: inline-block; padding: 1px 8px; border-radius: 99px;
+        font-size: 0.7rem; font-weight: 700; letter-spacing: 0.02em;
+        background: transparent; color: var(--sub);
+        border: 1px solid var(--border); }
+.pull.own { color: var(--green); border-color: var(--green); }
+.pull.ask { color: var(--gold); border-color: var(--gold); }
+
+/* 冒頭の「3秒で結論」。カード3枚を並べるが、狭い画面では1列に落とす */
+.tldr { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 0 0 24px; }
+@media (min-width: 640px) { .tldr { grid-template-columns: repeat(3, 1fr); } }
+.tldr .box { background: var(--card); border: 1px solid var(--border);
+             border-radius: 12px; padding: 10px 14px; }
+.tldr .k { font-size: 0.72rem; color: var(--sub); margin-bottom: 3px; }
+.tldr .v { font-size: 0.98rem; font-weight: 800; }
+.tldr .n { font-size: 0.78rem; color: var(--sub); margin-top: 3px; font-weight: normal; }
+
 .idtag { display: inline-block; padding: 1px 8px; border-radius: 99px;
          font-size: 0.72rem; font-weight: 700;
          background: var(--sid, var(--accent-soft));
@@ -102,32 +120,39 @@ p { margin: 6px 0; }
 <p>RAmarl / Section ID = Greenill 向けの、これから何を掘りに行くかの見取り図。
 上から順に「まず狙う → その次 → 長期の目標 → 余裕があれば」と並んでいます。
 急がなくていいし、順番も自由。</p>
-<p>rate は敵1体あたりのドロップ確率。Hildetorr / Dorphon Eclair / Merissa AA は<b>レア変異</b>で、通常敵の <b>1/500</b> の確率でしか湧かないので、表示上の 1/2 は「レア変異と遭遇できたときの確率」であって、実効的なドロップ確率は <b>1/1,000 相当</b>になる。</p>
+<p>rate は敵1体あたりのドロップ確率。Hildetorr / Dorphon Eclair / Merissa AA は<b>レア変異</b>で、通常敵の <b>1/500</b> の確率でしか湧かないので、表示上の 1/2 は「レア変異が湧いた1体から出る確率」であって、実効的なドロップ確率は <b>1/1,000 相当</b>になる。</p>
+<p>各カードの右上に <span class="pull own">自力</span> と <span class="pull ask">他色に依頼</span> のチップを付けた。Greenill / Pinkal / Redria の3色で妥当に掘れるものが自力、Bluefull・Oran・Yellowboze などのキャラに頼むしかないものが依頼。</p>
+</div>
+
+<!-- ============ 3秒で結論 ============ -->
+<div class="tldr">
+  <div class="box">
+    <div class="k">最初の1本</div>
+    <div class="v">スプレッドニードル</div>
+    <div class="n">Greenill の Merlan を回す</div>
+  </div>
+  <div class="box">
+    <div class="k">最強ユニット2種</div>
+    <div class="v">V101 + Adept</div>
+    <div class="n">攻撃速度と命中の両輪。片方だけでは不足</div>
+  </div>
+  <div class="box">
+    <div class="k">長期の1本</div>
+    <div class="v">レッドリング</div>
+    <div class="n">Lv180 まで塩漬けでよい</div>
+  </div>
 </div>
 
 <!-- ============ まず狙う ============ -->
 <h2>まず狙う(アルティメット序盤を安全にする)</h2>
-
-<div class="item">
-  <div class="head">
-    <span class="name">フローズンシューター</span>
-    <span class="en">Frozen Shooter</span>
-    <span class="kind">武器 / ライフル</span>
-  </div>
-  <div class="drops">
-    <span class="idtag sid-green">Greenill</span> Ep1 Hildetorr <span class="rate">1/2</span> <span class="rare">レア変異</span>
-  </div>
-  <dl>
-    <dt>効果</dt><dd>単体対象のライフル。スペシャル攻撃は<b>100% 凍結</b>(凍らない敵を除く)。凍った敵はダメージが増える</dd>
-    <dt>メリット</dt><dd>アルティメット序盤は敵の攻撃1発でHPが吹き飛ぶが、この1本があれば「凍らせて→殴る」の型で安全に処理できる。パーティでも動きを止めるだけで貢献になる。特に速い敵に効く</dd>
-  </dl>
-</div>
+<p class="note">レア変異は湧きに左右されるので、まずは非レアで確実に回せるスプレッドニードルから。フローズンシューターは平行して Hildetorr が湧いたときに拾う。</p>
 
 <div class="item">
   <div class="head">
     <span class="name">スプレッドニードル</span>
     <span class="en">Spread Needle</span>
     <span class="kind">武器 / ライフル</span>
+    <span class="pull own">自力</span>
   </div>
   <div class="drops">
     <span class="idtag sid-green">Greenill</span> Ep1 Merlan <span class="rate">1/900</span>
@@ -140,6 +165,25 @@ p { margin: 6px 0; }
   </dl>
 </div>
 
+<div class="item">
+  <div class="head">
+    <span class="name">フローズンシューター</span>
+    <span class="en">Frozen Shooter</span>
+    <span class="kind">武器 / ライフル</span>
+    <span class="pull own">自力</span>
+  </div>
+  <div class="drops">
+    <span class="idtag sid-green">Greenill</span> Ep1 Hildetorr <span class="rate">1/2</span> <span class="rare">レア変異</span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd>単体対象のライフル。スペシャル攻撃は<b>100% 凍結</b>(凍らない敵を除く)。凍った敵はダメージが増える</dd>
+    <dt>メリット</dt><dd>アルティメット序盤は敵の攻撃1発でHPが吹き飛ぶが、この1本があれば「凍らせて→殴る」の型で安全に処理できる。パーティでも動きを止めるだけで貢献になる。特に速い敵に効く</dd>
+    <dt>デメリット</dt><dd><b>装備したまま2分経つと、25% の確率で自分が凍る</b>(wiki 明記の仕様)。長時間の道中でずっと持ち替えないと事故る。<br>
+      通常攻撃の ATP は 240〜250 と控えめで、非スペシャル運用ではライフル上位に劣る。<b>スペシャルの凍結でCC(妨害)する武器</b>と割り切る。<br>
+      ボスなど凍結が効かない相手には出番がない。持ち替え前提。</dd>
+  </dl>
+</div>
+
 <!-- ============ その次 ============ -->
 <h2>その次(命中と手数を底上げする)</h2>
 
@@ -147,6 +191,7 @@ p { margin: 6px 0; }
   <div class="head">
     <span class="name">V101</span>
     <span class="kind unit">ユニット</span>
+    <span class="pull ask">他色に依頼</span>
   </div>
   <div class="drops">
     <span class="droprow"><span class="idtag sid-oran">Oran</span> Ep1 Sinow Blue <span class="rate">1/3,034</span></span>
@@ -156,7 +201,7 @@ p { margin: 6px 0; }
   </div>
   <dl>
     <dt>効果</dt><dd>ATP / DFP / MST / EVP / LCK 各 +15、ATA +1.5、<b>攻撃速度 +40%</b></dd>
-    <dt>メリット</dt><dd>本命は攻撃速度 +40%(Heavenly/Battle と同じスペック)。1秒あたりの発射数が 1.4 倍になるので、火力が実質 1.4 倍になる。RAmarl の装備の中では単独最強クラス</dd>
+    <dt>メリット</dt><dd>本命は攻撃速度 +40%。1秒あたりの発射数が 1.4 倍になるので、火力が実質 1.4 倍になる。ステ +15 も乗るので、攻撃速度専用ユニット(Heavenly/Battle)の上位互換。RAmarl の装備の中では単独最強クラス</dd>
     <dt>掘り方</dt><dd>Greenill でも Ep4 Zu から出るが、1体ごとに出会う機会が少なく実プレイでは狙いにくい。定番は Oran のシノワブルー(Lost SOUL BLADE / Knight of Coral の周回)。<b>Greenill / Pinkal / Redria の3色だけでは狙いが立ちにくいので、Oran / Viridia / Yellowboze のキャラを持つ人にお願いするのが現実的</b></dd>
   </dl>
 </div>
@@ -165,6 +210,7 @@ p { margin: 6px 0; }
   <div class="head">
     <span class="name">V501</span>
     <span class="kind unit">ユニット</span>
+    <span class="pull ask">他色に依頼</span>
   </div>
   <div class="drops">
     <span class="droprow"><span class="idtag sid-bluefull">Bluefull</span> Ep2 Sinow Berill <span class="rate">1/1,024</span></span>
@@ -186,13 +232,14 @@ p { margin: 6px 0; }
     <span class="name">ヘブンストライカー</span>
     <span class="en">Heaven Striker</span>
     <span class="kind">武器 / ハンドガン</span>
+    <span class="pull own">自力</span>
   </div>
   <div class="drops">
     <span class="idtag sid-green">Greenill</span> <span class="idtag sid-red">Redria</span> Ep4 Pyro Goran <span class="rate">1/3,344</span>
   </div>
   <dl>
     <dt>効果</dt><dd>ハンドガンだが通常攻撃はライフル並みの射程・自動照準。スペシャル攻撃は<b>Berserk</b>(HP を消費して超高火力を撃つ)。単体対象</dd>
-    <dt>真価</dt><dd><b>Striker Unit(セルマグ)を装備している状態</b>だと、スペシャル攻撃が <b>Divine Punishment</b> に変わり本領を発揮する(ビート時間の百の位が偶数のときに発動)。Striker Unit は <b>Heaven Striker Coat(マグセル)を Lv50 以上の Garuda に使う</b>ことで作れる4段階進化のセルマグ</dd>
+    <dt>真価</dt><dd><b>Striker Unit(セルマグ)を装備している状態</b>だと、スペシャル攻撃が <b>Divine Punishment</b> に変わり本領を発揮する(内部の「ビート時間」の百の位が偶数の間だけ切り替わる = 約半分の時間帯)。Striker Unit は <b>Heaven Striker Coat(マグセル)を Lv50 以上の Garuda に使う</b>ことで作れる4段階進化のセルマグ</dd>
     <dt>メリット</dt><dd>ボス戦の削り速度が別物になる。ドロップ率が低いので、日々のクエストの副産物として狙う。イベント時の Maximum Attack E で狙うと現実的</dd>
   </dl>
 </div>
@@ -201,13 +248,14 @@ p { margin: 6px 0; }
   <div class="head">
     <span class="name">Limiter → Adept</span>
     <span class="kind unit">ユニット(Sealed)</span>
+    <span class="pull own">自力</span>
   </div>
   <div class="drops">
     <span class="idtag sid-pink">Pinkal</span> Ep4 Girtablulu <span class="rate">1/394</span>
     <span class="note">(Greenill では出ない)</span>
   </div>
   <dl>
-    <dt>効果</dt><dd>Limiter 自体は装備するとステータスが下がる封印品(ATA -10 など)。
+    <dt>効果</dt><dd>Limiter 自体は装備するとステータスが下がる封印品(ATP / MST / EVP / DFP / LCK 各 -30、ATA -10、全属性耐性 -10)。
       <b>Limiter を装備した状態で敵を 20,000 体倒す</b>と、インベントリの Limiter に
       「Use」が出て、<b>Adept</b> というユニットに化ける。<br>
       Adept の効果: ATP / DFP / MST / EVP / LCK 各 +10、<b>ATA +20</b>、
@@ -221,6 +269,7 @@ p { margin: 6px 0; }
     <span class="name">レッドリング</span>
     <span class="en">Red Ring</span>
     <span class="kind barrier">バリア</span>
+    <span class="pull own">自力</span>
   </div>
   <div class="drops">
     <span class="idtag sid-green">Greenill</span> <span class="idtag sid-red">Redria</span> Ep1 Dark Falz <span class="rate">1/186</span>
@@ -239,6 +288,7 @@ p { margin: 6px 0; }
     <span class="name">カノンルージュ</span>
     <span class="en">Cannon Rouge</span>
     <span class="kind">武器 / バズーカ</span>
+    <span class="pull own">自力</span>
   </div>
   <div class="drops">
     <span class="idtag sid-green">Greenill</span> Ep4 Dorphon Eclair <span class="rate">1/2</span> <span class="rare">レア変異</span>
@@ -256,6 +306,7 @@ p { margin: 6px 0; }
     <span class="name">オフェリセーズ</span>
     <span class="en">Ophelie Seize</span>
     <span class="kind">武器 / ハンドガン</span>
+    <span class="pull own">自力</span>
   </div>
   <div class="drops">
     <span class="idtag sid-pink">Pinkal</span> Ep4 Merissa AA <span class="rate">1/2</span> <span class="rare">レア変異</span>
@@ -271,6 +322,7 @@ p { margin: 6px 0; }
     <span class="name">勇者のディスカ</span>
     <span class="en">Diska of Braveman</span>
     <span class="kind">武器 / スライサー</span>
+    <span class="pull own">自力</span>
   </div>
   <div class="drops">
     <span class="droprow"><span class="idtag sid-red">Redria</span> Ep4 Ze Boota <span class="rate">1/168</span></span>
@@ -288,6 +340,7 @@ p { margin: 6px 0; }
     <span class="name">狂信者のスライサー</span>
     <span class="en">Slicer of Fanatic</span>
     <span class="kind">武器 / スライサー</span>
+    <span class="pull own">自力</span>
   </div>
   <div class="drops">
     <span class="idtag sid-pink">Pinkal</span> Ep4 Merissa A <span class="rate">1/1,379</span>
