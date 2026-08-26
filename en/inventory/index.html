@@ -797,6 +797,8 @@ function resolve(it) {
 function category(it) {
   const n = it.name;
   if (n.includes('MESETA') || ['Photon Drop', 'Photon Crystal', 'Photon Hoard', 'Halloween Cookie', 'Coal'].includes(n)) return 'Currency';
+  // イベントバッジCurrency(無印 = 今年のアニバ / 1st–4th = 過去年の残存)
+  if (/^(\d+(st|nd|rd|th) )?Anniv\. (Bronze|Silver|Gold|Platinum) Badge$/.test(n)) return 'Currency';
   if (/^\w+ LV\d+ Disk$/.test(n)) return 'Tech disk';
   if (/^.*LV\d+$/.test(n) || n === 'Mag LV5') return 'Mag';
   // 防具は名前の集合(constants.load_equip_names)で引く。相場表のティア表(FRAMES_T /
