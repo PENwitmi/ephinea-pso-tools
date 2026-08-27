@@ -164,7 +164,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .card.gold .val { color: var(--gold); }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
 .viewopts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
-/* シンプルモード: アイテム名(+評価額)だけに絞る。掲示板コピペ用のノイズ排除 */
+/* Simple mode: アイテム名(+評価額)だけに絞る。掲示板コピペ用のノイズ排除 */
 #tbl.simple thead th:nth-child(1),
 #tbl.simple thead th:nth-child(3),
 #tbl.simple thead th:nth-child(4),
@@ -176,13 +176,14 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 #tbl.simple .starmark,
 #tbl.simple .pill,
 #tbl.simple .notetxt,
-#tbl.simple .cont { display: none; }
+#tbl.simple .cont,
+#tbl.simple .minibtn { display: none; }
 #tbl.simple { min-width: 0; }
 #tbl.simple tr.hi td:first-child { border-left: none; }
 #tbl.simple tr.zero td { color: inherit; }
 #tbl.simple tbody tr { cursor: text; }
 #tbl.simple tbody tr:hover td { background: transparent; }
-/* 評価額列の非表示。シンプルモードとは独立で効くので、通常表示でも隠せる */
+/* 評価額列の非表示。Simple modeとは独立で効くので、通常表示でも隠せる */
 #tbl.hideval thead th:nth-child(6),
 #tbl.hideval tbody td:nth-child(6) { display: none; }
 .controls input[type=search], .controls select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 0.85rem; }
@@ -299,16 +300,16 @@ tr.zero td { color: var(--sub); }
   <select id="floc" aria-label="Filter by character"><option value="">Character: all</option></select>
   <label class="chk"><input type="checkbox" id="fval"> ≥1 PD only</label>
   <label class="chk"><input type="checkbox" id="fzero"> 0 PD only</label>
-  <label class="chk"><input type="checkbox" id="fsel"> ★Selected only</label>
+  <label class="chk"><input type="checkbox" id="fsel"> Selected only</label>
   <button class="reset" id="clearFilters" style="display:none">Clear filters ✕</button>
-  <button class="reset" id="clearSelection" style="display:none">★Clear all selections</button>
+  <button class="reset" id="clearSelection" style="display:none">Clear all selections</button>
   <span class="count" id="count" aria-live="polite"></span>
 </div>
 <div class="viewopts">
-  <label class="chk"><input type="checkbox" id="fnote" checked> 💬 Show descriptions</label>
-  <label class="chk"><input type="checkbox" id="fshowval" checked> 💴 Show value</label>
-  <label class="chk"><input type="checkbox" id="fsimple"> 📋 Simple mode</label>
-  <button class="reset" id="copyTrade" style="display:none">📋 Copy to clipboard</button>
+  <label class="chk"><input type="checkbox" id="fnote" checked> Show descriptions</label>
+  <label class="chk"><input type="checkbox" id="fshowval" checked> Show value</label>
+  <label class="chk"><input type="checkbox" id="fsimple"> Simple mode</label>
+  <button class="reset" id="copyTrade" style="display:none">Copy to clipboard</button>
 </div>
 <div class="tblwrap">
 <table id="tbl">
@@ -1076,9 +1077,11 @@ if (!inv || !inv.items || !inv.items.length) {
       const magGo = d.cat === 'Mag' && magParts(d)
         ? `<button type="button" class="minibtn" data-magrow="${d.id}">Continue this mag</button>` : '';
       const ariaSel = isOn ? 'Unselect this item' : 'Select this item';
+      // Simple modeは掲示板コピー用途なので、アイテム名は英語の raw を出す
+      const dispName = fSimple ? d.raw : d.disp;
       return `<tr class="${big ? 'hi' : ''} ${zero ? 'zero' : ''}" data-selkey="${selKey(d)}" role="button" tabindex="0" aria-label="${ariaSel}">
         <td>${d.id}</td>
-        <td>${cont}${star}${d.disp}${magGo}${fn && d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
+        <td>${cont}${star}${dispName}${magGo}${fn && d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
         <td><span class="pill">${d.cat}</span></td>
         <td>${d.loc}</td>
         <td class="num">${d.qty}</td>
@@ -1149,24 +1152,24 @@ if (!inv || !inv.items || !inv.items.length) {
     render();
   });
   ['q', 'fcat', 'floc', 'fval', 'fzero', 'fsel', 'fnote', 'fshowval', 'fsimple'].forEach(id => document.getElementById(id).addEventListener('input', render));
-  // 評価額表示もLooksの好みなので永続化 (シンプルモード自体は一時的なので永続化しない)
+  // 評価額表示もLooksの好みなので永続化 (Simple mode自体は一時的なので永続化しない)
   const VAL_KEY = SKEYS.inv_showval;
   const savedVal = localStorage.getItem(VAL_KEY);
   if (savedVal !== null) document.getElementById('fshowval').checked = savedVal === 'true';
   document.getElementById('fshowval').addEventListener('input', () =>
     localStorage.setItem(VAL_KEY, document.getElementById('fshowval').checked));
-  // シンプルモードのクリップボードコピー。掲示板貼り付け用テキストを1発で作る。
+  // Simple modeのクリップボードコピー。掲示板貼り付け用テキストを1発で作る。
   // 評価額トグルがOFFなら名前だけ、ONなら "名前 - 12–34 PD" 形式
   document.getElementById('copyTrade').addEventListener('click', async () => {
     const showVal = document.getElementById('fshowval').checked;
     const text = visibleRows.map(d =>
-      showVal ? `${d.disp} - ${rangeStr(d.sub_lo, d.sub_hi)} PD` : d.disp
+      showVal ? `${d.raw} - ${rangeStr(d.sub_lo, d.sub_hi)} PD` : d.raw
     ).join('\n');
     const btn = document.getElementById('copyTrade');
     try {
       await navigator.clipboard.writeText(text);
       const orig = btn.textContent;
-      btn.textContent = 'Copied ✓';
+      btn.textContent = 'Copied';
       setTimeout(() => { btn.textContent = orig; }, 1500);
     } catch (e) { alert('コピー失敗: ' + e.message); }
   });
@@ -1179,7 +1182,7 @@ if (!inv || !inv.items || !inv.items.length) {
     localStorage.setItem(NOTE_KEY, document.getElementById('fnote').checked));
   // 行クリックで★トグル。tbody に1回だけ付けるので innerHTML 再描画でも消えない。
   // Magの「続きを計算」など行内の他のボタンは stopPropagation で除外。
-  // シンプルモード中はテキスト選択を邪魔しないよう★トグルを抑制する
+  // Simple mode中はテキスト選択を邪魔しないよう★トグルを抑制する
   document.querySelector('#tbl tbody').addEventListener('click', e => {
     if (document.getElementById('fsimple').checked) return;
     const tr = e.target.closest('tr[data-selkey]');

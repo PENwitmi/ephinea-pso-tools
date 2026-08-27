@@ -176,7 +176,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 #tbl.simple .starmark,
 #tbl.simple .pill,
 #tbl.simple .notetxt,
-#tbl.simple .cont { display: none; }
+#tbl.simple .cont,
+#tbl.simple .minibtn { display: none; }
 #tbl.simple { min-width: 0; }
 #tbl.simple tr.hi td:first-child { border-left: none; }
 #tbl.simple tr.zero td { color: inherit; }
@@ -299,16 +300,16 @@ tr.zero td { color: var(--sub); }
   <select id="floc" aria-label="キャラクターで絞り込み"><option value="">キャラ: 全て</option></select>
   <label class="chk"><input type="checkbox" id="fval"> 1PD以上のみ</label>
   <label class="chk"><input type="checkbox" id="fzero"> 0PDのみ</label>
-  <label class="chk"><input type="checkbox" id="fsel"> ★選択したものだけ</label>
+  <label class="chk"><input type="checkbox" id="fsel"> 選択したものだけ</label>
   <button class="reset" id="clearFilters" style="display:none">絞り込み解除 ✕</button>
-  <button class="reset" id="clearSelection" style="display:none">★選択をすべて解除</button>
+  <button class="reset" id="clearSelection" style="display:none">選択をすべて解除</button>
   <span class="count" id="count" aria-live="polite"></span>
 </div>
 <div class="viewopts">
-  <label class="chk"><input type="checkbox" id="fnote" checked> 💬 説明を表示</label>
-  <label class="chk"><input type="checkbox" id="fshowval" checked> 💴 評価額を表示</label>
-  <label class="chk"><input type="checkbox" id="fsimple"> 📋 シンプルモード</label>
-  <button class="reset" id="copyTrade" style="display:none">📋 クリップボードにコピー</button>
+  <label class="chk"><input type="checkbox" id="fnote" checked> 説明を表示</label>
+  <label class="chk"><input type="checkbox" id="fshowval" checked> 評価額を表示</label>
+  <label class="chk"><input type="checkbox" id="fsimple"> シンプルモード</label>
+  <button class="reset" id="copyTrade" style="display:none">クリップボードにコピー</button>
 </div>
 <div class="tblwrap">
 <table id="tbl">
@@ -1076,9 +1077,11 @@ if (!inv || !inv.items || !inv.items.length) {
       const magGo = d.cat === 'マグ' && magParts(d)
         ? `<button type="button" class="minibtn" data-magrow="${d.id}">続きを計算</button>` : '';
       const ariaSel = isOn ? 'このアイテムの選択を解除' : 'このアイテムを選択';
+      // シンプルモードは掲示板コピー用途なので、アイテム名は英語の raw を出す
+      const dispName = fSimple ? d.raw : d.disp;
       return `<tr class="${big ? 'hi' : ''} ${zero ? 'zero' : ''}" data-selkey="${selKey(d)}" role="button" tabindex="0" aria-label="${ariaSel}">
         <td>${d.id}</td>
-        <td>${cont}${star}${d.disp}${magGo}${fn && d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
+        <td>${cont}${star}${dispName}${magGo}${fn && d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
         <td><span class="pill">${d.cat}</span></td>
         <td>${d.loc}</td>
         <td class="num">${d.qty}</td>
@@ -1160,13 +1163,13 @@ if (!inv || !inv.items || !inv.items.length) {
   document.getElementById('copyTrade').addEventListener('click', async () => {
     const showVal = document.getElementById('fshowval').checked;
     const text = visibleRows.map(d =>
-      showVal ? `${d.disp} - ${rangeStr(d.sub_lo, d.sub_hi)} PD` : d.disp
+      showVal ? `${d.raw} - ${rangeStr(d.sub_lo, d.sub_hi)} PD` : d.raw
     ).join('\n');
     const btn = document.getElementById('copyTrade');
     try {
       await navigator.clipboard.writeText(text);
       const orig = btn.textContent;
-      btn.textContent = 'コピーしました ✓';
+      btn.textContent = 'コピーしました';
       setTimeout(() => { btn.textContent = orig; }, 1500);
     } catch (e) { alert('コピー失敗: ' + e.message); }
   });
