@@ -37,6 +37,12 @@ h2::before { content: ''; width: 3px; height: 1em; border-radius: 2px;
              background: linear-gradient(180deg, var(--accent), var(--photon)); }
 p { margin: 6px 0; }
 
+.picklist { margin: 20px 0; padding: 10px 14px; border-left: 3px solid var(--accent);
+            background: var(--card); border-radius: 4px; }
+.picklist h3 { font-size: 0.95rem; margin: 0 0 8px; color: var(--sub); font-weight: 700; }
+.picklist p { margin: 3px 0; font-size: 0.88rem; }
+.picklist .foot { color: var(--sub); font-size: 0.82rem; margin-top: 6px; }
+
 .lead { border-left: 3px solid var(--accent);
         border-image: linear-gradient(180deg, var(--accent), var(--photon)) 1;
         padding: 2px 0 2px 12px; margin: 8px 0 20px;
@@ -134,7 +140,7 @@ p { margin: 6px 0; }
   <div class="box">
     <div class="k">最強ユニット2種</div>
     <div class="v">V101 + Adept</div>
-    <div class="n">攻撃速度と命中の両輪。片方だけでは不足</div>
+    <div class="n">攻撃速度と命中の両輪。届くまではヘヴンリー/アームで命中を稼ぐ</div>
   </div>
   <div class="box">
     <div class="k">長期の1本</div>
@@ -145,7 +151,7 @@ p { margin: 6px 0; }
 
 <!-- ============ まず狙う ============ -->
 <h2>まず狙う(アルティメット序盤を安全にする)</h2>
-<p class="note">レア変異は湧きに左右されるので、まずは非レアで確実に回せるスプレッドニードルから。フローズンシューターは平行して Hildetorr が湧いたときに拾う。</p>
+<p class="note">レア変異は湧きに左右されるので、まずは非レアで確実に回せるスプレッドニードルから。フローズンシューターは平行して Hildetorr が湧いたときに拾う。武器2本と並行して、命中を +25 一気に盛れる<b>ヘヴンリー/アーム</b>も掘っておくと、V101 に届くまでの命中不安が消える。</p>
 
 <div class="item">
   <div class="head">
@@ -181,6 +187,25 @@ p { margin: 6px 0; }
     <dt>デメリット</dt><dd><b>装備したまま2分経つと、25% の確率で自分が凍る</b>(wiki 明記の仕様)。長時間の道中でずっと持ち替えないと事故る。<br>
       通常攻撃の ATP は 240〜250 と控えめで、非スペシャル運用ではライフル上位に劣る。<b>スペシャルの凍結でCC(妨害)する武器</b>と割り切る。<br>
       ボスなど凍結が効かない相手には出番がない。持ち替え前提。</dd>
+  </dl>
+</div>
+
+<div class="item">
+  <div class="head">
+    <span class="name">ヘヴンリー/アーム</span>
+    <span class="en">Heavenly/Arms</span>
+    <span class="kind unit">ユニット</span>
+    <span class="pull own">自力</span>
+  </div>
+  <div class="drops">
+    <span class="droprow"><span class="idtag sid-pink">Pinkal</span> Ep1 Mil Lily <span class="rate">1/3.2</span> <span class="rare">レア変異</span></span>
+    <span class="droprow"><span class="idtag sid-green">Greenill</span> Ep1 Indi Belra <span class="rate">1/700</span></span>
+    <span class="droprow"><span class="idtag sid-yellow">Yellowboze</span> Ep1 Indi Belra <span class="rate">1/700</span></span>
+  </div>
+  <dl>
+    <dt>効果</dt><dd><b>ATA +25</b>のみ(命中特化のシンプルなユニット)</dd>
+    <dt>メリット</dt><dd>V101 に届く前の命中の入口装備。ATA を +25 一気に伸ばせる。<b>Pinkal なら Mil Lily(レア変異)から 1/3.2 の破格のドロップ率</b>で、レア変異が湧きさえすればすぐ着けられる</dd>
+    <dt>掘り方</dt><dd>Pinkal のキャラを持っている(or 頼める)なら Mil Lily 狙い。Mil Lily は <b>1/500</b> でレア変異するので、実効的には <b>1/1,600</b> 相当だが、それでも他色の Indi Belra 1/700 より速い</dd>
   </dl>
 </div>
 
@@ -349,6 +374,13 @@ p { margin: 6px 0; }
     <dt>効果</dt><dd>スライサーの中では ATP 最高。ただし target は<b>3体</b>(標準の4より少ない)。スペシャル攻撃は<b>Demon's</b>(耐性を無視して敵の現HPを大きく削る)</dd>
     <dt>メリット</dt><dd>Demon's のスペシャルで硬い敵の HP を一気に削れる。勇者のディスカとは役割が違う(ディスカ = ATPは劣るが4体、狂信者のスライサー = 高火力+Demon's だが3体)</dd>
   </dl>
+</div>
+
+<div class="picklist">
+  <h3>拾うべき通常武器 + スペシャル</h3>
+  <p><b>武器種</b>:バルカン / レイガン / レーザー / アームス</p>
+  <p><b>スペシャル</b>:アレス / バーサク / チャージ / ヘル / デーモン</p>
+  <p class="foot">すべて<b>ヒット付き</b>が前提</p>
 </div>
 
 <div class="footer">
