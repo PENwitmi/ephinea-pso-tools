@@ -424,6 +424,10 @@ const ST = [
   { key: 'ata', label: 'ATA', i: 3, mat: null },
   { key: 'evp', label: 'EVP', i: 4, mat: 'イベイド' },
   { key: 'lck', label: 'LCK', i: 5, mat: 'ラック' },
+  // HP/TP は .lv[level][6] や TP のクラス式など特殊なので i:-1 でマークし、
+  // 素ステループでは触らずに analyze() 内で個別に stats.hp/tp をセットする
+  { key: 'hp',  label: 'HP',  i: -1, mat: null },
+  { key: 'tp',  label: 'TP',  i: -1, mat: null },
 ];
 const MAT_TO_SIM = { 'パワー': 'pow', 'デフ': 'def', 'マインド': 'mind',
                      'イベイド': 'eva', 'ラック': 'lck',
@@ -439,6 +443,7 @@ function analyze(c) {
   const stats = {}, mats = {};
   let odd = false;
   for (const s of ST) {
+    if (s.i < 0) continue;   // HP/TPはループ外で計算
     // ファイルの値 + クラス別の基礎値(min) = 表示されるステータス
     stats[s.key] = c.raw[s.key] + cd.min[s.i];
     if (!s.mat) continue;
@@ -450,6 +455,19 @@ function analyze(c) {
   // 5マテ合計/上限とは別枠(cd.mat[0]は 5マテだけの上限、HPマテ上限=cd.mat[1]、TPマテ上限=cd.mat[2])
   if (c.matsHP > 0) mats['HPマテ'] = c.matsHP;
   if (c.matsTP > 0 && cd.mat[2] > 0) mats['TPマテ'] = c.matsTP;
+  // HP: baseHP + マテHP×2。base[6] は chardata の lv[level][6]
+  stats.hp = base[6] + 2 * (c.matsHP || 0);
+  // TP: クラス依存。素MST(mat込み)と level から計算。
+  // ATA*10 ではなく level を使うのが現行シミュレーターの実装
+  // (build_simulator.py:945-955 と simulator_en.js:473-495 が同じ式)
+  const ck = classKey(c.cls);
+  if (['hucast','hucaseal','racast','racaseal'].includes(ck)) {
+    stats.tp = 0;
+  } else if (['fomar','fomarl','fonewm','fonewearl'].includes(ck)) {
+    stats.tp = Math.floor((stats.mst + c.level - 1) * 1.5) + 2 * (c.matsTP || 0);
+  } else {
+    stats.tp = (stats.mst + c.level - 1) + 2 * (c.matsTP || 0);
+  }
   return { stats, mats, cap: cd.mat[0], cls: cd.name, odd,
            hasHptp: c.matsHP !== undefined };
 }
