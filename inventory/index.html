@@ -164,6 +164,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .card.gold .val { color: var(--gold); }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
 .viewopts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
+.viewopts .viewopt-right { margin-left: auto; }
 /* ★列: 一番左に狭く配置。ヘッダは空、行のセルには starmark が入る */
 th.starhead, td.starcell { width: 1.6em; padding: 7px 4px; text-align: center; }
 /* シンプルモード: アイテム名(+評価額)だけに絞る。掲示板コピペ用のノイズ排除 */
@@ -308,12 +309,12 @@ tr.zero td { color: var(--sub); }
   <span class="count" id="count" aria-live="polite"></span>
 </div>
 <div class="viewopts">
-  <label class="chk"><input type="checkbox" id="fnote" checked> 説明を表示</label>
-  <label class="chk"><input type="checkbox" id="fshowval" checked> 評価額を表示</label>
   <label class="chk"><input type="checkbox" id="fsel"> 選択したものだけ</label>
   <label class="chk"><input type="checkbox" id="fsimple"> シンプルモード</label>
   <button class="reset" id="copyTrade" style="display:none">クリップボードにコピー</button>
   <button class="reset" id="clearSelection" style="display:none">選択をすべて解除</button>
+  <label class="chk viewopt-right"><input type="checkbox" id="fnote" checked> 説明を表示</label>
+  <label class="chk"><input type="checkbox" id="fshowval" checked> 評価額を表示</label>
 </div>
 <div class="tblwrap">
 <table id="tbl">
