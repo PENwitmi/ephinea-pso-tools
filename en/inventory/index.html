@@ -304,16 +304,16 @@ tr.zero td { color: var(--sub); }
   <select id="floc" aria-label="Filter by character"><option value="">Character: all</option></select>
   <label class="chk"><input type="checkbox" id="fval"> ≥1 PD only</label>
   <label class="chk"><input type="checkbox" id="fzero"> 0 PD only</label>
-  <label class="chk"><input type="checkbox" id="fsel"> Selected only</label>
   <button class="reset" id="clearFilters" style="display:none">Clear filters ✕</button>
-  <button class="reset" id="clearSelection" style="display:none">Clear all selections</button>
   <span class="count" id="count" aria-live="polite"></span>
 </div>
 <div class="viewopts">
   <label class="chk"><input type="checkbox" id="fnote" checked> Show descriptions</label>
   <label class="chk"><input type="checkbox" id="fshowval" checked> Show value</label>
+  <label class="chk"><input type="checkbox" id="fsel"> Selected only</label>
   <label class="chk"><input type="checkbox" id="fsimple"> Simple mode</label>
   <button class="reset" id="copyTrade" style="display:none">Copy to clipboard</button>
+  <button class="reset" id="clearSelection" style="display:none">Clear all selections</button>
 </div>
 <div class="tblwrap">
 <table id="tbl">
@@ -1061,7 +1061,8 @@ if (!inv || !inv.items || !inv.items.length) {
     tbl.classList.toggle('simple', fSimple);
     tbl.classList.toggle('hideval', !fShowVal);
     document.getElementById('copyTrade').style.display = fSimple ? '' : 'none';
-    const filtered = !!(fc || fl || fv || fz || fs);
+    // fs は viewopts 側に移ったので、絞り込み解除ボタンの条件からは外す
+    const filtered = !!(fc || fl || fv || fz);
     document.getElementById('clearFilters').style.display = filtered ? '' : 'none';
     document.getElementById('clearSelection').style.display = selected.size ? '' : 'none';
     const sumLo = rows.reduce((s, r) => s + r.sub_lo, 0), sumHi = rows.reduce((s, r) => s + r.sub_hi, 0);
@@ -1147,7 +1148,6 @@ if (!inv || !inv.items || !inv.items.length) {
     document.getElementById('floc').value = '';
     document.getElementById('fval').checked = false;
     document.getElementById('fzero').checked = false;
-    document.getElementById('fsel').checked = false;
     render();
   });
   // ★を全解除。フィルタとは別扱いで、選択セット自体を空にする
