@@ -164,15 +164,19 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .card.gold .val { color: var(--gold); }
 .controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
 .viewopts { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
+/* ★列: 一番左に狭く配置。ヘッダは空、行のセルには starmark が入る */
+th.starhead, td.starcell { width: 1.6em; padding: 7px 4px; text-align: center; }
 /* Simple mode: アイテム名(+評価額)だけに絞る。掲示板コピペ用のノイズ排除 */
 #tbl.simple thead th:nth-child(1),
-#tbl.simple thead th:nth-child(3),
+#tbl.simple thead th:nth-child(2),
 #tbl.simple thead th:nth-child(4),
 #tbl.simple thead th:nth-child(5),
+#tbl.simple thead th:nth-child(6),
 #tbl.simple tbody td:nth-child(1),
-#tbl.simple tbody td:nth-child(3),
+#tbl.simple tbody td:nth-child(2),
 #tbl.simple tbody td:nth-child(4),
-#tbl.simple tbody td:nth-child(5) { display: none; }
+#tbl.simple tbody td:nth-child(5),
+#tbl.simple tbody td:nth-child(6) { display: none; }
 #tbl.simple .starmark,
 #tbl.simple .pill,
 #tbl.simple .notetxt,
@@ -184,8 +188,8 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 #tbl.simple tbody tr { cursor: text; }
 #tbl.simple tbody tr:hover td { background: transparent; }
 /* 評価額列の非表示。Simple modeとは独立で効くので、通常表示でも隠せる */
-#tbl.hideval thead th:nth-child(6),
-#tbl.hideval tbody td:nth-child(6) { display: none; }
+#tbl.hideval thead th:nth-child(7),
+#tbl.hideval tbody td:nth-child(7) { display: none; }
 .controls input[type=search], .controls select { padding: 7px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font-size: 0.85rem; }
 .controls input[type=search] { flex: 1 1 200px; min-width: 160px; }
 .controls label.chk { font-size: 0.8rem; color: var(--sub); display: flex; align-items: center; gap: 4px; cursor: pointer; border: 1px solid var(--border); border-radius: 99px; padding: 4px 12px; background: var(--card); }
@@ -314,6 +318,7 @@ tr.zero td { color: var(--sub); }
 <div class="tblwrap">
 <table id="tbl">
 <thead><tr>
+  <th class="starhead" aria-label="お気に入り"></th>
   <th scope="col" tabindex="0" data-k="id">#<span class="arrow"></span></th>
   <th scope="col" tabindex="0" data-k="raw">Item<span class="arrow"></span></th>
   <th scope="col" tabindex="0" data-k="cat">Category<span class="arrow"></span></th>
@@ -1080,8 +1085,9 @@ if (!inv || !inv.items || !inv.items.length) {
       // Simple modeは掲示板コピー用途なので、アイテム名は英語の raw を出す
       const dispName = fSimple ? d.raw : d.disp;
       return `<tr class="${big ? 'hi' : ''} ${zero ? 'zero' : ''}" data-selkey="${selKey(d)}" role="button" tabindex="0" aria-label="${ariaSel}">
+        <td class="starcell">${star}</td>
         <td>${d.id}</td>
-        <td>${cont}${star}${dispName}${magGo}${fn && d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
+        <td>${cont}${dispName}${magGo}${fn && d.note ? `<span class="notetxt">${d.note}</span>` : ''}</td>
         <td><span class="pill">${d.cat}</span></td>
         <td>${d.loc}</td>
         <td class="num">${d.qty}</td>
@@ -1124,13 +1130,13 @@ if (!inv || !inv.items || !inv.items.length) {
   const doSort = th => {
     const k = th.dataset.k;
     if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = ['raw', 'cat', 'loc'].includes(k) ? 1 : -1; }
-    document.querySelectorAll('#tbl th').forEach(t => { t.classList.remove('sorted'); t.removeAttribute('aria-sort'); t.querySelector('.arrow').textContent = ''; });
+    document.querySelectorAll('#tbl th[data-k]').forEach(t => { t.classList.remove('sorted'); t.removeAttribute('aria-sort'); t.querySelector('.arrow').textContent = ''; });
     th.classList.add('sorted');
     th.setAttribute('aria-sort', sortDir === -1 ? 'descending' : 'ascending');
     th.querySelector('.arrow').textContent = sortDir === -1 ? '▼' : '▲';
     render();
   };
-  document.querySelectorAll('#tbl th').forEach(th => {
+  document.querySelectorAll('#tbl th[data-k]').forEach(th => {
     th.addEventListener('click', () => doSort(th));
     th.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); doSort(th); } });
   });
