@@ -595,11 +595,19 @@ function psoCharMeta(data, slot) {
   // 素のStats。ファイルには「クラス別の基礎値(min)を引いた成長分」が入っているので、
   // 表示値にするには min を足し戻す(実測: Lv1Char 5人×6項目がwikiのベース値と完全一致)
   const u16 = o => data[o] | data[o + 1] << 8;
+  // HP/TP matsはインベントリヘッダに直接記録されている(newserv PlayerInventoryT: hp_from_materials @1,
+  // tp_from_materials @2、いずれも「 used数 × 2」。.psochar は 8B ヘッダ後にChar 本体なので +8 して @9/@10)。
+  // 実測: Hunewearl/RAcaseal/FOnewearl 3Char で @9=250 = 125×2 が実HP mats125と一致。
+  // TP mats側(@10)は手元データが全員0で非0検証はまだ(canonical structの対称性で採用)。
+  // Ephinea SPEC でも「素Stats列7個(@852–864)のof which  @858 は不明」と書いていたが、HP/TP matsは
+  // そこではなくインベントリ側にある。素ステから逆算する5マテ(Power/Mind/Evade/Def/Luck)と
+  // 違って直接記録なので、レベル情報が要らない
   return { slot, name, cls: PSO.classes[data[937]] || '?',
            sectionId: PSO.section_ids[data[936]] || '?', level: data[876] + 1,
            exp: data[880] | data[881] << 8 | data[882] << 16 | data[883] << 24,
            raw: { atp: u16(852), mst: u16(854), evp: u16(856),
                   dfp: u16(860), ata: u16(862), lck: u16(864) },
+           matsHP: data[9] >> 1, matsTP: data[10] >> 1,
            eq: psoEquipped(data) };
 }
 

@@ -248,7 +248,7 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   <p>キャラクターデータにマテリアルの使用数そのものは記録されていません。代わりに<b>素のステータス</b>が入っているので、そこから逆算しています。</p>
   <p class="note">マテリアル使用数 =（素のステータス − そのクラス・レベルのベース値）÷ 2</p>
   <p>ファイルにはクラス別の基礎値(min)を引いた成長分が入っているため、表示にあたっては min を足し戻しています。Lv1のキャラクター(マテリアル未使用が確定)で6項目すべてがwikiのベース値と一致することを確認済みです。</p>
-  <p class="note">なお<b>HPマテリアルとTPマテリアルの使用数は分かりません</b>。この2つはステータスへの反映のされ方が異なり、ファイルからも読み取れませんでした。シミュレーターへ渡すときは0として扱うので、必要なら向こうで足してください。</p>
+  <p class="note"><b>HPマテとTPマテ</b>はステータスからの逆算ではなく、ファイル先頭のインベントリヘッダ(<code>hp_from_materials</code> / <code>tp_from_materials</code>)に直接記録された値を <code>÷2</code> して表示しています。以前は「読み取れない」と書いていましたが、公開されているPSOBBサーバー実装(newserv)の構造体定義を確認したところ、canonical位置に入っていました。<b>過去に取込み済みのキャラは、もう一度取り込み直すと表示されます</b>。</p>
   </div>
 </details>
 </main>
@@ -426,7 +426,8 @@ const ST = [
   { key: 'lck', label: 'LCK', i: 5, mat: 'ラック' },
 ];
 const MAT_TO_SIM = { 'パワー': 'pow', 'デフ': 'def', 'マインド': 'mind',
-                     'イベイド': 'eva', 'ラック': 'lck' };
+                     'イベイド': 'eva', 'ラック': 'lck',
+                     'HPマテ': 'hp', 'TPマテ': 'tp' };
 
 const classKey = cls => String(cls || '').toLowerCase().replace(/[^a-z]/g, '');
 
@@ -445,7 +446,12 @@ function analyze(c) {
     if (diff < 0 || diff % 2) odd = true;   // 想定外は隠さず出す
     mats[s.mat] = diff / 2;
   }
-  return { stats, mats, cap: cd.mat[0], cls: cd.name, odd };
+  // HP/TPマテはファイル @9/@10 の直接値。古いキャッシュ(matsHPが無い)は表示しない。
+  // 5マテ合計/上限とは別枠(cd.mat[0]は 5マテだけの上限、HPマテ上限=cd.mat[1]、TPマテ上限=cd.mat[2])
+  if (c.matsHP > 0) mats['HPマテ'] = c.matsHP;
+  if (c.matsTP > 0 && cd.mat[2] > 0) mats['TPマテ'] = c.matsTP;
+  return { stats, mats, cap: cd.mat[0], cls: cd.name, odd,
+           hasHptp: c.matsHP !== undefined };
 }
 
 // シミュレーターは起動時に localStorage の pso_sim_last を読んで復元する。
@@ -464,7 +470,10 @@ function toSimState(c, a) {
   const eq = c.eq || {};
   const m = eq.mag;
   const mats = { hp: 0, tp: 0, pow: 0, def: 0, mind: 0, eva: 0, lck: 0 };
-  Object.entries(a.mats).forEach(([k, v]) => { mats[MAT_TO_SIM[k]] = v; });
+  // MAT_TO_SIM に無いキーは無視する(想定外の日本語ラベルで mats[undefined] を作らないため)
+  Object.entries(a.mats).forEach(([k, v]) => {
+    if (MAT_TO_SIM[k]) mats[MAT_TO_SIM[k]] = v;
+  });
   return {
     cls: classKey(c.cls), lv: c.level, mats,
     mag: m ? { def: Math.floor(m.def), pow: Math.floor(m.pow),
@@ -518,11 +527,20 @@ function cardHTML(c) {
     return `<div><span>${s.label}</span><b>${v}</b></div>`;
   }).join('');
   const used = Object.entries(a.mats).filter(([, v]) => v > 0);
-  const total = used.reduce((s, [, v]) => s + v, 0);
+  // 5マテ(cd.mat[0]の上限に含まれる)とHP/TPマテを分けて合計。
+  // HP/TPマテは別枠(HP=125上限、TP=クラス依存)なので混ぜて表示すると意味が壊れる
+  const HPTP_KEYS = { 'HPマテ': 1, 'TPマテ': 1 };
+  const usedStat = used.filter(([k]) => !HPTP_KEYS[k]);
+  const total = usedStat.reduce((s, [, v]) => s + v, 0);
   const pills = used.length
     ? used.map(([k, v]) => `<span class="matpill">${k} ${v}</span>`).join('')
     : '<span class="matnone">まだ使っていません</span>';
   const left = a.cap - total;
+  // 古いキャッシュ(HP/TPマテを読み取っていなかった時代のもの)にはヒントを添える。
+  // 新しい取込みでは matsHP が入っているので hasHptp=true になり、案内は出ない
+  const hptpHint = !a.hasHptp
+    ? '<div class="note" style="margin-top:6px">取込み直すとHP/TPマテも表示できます</div>'
+    : '';
   return `<div class="charcard sid-${sidIdx}">
     ${head}
     <div class="charbody">
@@ -533,6 +551,7 @@ function cardHTML(c) {
           ${left > 0 ? `・あと<b>${left}</b>個使えます` : '・<b>上限まで使用済み</b>'}
           ${left < 0 ? '<span class="warn">（上限を超えています）</span>' : ''}
           ${a.odd ? '<span class="warn">（計算が合わない項目があります）</span>' : ''}</div>
+        ${hptpHint}
       </div>
       <div class="sec"><h4>装備中</h4><div class="gearlist">${gearRows(c.eq)}</div></div>
     </div>
